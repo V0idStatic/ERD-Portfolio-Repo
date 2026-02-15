@@ -1,0 +1,30 @@
+{
+  "tables": {
+    "auth_id": {
+      "name": "auth_id",
+      "columns": {
+        "auth_id": {
+          "name": "auth_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "auth_id_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "auth_id_pkey",
+          "columnNames": [
+            "auth_id"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}

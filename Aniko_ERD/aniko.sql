@@ -1,0 +1,4 @@
+CREATE TABLE auth_id
+(
+ auth_id SERIAL PRIMARY KEY
+);
