@@ -23,6 +23,1564 @@
           ]
         }
       }
+    },
+    "lib_crop_regions": {
+      "name": "lib_crop_regions",
+      "columns": {
+        "reg_id": {
+          "name": "reg_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reg_desc": {
+          "name": "reg_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_regions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_regions_pkey",
+          "columnNames": [
+            "reg_id"
+          ]
+        }
+      }
+    },
+    "lib_crop_provinces": {
+      "name": "lib_crop_provinces",
+      "columns": {
+        "province_id": {
+          "name": "province_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "province_desc": {
+          "name": "province_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_provinces_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_provinces_pkey",
+          "columnNames": [
+            "province_id"
+          ]
+        }
+      }
+    },
+    "lib_crop_city": {
+      "name": "lib_crop_city",
+      "columns": {
+        "city_id": {
+          "name": "city_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "city_desc": {
+          "name": "city_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "lat": {
+          "name": "lat",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "lon": {
+          "name": "lon",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_city_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_city_pkey",
+          "columnNames": [
+            "city_id"
+          ]
+        }
+      }
+    },
+    "lib_crop_location": {
+      "name": "lib_crop_location",
+      "columns": {
+        "location_id": {
+          "name": "location_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "region_id": {
+          "name": "region_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "province_id": {
+          "name": "province_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_location_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_location_pkey",
+          "columnNames": [
+            "location_id"
+          ]
+        },
+        "lib_crop_regions_reg_id_to_lib_crop_location_region_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_regions_reg_id_to_lib_crop_location_region_id",
+          "columnNames": [
+            "region_id"
+          ],
+          "targetTableName": "lib_crop_regions",
+          "targetColumnNames": [
+            "reg_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lib_crop_provinces_province_id_to_lib_crop_location_province_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_provinces_province_id_to_lib_crop_location_province_id",
+          "columnNames": [
+            "province_id"
+          ],
+          "targetTableName": "lib_crop_provinces",
+          "targetColumnNames": [
+            "province_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lib_crop_city_city_id_to_lib_crop_location_city_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_city_city_id_to_lib_crop_location_city_id",
+          "columnNames": [
+            "city_id"
+          ],
+          "targetTableName": "lib_crop_city",
+          "targetColumnNames": [
+            "city_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_crop_category": {
+      "name": "lib_crop_category",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "categories": {
+          "name": "categories",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_category_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_category_pkey",
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    },
+    "lib_crop_name": {
+      "name": "lib_crop_name",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_name_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_name_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "lib_crop_category_id_to_lib_crop_name_category_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_category_id_to_lib_crop_name_category_id",
+          "columnNames": [
+            "category_id"
+          ],
+          "targetTableName": "lib_crop_category",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_crop_details": {
+      "name": "lib_crop_details",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "crop_id": {
+          "name": "crop_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_details_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_details_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "lib_crop_name_id_to_lib_crop_details_crop_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_name_id_to_lib_crop_details_crop_id",
+          "columnNames": [
+            "crop_id"
+          ],
+          "targetTableName": "lib_crop_name",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lib_crop_location_location_id_to_lib_crop_details_location_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_location_location_id_to_lib_crop_details_location_id",
+          "columnNames": [
+            "location_id"
+          ],
+          "targetTableName": "lib_crop_location",
+          "targetColumnNames": [
+            "location_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_crop_parameter": {
+      "name": "lib_crop_parameter",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "crop_detail_id": {
+          "name": "crop_detail_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_min": {
+          "name": "temperature_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_max": {
+          "name": "temperature_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level_min": {
+          "name": "ph_level_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level_max": {
+          "name": "ph_level_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "moisture_min": {
+          "name": "moisture_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "moisture_max": {
+          "name": "moisture_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_min": {
+          "name": "nitrogen_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_max": {
+          "name": "nitrogen_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_min": {
+          "name": "potassium_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_max": {
+          "name": "potassium_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_min": {
+          "name": "phosphorus_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_max": {
+          "name": "phosphorus_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_depth_min": {
+          "name": "soil_depth_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_depth_max": {
+          "name": "soil_depth_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_crop_parameter_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_crop_parameter_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "lib_crop_details_id_to_lib_crop_parameter_crop_detail_id": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_details_id_to_lib_crop_parameter_crop_detail_id",
+          "columnNames": [
+            "crop_detail_id"
+          ],
+          "targetTableName": "lib_crop_details",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "auth_id": {
+          "name": "auth_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "users_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "users_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "auth_id_auth_id_to_users_auth_id": {
+          "type": "FOREIGN KEY",
+          "name": "auth_id_auth_id_to_users_auth_id",
+          "columnNames": [
+            "auth_id"
+          ],
+          "targetTableName": "auth_id",
+          "targetColumnNames": [
+            "auth_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "plant_recommendations": {
+      "name": "plant_recommendations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_details": {
+          "name": "crop_details",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_status": {
+          "name": "current_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "best_months": {
+          "name": "best_months",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "generated_at": {
+          "name": "generated_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "generated_date": {
+          "name": "generated_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "valid_until": {
+          "name": "valid_until",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "analyzed_weather_performance": {
+          "name": "analyzed_weather_performance",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_temp_analyzed": {
+          "name": "avg_temp_analyzed",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_humidity_analyzed": {
+          "name": "avg_humidity_analyzed",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_rainfall_analyzed": {
+          "name": "avg_rainfall_analyzed",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "risk_factors": {
+          "name": "risk_factors",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recommendations": {
+          "name": "recommendations",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "alternative_dates": {
+          "name": "alternative_dates",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "predicted_weather": {
+          "name": "predicted_weather",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_conditions": {
+          "name": "optimal_conditions",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "plant_recommendations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "plant_recommendations_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_plant_recommendations_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_plant_recommendations_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lib_crop_details_id_to_plant_recommendations_crop_details": {
+          "type": "FOREIGN KEY",
+          "name": "lib_crop_details_id_to_plant_recommendations_crop_details",
+          "columnNames": [
+            "crop_details"
+          ],
+          "targetTableName": "lib_crop_details",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "esp32_readings": {
+      "name": "esp32_readings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "measured_at": {
+          "name": "measured_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temp_c": {
+          "name": "temp_c",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "moisture_pct": {
+          "name": "moisture_pct",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ec_us_cm": {
+          "name": "ec_us_cm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level": {
+          "name": "ph_level",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_ppm": {
+          "name": "nitrogen_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_ppm": {
+          "name": "phosphorus_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_ppm": {
+          "name": "potassium_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity_pct": {
+          "name": "humidity_pct",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "esp32_readings_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "esp32_readings_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_esp32_readings_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_esp32_readings_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "crop_sensor_comparisons": {
+      "name": "crop_sensor_comparisons",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_name": {
+          "name": "crop_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "esp32_reading_id": {
+          "name": "esp32_reading_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recommendation_id": {
+          "name": "recommendation_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_temperature": {
+          "name": "current_temperature",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_moisture": {
+          "name": "current_moisture",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_ph": {
+          "name": "current_ph",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_nitrogen": {
+          "name": "current_nitrogen",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_phosphorus": {
+          "name": "current_phosphorus",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_potassium": {
+          "name": "current_potassium",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_temp_min": {
+          "name": "optimal_temp_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_temp_max": {
+          "name": "optimal_temp_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_moisture_min": {
+          "name": "optimal_moisture_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_moisture_max": {
+          "name": "optimal_moisture_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_ph_min": {
+          "name": "optimal_ph_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_ph_max": {
+          "name": "optimal_ph_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_nitrogen_min": {
+          "name": "optimal_nitrogen_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_nitrogen_max": {
+          "name": "optimal_nitrogen_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_phosphorus_min": {
+          "name": "optimal_phosphorus_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_phosphorus_max": {
+          "name": "optimal_phosphorus_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_potassium_min": {
+          "name": "optimal_potassium_min",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "optimal_potassium_max": {
+          "name": "optimal_potassium_max",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "overall_status": {
+          "name": "overall_status",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_sensor_comparisons_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_sensor_comparisons_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_crop_sensor_comparisons_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_crop_sensor_comparisons_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "esp32_readings_id_to_crop_sensor_comparisons_esp32_reading_id": {
+          "type": "FOREIGN KEY",
+          "name": "esp32_readings_id_to_crop_sensor_comparisons_esp32_reading_id",
+          "columnNames": [
+            "esp32_reading_id"
+          ],
+          "targetTableName": "esp32_readings",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "plant_recommendations_id_to_crop_sensor_comparisons_recommendation_id": {
+          "type": "FOREIGN KEY",
+          "name": "plant_recommendations_id_to_crop_sensor_comparisons_recommendation_id",
+          "columnNames": [
+            "recommendation_id"
+          ],
+          "targetTableName": "plant_recommendations",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "weather_historical": {
+      "name": "weather_historical",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_avg": {
+          "name": "temperature_avg",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity_avg": {
+          "name": "humidity_avg",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rainfall_mm": {
+          "name": "rainfall_mm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "weather_description": {
+          "name": "weather_description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "year": {
+          "name": "year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "month": {
+          "name": "month",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "data_source": {
+          "name": "data_source",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "weather_historical_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "weather_historical_pkey",
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    },
+    "weather_current": {
+      "name": "weather_current",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_avg": {
+          "name": "temperature_avg",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity_avg": {
+          "name": "humidity_avg",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rainfall_mm": {
+          "name": "rainfall_mm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "weather_description": {
+          "name": "weather_description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "data_source": {
+          "name": "data_source",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "year": {
+          "name": "year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "month": {
+          "name": "month",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "weather_current_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "weather_current_pkey",
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    },
+    "weather_api_logs": {
+      "name": "weather_api_logs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "api_endpoint": {
+          "name": "api_endpoint",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "request_params": {
+          "name": "request_params",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "date_range_start": {
+          "name": "date_range_start",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "date_range_end": {
+          "name": "date_range_end",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "response_status": {
+          "name": "response_status",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "weather_api_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "weather_api_logs_pkey",
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    },
+    "esp32_readings_backup": {
+      "name": "esp32_readings_backup",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "measured_at": {
+          "name": "measured_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temp_c": {
+          "name": "temp_c",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ec_us_cm": {
+          "name": "ec_us_cm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_ppm": {
+          "name": "nitrogen_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_ppm": {
+          "name": "phosphorus_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_ppm": {
+          "name": "potassium_ppm",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level": {
+          "name": "ph_level",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity_pct": {
+          "name": "humidity_pct",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "esp32_readings_backup_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "esp32_readings_backup_pkey",
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
     }
   },
   "enums": {},
