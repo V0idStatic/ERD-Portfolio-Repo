@@ -1,0 +1,858 @@
+{
+  "tables": {
+    "auth_id": {
+      "name": "auth_id",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "auth_id_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "auth_id_pkey",
+          "columnNames": [
+            "user_id"
+          ]
+        }
+      }
+    },
+    "user_level": {
+      "name": "user_level",
+      "columns": {
+        "user_level_id": {
+          "name": "user_level_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "level_id": {
+          "name": "level_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "user_level_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "user_level_pkey",
+          "columnNames": [
+            "user_level_id"
+          ]
+        },
+        "auth_id_user_id_to_user_level_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "auth_id_user_id_to_user_level_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "auth_id",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "level_level_id_to_user_level_level_id": {
+          "type": "FOREIGN KEY",
+          "name": "level_level_id_to_user_level_level_id",
+          "columnNames": [
+            "level_id"
+          ],
+          "targetTableName": "level",
+          "targetColumnNames": [
+            "level_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "level": {
+      "name": "level",
+      "columns": {
+        "level_id": {
+          "name": "level_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "level_number": {
+          "name": "level_number",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "level_name": {
+          "name": "level_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "level_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "level_pkey",
+          "columnNames": [
+            "level_id"
+          ]
+        },
+        "zombie_typing_game_level_number_to_level_level_number": {
+          "type": "FOREIGN KEY",
+          "name": "zombie_typing_game_level_number_to_level_level_number",
+          "columnNames": [
+            "level_number"
+          ],
+          "targetTableName": "zombie_typing_game",
+          "targetColumnNames": [
+            "level_number"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "gamemode": {
+      "name": "gamemode",
+      "columns": {
+        "gamemode_id": {
+          "name": "gamemode_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "gamemode_name": {
+          "name": "gamemode_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "uses_level": {
+          "name": "uses_level",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "gamemode_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "gamemode_pkey",
+          "columnNames": [
+            "gamemode_id"
+          ]
+        }
+      }
+    },
+    "zombie_typing_game": {
+      "name": "zombie_typing_game",
+      "columns": {
+        "zombie_typing_game_id": {
+          "name": "zombie_typing_game_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "gamemode_id": {
+          "name": "gamemode_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "level_number": {
+          "name": "level_number",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "sentence": {
+          "name": "sentence",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "difficulty": {
+          "name": "difficulty",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "zombie_typing_game_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "zombie_typing_game_pkey",
+          "columnNames": [
+            "zombie_typing_game_id"
+          ]
+        },
+        "gamemode_gamemode_id_to_zombie_typing_game_gamemode_id": {
+          "type": "FOREIGN KEY",
+          "name": "gamemode_gamemode_id_to_zombie_typing_game_gamemode_id",
+          "columnNames": [
+            "gamemode_id"
+          ],
+          "targetTableName": "gamemode",
+          "targetColumnNames": [
+            "gamemode_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "only_typing_game": {
+      "name": "only_typing_game",
+      "columns": {
+        "only_typing_game_id": {
+          "name": "only_typing_game_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "gamemode_id": {
+          "name": "gamemode_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "sentence": {
+          "name": "sentence",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "difficulty": {
+          "name": "difficulty",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "only_typing_game_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "only_typing_game_pkey",
+          "columnNames": [
+            "only_typing_game_id"
+          ]
+        },
+        "gamemode_gamemode_id_to_only_typing_game_gamemode_id": {
+          "type": "FOREIGN KEY",
+          "name": "gamemode_gamemode_id_to_only_typing_game_gamemode_id",
+          "columnNames": [
+            "gamemode_id"
+          ],
+          "targetTableName": "gamemode",
+          "targetColumnNames": [
+            "gamemode_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "session": {
+      "name": "session",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "gamemode_id": {
+          "name": "gamemode_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "gamep_id": {
+          "name": "gamep_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "common_mistake_id": {
+          "name": "common_mistake_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "keystroke_id": {
+          "name": "keystroke_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "performance_id": {
+          "name": "performance_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "session_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "session_pkey",
+          "columnNames": [
+            "session_id"
+          ]
+        },
+        "auth_id_user_id_to_session_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "auth_id_user_id_to_session_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "auth_id",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "gamemode_gamemode_id_to_session_gamemode_id": {
+          "type": "FOREIGN KEY",
+          "name": "gamemode_gamemode_id_to_session_gamemode_id",
+          "columnNames": [
+            "gamemode_id"
+          ],
+          "targetTableName": "gamemode",
+          "targetColumnNames": [
+            "gamemode_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_performance_gamep_id_to_session_gamep_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_performance_gamep_id_to_session_gamep_id",
+          "columnNames": [
+            "gamep_id"
+          ],
+          "targetTableName": "game_performance",
+          "targetColumnNames": [
+            "gamep_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "common_mistake_common_mistake_id_to_session_common_mistake_id": {
+          "type": "FOREIGN KEY",
+          "name": "common_mistake_common_mistake_id_to_session_common_mistake_id",
+          "columnNames": [
+            "common_mistake_id"
+          ],
+          "targetTableName": "common_mistake",
+          "targetColumnNames": [
+            "common_mistake_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "keystroke_keystroke_id_to_session_keystroke_id": {
+          "type": "FOREIGN KEY",
+          "name": "keystroke_keystroke_id_to_session_keystroke_id",
+          "columnNames": [
+            "keystroke_id"
+          ],
+          "targetTableName": "keystroke",
+          "targetColumnNames": [
+            "keystroke_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "performance_metrics_performance_id_to_session_performance_id": {
+          "type": "FOREIGN KEY",
+          "name": "performance_metrics_performance_id_to_session_performance_id",
+          "columnNames": [
+            "performance_id"
+          ],
+          "targetTableName": "performance_metrics",
+          "targetColumnNames": [
+            "performance_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "game_performance": {
+      "name": "game_performance",
+      "columns": {
+        "gamep_id": {
+          "name": "gamep_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "final_score": {
+          "name": "final_score",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "zombies_defeated": {
+          "name": "zombies_defeated",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_points": {
+          "name": "avg_points",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "game_performance_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "game_performance_pkey",
+          "columnNames": [
+            "gamep_id"
+          ]
+        },
+        "session_session_id_to_game_performance_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_session_id_to_game_performance_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "session_user_id_to_game_performance_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_user_id_to_game_performance_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "common_mistake": {
+      "name": "common_mistake",
+      "columns": {
+        "common_mistake_id": {
+          "name": "common_mistake_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "correct": {
+          "name": "correct",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "incorrect": {
+          "name": "incorrect",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "common_mistake_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "common_mistake_pkey",
+          "columnNames": [
+            "common_mistake_id"
+          ]
+        },
+        "session_session_id_to_common_mistake_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_session_id_to_common_mistake_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "session_user_id_to_common_mistake_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_user_id_to_common_mistake_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "keystroke": {
+      "name": "keystroke",
+      "columns": {
+        "keystroke_id": {
+          "name": "keystroke_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "total_keystroke": {
+          "name": "total_keystroke",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "keystroke_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "keystroke_pkey",
+          "columnNames": [
+            "keystroke_id"
+          ]
+        },
+        "session_session_id_to_keystroke_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_session_id_to_keystroke_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "session_user_id_to_keystroke_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_user_id_to_keystroke_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "performance_metrics": {
+      "name": "performance_metrics",
+      "columns": {
+        "performance_id": {
+          "name": "performance_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "wpm": {
+          "name": "wpm",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "cpm": {
+          "name": "cpm",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "accuracy": {
+          "name": "accuracy",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "duration": {
+          "name": "duration",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "performance_metrics_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "performance_metrics_pkey",
+          "columnNames": [
+            "performance_id"
+          ]
+        },
+        "session_session_id_to_performance_metrics_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_session_id_to_performance_metrics_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "session_user_id_to_performance_metrics_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_user_id_to_performance_metrics_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "leaderboard": {
+      "name": "leaderboard",
+      "columns": {
+        "leaderboard_id": {
+          "name": "leaderboard_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "leaderboard_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "leaderboard_pkey",
+          "columnNames": [
+            "leaderboard_id"
+          ]
+        },
+        "session_user_id_to_leaderboard_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "session_user_id_to_leaderboard_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "session",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}
