@@ -62,9 +62,9 @@
             "user_level_id"
           ]
         },
-        "auth_id_user_id_to_user_level_user_id": {
+        "fk_auth_user_id": {
           "type": "FOREIGN KEY",
-          "name": "auth_id_user_id_to_user_level_user_id",
+          "name": "fk_auth_user_id",
           "columnNames": [
             "user_id"
           ],
@@ -75,9 +75,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "level_level_id_to_user_level_level_id": {
+        "fk_lvl_level_id": {
           "type": "FOREIGN KEY",
-          "name": "level_level_id_to_user_level_level_id",
+          "name": "fk_lvl_level_id",
           "columnNames": [
             "level_id"
           ],
@@ -128,9 +128,9 @@
             "level_id"
           ]
         },
-        "zombie_typing_game_level_number_to_level_level_number": {
+        "fk_ztg_level_number": {
           "type": "FOREIGN KEY",
-          "name": "zombie_typing_game_level_number_to_level_level_number",
+          "name": "fk_ztg_level_number",
           "columnNames": [
             "level_number"
           ],
@@ -237,9 +237,9 @@
             "zombie_typing_game_id"
           ]
         },
-        "gamemode_gamemode_id_to_zombie_typing_game_gamemode_id": {
+        "fk_gm_gamemode_id": {
           "type": "FOREIGN KEY",
-          "name": "gamemode_gamemode_id_to_zombie_typing_game_gamemode_id",
+          "name": "fk_gm_gamemode_id",
           "columnNames": [
             "gamemode_id"
           ],
@@ -298,9 +298,9 @@
             "only_typing_game_id"
           ]
         },
-        "gamemode_gamemode_id_to_only_typing_game_gamemode_id": {
+        "fk_gm_gamemode_id_otg": {
           "type": "FOREIGN KEY",
-          "name": "gamemode_gamemode_id_to_only_typing_game_gamemode_id",
+          "name": "fk_gm_gamemode_id_otg",
           "columnNames": [
             "gamemode_id"
           ],
@@ -383,9 +383,9 @@
             "session_id"
           ]
         },
-        "auth_id_user_id_to_session_user_id": {
+        "fk_auth_user_id_sess": {
           "type": "FOREIGN KEY",
-          "name": "auth_id_user_id_to_session_user_id",
+          "name": "fk_auth_user_id_sess",
           "columnNames": [
             "user_id"
           ],
@@ -396,9 +396,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "gamemode_gamemode_id_to_session_gamemode_id": {
+        "fk_gm_gamemode_id_sess": {
           "type": "FOREIGN KEY",
-          "name": "gamemode_gamemode_id_to_session_gamemode_id",
+          "name": "fk_gm_gamemode_id_sess",
           "columnNames": [
             "gamemode_id"
           ],
@@ -409,9 +409,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "game_performance_gamep_id_to_session_gamep_id": {
+        "fk_gp_gamep_id": {
           "type": "FOREIGN KEY",
-          "name": "game_performance_gamep_id_to_session_gamep_id",
+          "name": "fk_gp_gamep_id",
           "columnNames": [
             "gamep_id"
           ],
@@ -422,9 +422,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "common_mistake_common_mistake_id_to_session_common_mistake_id": {
+        "fk_cm_common_mistake_id": {
           "type": "FOREIGN KEY",
-          "name": "common_mistake_common_mistake_id_to_session_common_mistake_id",
+          "name": "fk_cm_common_mistake_id",
           "columnNames": [
             "common_mistake_id"
           ],
@@ -435,9 +435,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "keystroke_keystroke_id_to_session_keystroke_id": {
+        "fk_ks_keystroke_id": {
           "type": "FOREIGN KEY",
-          "name": "keystroke_keystroke_id_to_session_keystroke_id",
+          "name": "fk_ks_keystroke_id",
           "columnNames": [
             "keystroke_id"
           ],
@@ -448,9 +448,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "performance_metrics_performance_id_to_session_performance_id": {
+        "fk_pm_performance_id": {
           "type": "FOREIGN KEY",
-          "name": "performance_metrics_performance_id_to_session_performance_id",
+          "name": "fk_pm_performance_id",
           "columnNames": [
             "performance_id"
           ],
@@ -525,9 +525,9 @@
             "gamep_id"
           ]
         },
-        "session_session_id_to_game_performance_session_id": {
+        "fk_sess_session_id_gp": {
           "type": "FOREIGN KEY",
-          "name": "session_session_id_to_game_performance_session_id",
+          "name": "fk_sess_session_id_gp",
           "columnNames": [
             "session_id"
           ],
@@ -538,9 +538,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "session_user_id_to_game_performance_user_id": {
+        "fk_sess_user_id_gp": {
           "type": "FOREIGN KEY",
-          "name": "session_user_id_to_game_performance_user_id",
+          "name": "fk_sess_user_id_gp",
           "columnNames": [
             "user_id"
           ],
@@ -607,9 +607,9 @@
             "common_mistake_id"
           ]
         },
-        "session_session_id_to_common_mistake_session_id": {
+        "fk_sess_session_id_cm": {
           "type": "FOREIGN KEY",
-          "name": "session_session_id_to_common_mistake_session_id",
+          "name": "fk_sess_session_id_cm",
           "columnNames": [
             "session_id"
           ],
@@ -620,9 +620,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "session_user_id_to_common_mistake_user_id": {
+        "fk_sess_user_id_cm": {
           "type": "FOREIGN KEY",
-          "name": "session_user_id_to_common_mistake_user_id",
+          "name": "fk_sess_user_id_cm",
           "columnNames": [
             "user_id"
           ],
@@ -681,9 +681,9 @@
             "keystroke_id"
           ]
         },
-        "session_session_id_to_keystroke_session_id": {
+        "fk_sess_session_id_ks": {
           "type": "FOREIGN KEY",
-          "name": "session_session_id_to_keystroke_session_id",
+          "name": "fk_sess_session_id_ks",
           "columnNames": [
             "session_id"
           ],
@@ -694,9 +694,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "session_user_id_to_keystroke_user_id": {
+        "fk_sess_user_id_ks": {
           "type": "FOREIGN KEY",
-          "name": "session_user_id_to_keystroke_user_id",
+          "name": "fk_sess_user_id_ks",
           "columnNames": [
             "user_id"
           ],
@@ -779,9 +779,9 @@
             "performance_id"
           ]
         },
-        "session_session_id_to_performance_metrics_session_id": {
+        "fk_sess_session_id_pm": {
           "type": "FOREIGN KEY",
-          "name": "session_session_id_to_performance_metrics_session_id",
+          "name": "fk_sess_session_id_pm",
           "columnNames": [
             "session_id"
           ],
@@ -792,9 +792,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "session_user_id_to_performance_metrics_user_id": {
+        "fk_sess_user_id_pm": {
           "type": "FOREIGN KEY",
-          "name": "session_user_id_to_performance_metrics_user_id",
+          "name": "fk_sess_user_id_pm",
           "columnNames": [
             "user_id"
           ],
@@ -837,9 +837,9 @@
             "leaderboard_id"
           ]
         },
-        "session_user_id_to_leaderboard_user_id": {
+        "fk_sess_user_id_lb": {
           "type": "FOREIGN KEY",
-          "name": "session_user_id_to_leaderboard_user_id",
+          "name": "fk_sess_user_id_lb",
           "columnNames": [
             "user_id"
           ],
