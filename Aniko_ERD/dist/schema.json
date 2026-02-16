@@ -182,9 +182,9 @@
             "location_id"
           ]
         },
-        "lib_crop_regions_reg_id_to_lib_crop_location_region_id": {
+        "fk_lcr_region_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_regions_reg_id_to_lib_crop_location_region_id",
+          "name": "fk_lcr_region_id",
           "columnNames": [
             "region_id"
           ],
@@ -195,9 +195,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "lib_crop_provinces_province_id_to_lib_crop_location_province_id": {
+        "fk_lcp_province_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_provinces_province_id_to_lib_crop_location_province_id",
+          "name": "fk_lcp_province_id",
           "columnNames": [
             "province_id"
           ],
@@ -208,9 +208,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "lib_crop_city_city_id_to_lib_crop_location_city_id": {
+        "fk_lcc_city_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_city_city_id_to_lib_crop_location_city_id",
+          "name": "fk_lcc_city_id",
           "columnNames": [
             "city_id"
           ],
@@ -301,9 +301,9 @@
             "id"
           ]
         },
-        "lib_crop_category_id_to_lib_crop_name_category_id": {
+        "fk_lcc_category_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_category_id_to_lib_crop_name_category_id",
+          "name": "fk_lcc_category_id",
           "columnNames": [
             "category_id"
           ],
@@ -354,9 +354,9 @@
             "id"
           ]
         },
-        "lib_crop_name_id_to_lib_crop_details_crop_id": {
+        "fk_lcn_crop_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_name_id_to_lib_crop_details_crop_id",
+          "name": "fk_lcn_crop_id",
           "columnNames": [
             "crop_id"
           ],
@@ -367,9 +367,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "lib_crop_location_location_id_to_lib_crop_details_location_id": {
+        "fk_lcl_location_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_location_location_id_to_lib_crop_details_location_id",
+          "name": "fk_lcl_location_id",
           "columnNames": [
             "location_id"
           ],
@@ -524,9 +524,9 @@
             "id"
           ]
         },
-        "lib_crop_details_id_to_lib_crop_parameter_crop_detail_id": {
+        "fk_lcd_crop_detail_id": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_details_id_to_lib_crop_parameter_crop_detail_id",
+          "name": "fk_lcd_crop_detail_id",
           "columnNames": [
             "crop_detail_id"
           ],
@@ -617,9 +617,9 @@
             "id"
           ]
         },
-        "auth_id_auth_id_to_users_auth_id": {
+        "fk_auth_auth_id": {
           "type": "FOREIGN KEY",
-          "name": "auth_id_auth_id_to_users_auth_id",
+          "name": "fk_auth_auth_id",
           "columnNames": [
             "auth_id"
           ],
@@ -782,9 +782,9 @@
             "id"
           ]
         },
-        "users_id_to_plant_recommendations_user_id": {
+        "fk_users_user_id": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_plant_recommendations_user_id",
+          "name": "fk_users_user_id",
           "columnNames": [
             "user_id"
           ],
@@ -795,9 +795,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "lib_crop_details_id_to_plant_recommendations_crop_details": {
+        "fk_lcd_crop_details": {
           "type": "FOREIGN KEY",
-          "name": "lib_crop_details_id_to_plant_recommendations_crop_details",
+          "name": "fk_lcd_crop_details",
           "columnNames": [
             "crop_details"
           ],
@@ -920,9 +920,9 @@
             "id"
           ]
         },
-        "users_id_to_esp32_readings_user_id": {
+        "fk_users_user_id_esp32": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_esp32_readings_user_id",
+          "name": "fk_users_user_id_esp32",
           "columnNames": [
             "user_id"
           ],
@@ -1149,9 +1149,9 @@
             "id"
           ]
         },
-        "users_id_to_crop_sensor_comparisons_user_id": {
+        "fk_users_user_id_csc": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_crop_sensor_comparisons_user_id",
+          "name": "fk_users_user_id_csc",
           "columnNames": [
             "user_id"
           ],
@@ -1162,9 +1162,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "esp32_readings_id_to_crop_sensor_comparisons_esp32_reading_id": {
+        "fk_esp32_reading_id": {
           "type": "FOREIGN KEY",
-          "name": "esp32_readings_id_to_crop_sensor_comparisons_esp32_reading_id",
+          "name": "fk_esp32_reading_id",
           "columnNames": [
             "esp32_reading_id"
           ],
@@ -1175,9 +1175,9 @@
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "plant_recommendations_id_to_crop_sensor_comparisons_recommendation_id": {
+        "fk_pr_recommendation_id": {
           "type": "FOREIGN KEY",
-          "name": "plant_recommendations_id_to_crop_sensor_comparisons_recommendation_id",
+          "name": "fk_pr_recommendation_id",
           "columnNames": [
             "recommendation_id"
           ],
