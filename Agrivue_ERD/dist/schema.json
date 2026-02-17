@@ -1,0 +1,388 @@
+{
+  "tables": {
+    "user_auth": {
+      "name": "user_auth",
+      "columns": {
+        "auth_id": {
+          "name": "auth_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "user_auth_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "user_auth_pkey",
+          "columnNames": [
+            "auth_id"
+          ]
+        }
+      }
+    },
+    "regions": {
+      "name": "regions",
+      "columns": {
+        "reg_id": {
+          "name": "reg_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reg_desc": {
+          "name": "reg_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "regions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "regions_pkey",
+          "columnNames": [
+            "reg_id"
+          ]
+        }
+      }
+    },
+    "provinces": {
+      "name": "provinces",
+      "columns": {
+        "province_id": {
+          "name": "province_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "province_desc": {
+          "name": "province_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "provinces_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "provinces_pkey",
+          "columnNames": [
+            "province_id"
+          ]
+        }
+      }
+    },
+    "cities": {
+      "name": "cities",
+      "columns": {
+        "city_id": {
+          "name": "city_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "city_desc": {
+          "name": "city_desc",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "lat": {
+          "name": "lat",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "lon": {
+          "name": "lon",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "cities_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "cities_pkey",
+          "columnNames": [
+            "city_id"
+          ]
+        }
+      }
+    },
+    "location": {
+      "name": "location",
+      "columns": {
+        "location_id": {
+          "name": "location_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "region_id": {
+          "name": "region_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "province_id": {
+          "name": "province_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "location_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "location_pkey",
+          "columnNames": [
+            "location_id"
+          ]
+        },
+        "lcr_region_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcr_region_id",
+          "columnNames": [
+            "region_id"
+          ],
+          "targetTableName": "regions",
+          "targetColumnNames": [
+            "reg_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lcp_province_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcp_province_id",
+          "columnNames": [
+            "province_id"
+          ],
+          "targetTableName": "provinces",
+          "targetColumnNames": [
+            "province_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lcc_city_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcc_city_id",
+          "columnNames": [
+            "city_id"
+          ],
+          "targetTableName": "cities",
+          "targetColumnNames": [
+            "city_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "crop_category": {
+      "name": "crop_category",
+      "columns": {
+        "crop_category_id": {
+          "name": "crop_category_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "categories": {
+          "name": "categories",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_category_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_category_pkey",
+          "columnNames": [
+            "crop_category_id"
+          ]
+        }
+      }
+    },
+    "crop_name": {
+      "name": "crop_name",
+      "columns": {
+        "crop_name_id": {
+          "name": "crop_name_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_name_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_name_pkey",
+          "columnNames": [
+            "crop_name_id"
+          ]
+        },
+        "lcc_category_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcc_category_id",
+          "columnNames": [
+            "category_id"
+          ],
+          "targetTableName": "crop_category",
+          "targetColumnNames": [
+            "crop_category_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "crop_details": {
+      "name": "crop_details",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "crop_name_id": {
+          "name": "crop_name_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "location_id": {
+          "name": "location_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_details_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_details_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "lcn_crop_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcn_crop_id",
+          "columnNames": [
+            "crop_name_id"
+          ],
+          "targetTableName": "crop_name",
+          "targetColumnNames": [
+            "crop_name_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "lcl_location_id": {
+          "type": "FOREIGN KEY",
+          "name": "lcl_location_id",
+          "columnNames": [
+            "location_id"
+          ],
+          "targetTableName": "location",
+          "targetColumnNames": [
+            "location_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}
