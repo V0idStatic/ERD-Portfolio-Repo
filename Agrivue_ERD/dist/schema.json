@@ -24,6 +24,120 @@
         }
       }
     },
+    "role": {
+      "name": "role",
+      "columns": {
+        "role_id": {
+          "name": "role_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "role_name": {
+          "name": "role_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "role_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "role_pkey",
+          "columnNames": [
+            "role_id"
+          ]
+        }
+      }
+    },
+    "user_role": {
+      "name": "user_role",
+      "columns": {
+        "user_role_id": {
+          "name": "user_role_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "user_role_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "user_role_pkey",
+          "columnNames": [
+            "user_role_id"
+          ]
+        },
+        "us_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "us_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "user_auth",
+          "targetColumnNames": [
+            "auth_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "us_role_id": {
+          "type": "FOREIGN KEY",
+          "name": "us_role_id",
+          "columnNames": [
+            "role_id"
+          ],
+          "targetTableName": "role",
+          "targetColumnNames": [
+            "role_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
     "regions": {
       "name": "regions",
       "columns": {
@@ -38,6 +152,30 @@
         "reg_desc": {
           "name": "reg_desc",
           "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "geometry": {
+          "name": "geometry",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "centroid": {
+          "name": "centroid",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "m_2": {
+          "name": "m_2",
+          "type": "float8",
           "default": null,
           "check": null,
           "notNull": false,
@@ -70,6 +208,30 @@
         "province_desc": {
           "name": "province_desc",
           "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "geometry": {
+          "name": "geometry",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "centroid": {
+          "name": "centroid",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "m_2": {
+          "name": "m_2",
+          "type": "float8",
           "default": null,
           "check": null,
           "notNull": false,
@@ -107,17 +269,25 @@
           "notNull": false,
           "comment": null
         },
-        "lat": {
-          "name": "lat",
-          "type": "int4",
+        "geometry": {
+          "name": "geometry",
+          "type": "geometry",
           "default": null,
           "check": null,
           "notNull": false,
           "comment": null
         },
-        "lon": {
-          "name": "lon",
-          "type": "int4",
+        "centroid": {
+          "name": "centroid",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "m_2": {
+          "name": "m_2",
+          "type": "float8",
           "default": null,
           "check": null,
           "notNull": false,
@@ -166,6 +336,30 @@
         "city_id": {
           "name": "city_id",
           "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "geometry": {
+          "name": "geometry",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "centroid": {
+          "name": "centroid",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "m_2": {
+          "name": "m_2",
+          "type": "float8",
           "default": null,
           "check": null,
           "notNull": false,
@@ -335,8 +529,24 @@
           "notNull": false,
           "comment": null
         },
-        "location_id": {
-          "name": "location_id",
+        "crop_indicator_value_id": {
+          "name": "crop_indicator_value_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_growth_id": {
+          "name": "crop_growth_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_spacing_id": {
+          "name": "crop_spacing_id",
           "type": "int4",
           "default": null,
           "check": null,
@@ -354,9 +564,48 @@
             "id"
           ]
         },
-        "lcn_crop_id": {
+        "cd_crop_spacing": {
           "type": "FOREIGN KEY",
-          "name": "lcn_crop_id",
+          "name": "cd_crop_spacing",
+          "columnNames": [
+            "crop_spacing_id"
+          ],
+          "targetTableName": "crop_spacing_models",
+          "targetColumnNames": [
+            "crop_spacing_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "cd_crop_growth_id": {
+          "type": "FOREIGN KEY",
+          "name": "cd_crop_growth_id",
+          "columnNames": [
+            "crop_growth_id"
+          ],
+          "targetTableName": "crop_growth_profiles",
+          "targetColumnNames": [
+            "crop_growth_profile_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "cd_crop_indicator_value_id": {
+          "type": "FOREIGN KEY",
+          "name": "cd_crop_indicator_value_id",
+          "columnNames": [
+            "crop_indicator_value_id"
+          ],
+          "targetTableName": "indicator_value",
+          "targetColumnNames": [
+            "indicator_value_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "cd_crop_id": {
+          "type": "FOREIGN KEY",
+          "name": "cd_crop_id",
           "columnNames": [
             "crop_name_id"
           ],
@@ -366,16 +615,803 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "indicator_types": {
+      "name": "indicator_types",
+      "columns": {
+        "indicator_types_id": {
+          "name": "indicator_types_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
         },
-        "lcl_location_id": {
-          "type": "FOREIGN KEY",
-          "name": "lcl_location_id",
+        "heat_index": {
+          "name": "heat_index",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rain_fall": {
+          "name": "rain_fall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "wind_speed": {
+          "name": "wind_speed",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity": {
+          "name": "humidity",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "indicator_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "indicator_types_pkey",
           "columnNames": [
-            "location_id"
+            "indicator_types_id"
+          ]
+        }
+      }
+    },
+    "indicator_value": {
+      "name": "indicator_value",
+      "columns": {
+        "indicator_value_id": {
+          "name": "indicator_value_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "indicator_types_id": {
+          "name": "indicator_types_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "value": {
+          "name": "value",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "season": {
+          "name": "season",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "indicator_value_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "indicator_value_pkey",
+          "columnNames": [
+            "indicator_value_id"
+          ]
+        },
+        "iv_indicator_types_id": {
+          "type": "FOREIGN KEY",
+          "name": "iv_indicator_types_id",
+          "columnNames": [
+            "indicator_types_id"
           ],
-          "targetTableName": "location",
+          "targetTableName": "indicator_types",
           "targetColumnNames": [
-            "location_id"
+            "indicator_types_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "crop_growth_profiles": {
+      "name": "crop_growth_profiles",
+      "columns": {
+        "crop_growth_profile_id": {
+          "name": "crop_growth_profile_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "min_rainfall": {
+          "name": "min_rainfall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "max_rainfall": {
+          "name": "max_rainfall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_type": {
+          "name": "soil_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "growth_days": {
+          "name": "growth_days",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_growth_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_growth_profiles_pkey",
+          "columnNames": [
+            "crop_growth_profile_id"
+          ]
+        }
+      }
+    },
+    "crop_spacing_models": {
+      "name": "crop_spacing_models",
+      "columns": {
+        "crop_spacing_id": {
+          "name": "crop_spacing_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "spacing_cm": {
+          "name": "spacing_cm",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "density_per_hectare": {
+          "name": "density_per_hectare",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_spacing_models_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_spacing_models_pkey",
+          "columnNames": [
+            "crop_spacing_id"
+          ]
+        }
+      }
+    },
+    "crop_parameter": {
+      "name": "crop_parameter",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "crop_detail_id": {
+          "name": "crop_detail_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_min": {
+          "name": "temperature_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "temperature_max": {
+          "name": "temperature_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level_min": {
+          "name": "ph_level_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ph_level_max": {
+          "name": "ph_level_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "moisture_min": {
+          "name": "moisture_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "moisture_max": {
+          "name": "moisture_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_min": {
+          "name": "nitrogen_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nitrogen_max": {
+          "name": "nitrogen_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_min": {
+          "name": "potassium_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "potassium_max": {
+          "name": "potassium_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_min": {
+          "name": "phosphorus_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "phosphorus_max": {
+          "name": "phosphorus_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_depth_min": {
+          "name": "soil_depth_min",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_depth_max": {
+          "name": "soil_depth_max",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_parameter_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_parameter_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "tcp_crop_detail_id": {
+          "type": "FOREIGN KEY",
+          "name": "tcp_crop_detail_id",
+          "columnNames": [
+            "crop_detail_id"
+          ],
+          "targetTableName": "crop_details",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "plots": {
+      "name": "plots",
+      "columns": {
+        "plot_id": {
+          "name": "plot_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "geometry": {
+          "name": "geometry",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "area_m2": {
+          "name": "area_m2",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "centroid": {
+          "name": "centroid",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "plots_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "plots_pkey",
+          "columnNames": [
+            "plot_id"
+          ]
+        },
+        "p_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "p_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "user_role",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "plot_versions": {
+      "name": "plot_versions",
+      "columns": {
+        "plot_versions": {
+          "name": "plot_versions",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "geometry_snapshot": {
+          "name": "geometry_snapshot",
+          "type": "geometry",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "plot_versions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "plot_versions_pkey",
+          "columnNames": [
+            "plot_versions"
+          ]
+        },
+        "pv_plot_id": {
+          "type": "FOREIGN KEY",
+          "name": "pv_plot_id",
+          "columnNames": [
+            "plot_id"
+          ],
+          "targetTableName": "plots",
+          "targetColumnNames": [
+            "plot_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "plot_environmental_summary": {
+      "name": "plot_environmental_summary",
+      "columns": {
+        "plot_environmental_id": {
+          "name": "plot_environmental_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "avg_heat_index": {
+          "name": "avg_heat_index",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_rainfall": {
+          "name": "avg_rainfall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_wind": {
+          "name": "avg_wind",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_slope": {
+          "name": "avg_slope",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "dominant_soil": {
+          "name": "dominant_soil",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "computed_at": {
+          "name": "computed_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "plot_environmental_summary_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "plot_environmental_summary_pkey",
+          "columnNames": [
+            "plot_environmental_id"
+          ]
+        },
+        "pes_plot_id": {
+          "type": "FOREIGN KEY",
+          "name": "pes_plot_id",
+          "columnNames": [
+            "plot_id"
+          ],
+          "targetTableName": "plots",
+          "targetColumnNames": [
+            "plot_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "plot_land_cover_analysis": {
+      "name": "plot_land_cover_analysis",
+      "columns": {
+        "plot_analysis_id": {
+          "name": "plot_analysis_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "road_percent": {
+          "name": "road_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "residential_percent": {
+          "name": "residential_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "tree_cover_percent": {
+          "name": "tree_cover_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "plantable_percent": {
+          "name": "plantable_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "restricted_area_percent": {
+          "name": "restricted_area_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "infrastructure_percent": {
+          "name": "infrastructure_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "water_percent": {
+          "name": "water_percent",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "plot_land_cover_analysis_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "plot_land_cover_analysis_pkey",
+          "columnNames": [
+            "plot_analysis_id"
+          ]
+        },
+        "plca_plot_id": {
+          "type": "FOREIGN KEY",
+          "name": "plca_plot_id",
+          "columnNames": [
+            "plot_id"
+          ],
+          "targetTableName": "plots",
+          "targetColumnNames": [
+            "plot_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "suitability_evaluations": {
+      "name": "suitability_evaluations",
+      "columns": {
+        "suitability_id": {
+          "name": "suitability_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_id": {
+          "name": "crop_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "suitability_score": {
+          "name": "suitability_score",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "limiting_factor": {
+          "name": "limiting_factor",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "suitability_evaluations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "suitability_evaluations_pkey",
+          "columnNames": [
+            "suitability_id"
+          ]
+        },
+        "se_plot_id": {
+          "type": "FOREIGN KEY",
+          "name": "se_plot_id",
+          "columnNames": [
+            "plot_id"
+          ],
+          "targetTableName": "plots",
+          "targetColumnNames": [
+            "plot_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "se_crop_id": {
+          "type": "FOREIGN KEY",
+          "name": "se_crop_id",
+          "columnNames": [
+            "crop_id"
+          ],
+          "targetTableName": "crop_details",
+          "targetColumnNames": [
+            "id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
@@ -384,5 +1420,9 @@
     }
   },
   "enums": {},
-  "extensions": {}
+  "extensions": {
+    "postgis": {
+      "name": "postgis"
+    }
+  }
 }

@@ -7,6 +7,7 @@ CREATE TABLE lib_crop_regions
 (
  reg_id SERIAL PRIMARY KEY,
  reg_desc VARCHAR(100)
+ 
 );
 
 CREATE TABLE lib_crop_provinces
