@@ -1417,6 +1417,96 @@
           "deleteConstraint": "NO_ACTION"
         }
       }
+    },
+    "yield_predictions": {
+      "name": "yield_predictions",
+      "columns": {
+        "yield_prediction_id": {
+          "name": "yield_prediction_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plot_id": {
+          "name": "plot_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "crop_id": {
+          "name": "crop_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "predicted_yield": {
+          "name": "predicted_yield",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "yield_predictions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "yield_predictions_pkey",
+          "columnNames": [
+            "yield_prediction_id"
+          ]
+        },
+        "yp_plot_id": {
+          "type": "FOREIGN KEY",
+          "name": "yp_plot_id",
+          "columnNames": [
+            "plot_id"
+          ],
+          "targetTableName": "plots",
+          "targetColumnNames": [
+            "plot_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "yp_crop_id": {
+          "type": "FOREIGN KEY",
+          "name": "yp_crop_id",
+          "columnNames": [
+            "crop_id"
+          ],
+          "targetTableName": "crop_details",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
     }
   },
   "enums": {},

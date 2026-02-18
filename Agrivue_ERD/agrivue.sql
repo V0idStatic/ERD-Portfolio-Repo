@@ -216,3 +216,16 @@ CREATE TABLE suitability_evaluations
  CONSTRAINT se_plot_id FOREIGN KEY(plot_id) REFERENCES plots(plot_id),
  CONSTRAINT se_crop_id FOREIGN KEY(crop_id) REFERENCES crop_details(id)
 );
+
+CREATE TABLE yield_predictions
+(
+ yield_prediction_id SERIAL PRIMARY KEY,
+ plot_id INT,
+ crop_id INT,
+ predicted_yield DOUBLE PRECISION,
+ confidence_score DOUBLE PRECISION,
+ created_at TIMESTAMP,
+
+ CONSTRAINT yp_plot_id FOREIGN KEY(plot_id) REFERENCES plots(plot_id),
+ CONSTRAINT yp_crop_id FOREIGN KEY(crop_id) REFERENCES crop_details(id)
+);
