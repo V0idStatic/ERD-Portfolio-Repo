@@ -25,8 +25,8 @@ CREATE TABLE regions
 (
  reg_id SERIAL PRIMARY KEY,
  reg_desc VARCHAR(100),
- geometry DOUBLE PRECISION,
- centroid DOUBLE PRECISION,
+ geometry GEOMETRY(Polygon, 4326),
+ centroid GEOMETRY(Point, 4326),
  m_2 DOUBLE PRECISION
 );
 
@@ -34,8 +34,8 @@ CREATE TABLE provinces
 (
  province_id SERIAL PRIMARY KEY,
  province_desc VARCHAR(100),
- geometry GEOMETRY,
- centroid GEOMETRY,
+ geometry GEOMETRY(Polygon, 4326),
+ centroid GEOMETRY(Point, 4326),
  m_2 DOUBLE PRECISION
 );
 
@@ -43,8 +43,8 @@ CREATE TABLE cities
 (
  city_id SERIAL PRIMARY KEY,
  city_desc VARCHAR(100),
- geometry GEOMETRY,
- centroid GEOMETRY,
+ geometry GEOMETRY(Polygon, 4326),
+ centroid GEOMETRY(Point, 4326),
  m_2 DOUBLE PRECISION
 );
 
@@ -54,8 +54,8 @@ CREATE TABLE location
  region_id INT,
  province_id INT,
  city_id INT,
- geometry GEOMETRY,
- centroid GEOMETRY,
+ geometry GEOMETRY(Polygon, 4326),
+ centroid GEOMETRY(Point, 4326),
  m_2 DOUBLE PRECISION,
  
  CONSTRAINT lcr_region_id FOREIGN KEY (region_id) REFERENCES regions(reg_id),
@@ -77,18 +77,20 @@ CREATE TABLE crop_name
  image_url TEXT,
  CONSTRAINT lcc_category_id FOREIGN KEY (category_id) REFERENCES crop_category(crop_category_id)
 );
-
-CREATE TABLE crop_details
+CREATE TABLE crop_spacing_models
 (
- id SERIAL PRIMARY KEY,
- crop_name_id INT,
- crop_indicator_value_id INT,
- crop_growth_id INT,
- crop_spacing_id INT,
- CONSTRAINT cd_crop_spacing FOREIGN KEY (crop_spacing_id) REFERENCES crop_spacing_models(crop_spacing_id),
- CONSTRAINT cd_crop_growth_id FOREIGN KEY (crop_growth_id) REFERENCES crop_growth_profiles(crop_growth_profile_id),
- CONSTRAINT cd_crop_indicator_value_id FOREIGN KEY (crop_indicator_value_id) REFERENCES indicator_value(indicator_value_id),
- CONSTRAINT cd_crop_id FOREIGN KEY (crop_name_id) REFERENCES crop_name(crop_name_id)
+ crop_spacing_id SERIAL PRIMARY KEY,
+ spacing_cm DOUBLE PRECISION,
+ density_per_hectare DOUBLE PRECISION
+);
+
+CREATE TABLE crop_growth_profiles
+(
+ crop_growth_profile_id SERIAL PRIMARY KEY,
+ min_rainfall DOUBLE PRECISION NULL,
+ max_rainfall DOUBLE PRECISION NULL,
+ soil_type VARCHAR(100) NULL,
+ growth_days DOUBLE PRECISION
 );
 
 CREATE TABLE indicator_types
@@ -110,21 +112,19 @@ CREATE TABLE indicator_value
  CONSTRAINT iv_indicator_types_id FOREIGN KEY (indicator_types_id) REFERENCES indicator_types(indicator_types_id)
 );
 
-CREATE TABLE crop_growth_profiles
+CREATE TABLE crop_details
 (
- crop_growth_profile_id SERIAL PRIMARY KEY,
- min_rainfall DOUBLE PRECISION NULL,
- max_rainfall DOUBLE PRECISION NULL,
- soil_type VARCHAR(100) NULL,
- growth_days DOUBLE PRECISION
+ id SERIAL PRIMARY KEY,
+ crop_name_id INT,
+ crop_indicator_value_id INT,
+ crop_growth_id INT,
+ crop_spacing_id INT,
+ CONSTRAINT cd_crop_spacing FOREIGN KEY (crop_spacing_id) REFERENCES crop_spacing_models(crop_spacing_id),
+ CONSTRAINT cd_crop_growth_id FOREIGN KEY (crop_growth_id) REFERENCES crop_growth_profiles(crop_growth_profile_id),
+ CONSTRAINT cd_crop_indicator_value_id FOREIGN KEY (crop_indicator_value_id) REFERENCES indicator_value(indicator_value_id),
+ CONSTRAINT cd_crop_id FOREIGN KEY (crop_name_id) REFERENCES crop_name(crop_name_id)
 );
 
-CREATE TABLE crop_spacing_models
-(
- crop_spacing_id SERIAL PRIMARY KEY,
- spacing_cm DOUBLE PRECISION,
- density_per_hectare DOUBLE PRECISION
-);
 
 
 CREATE TABLE crop_parameter
@@ -145,25 +145,21 @@ CREATE TABLE crop_parameter
  phosphorus_max DOUBLE PRECISION NULL,
  soil_depth_min DOUBLE PRECISION NULL,
  soil_depth_max DOUBLE PRECISION NULL,
+ 
  CONSTRAINT tcp_crop_detail_id FOREIGN KEY (crop_detail_id) REFERENCES crop_details(id)
 );
 
 CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE INDEX idx_plots_geometry
-ON plots
-USING GIST (geometry);
-
-
 
 CREATE TABLE plots
 (
  plot_id SERIAL PRIMARY KEY,
  user_id INT,
- geometry GEOMETRY,
+ geometry GEOMETRY(Polygon, 4326),
  area_m2 DOUBLE PRECISION,
- centroid GEOMETRY,
+ centroid GEOMETRY (Point, 4326),
  created_at TIMESTAMP,
- CONSTRAINT p_user_id FOREIGN KEY(user_id) REFERENCES user_role(user_id)
+ CONSTRAINT p_user_id FOREIGN KEY(user_id) REFERENCES user_role(user_role_id)
 );
 
 CREATE TABLE plot_versions
@@ -174,6 +170,11 @@ CREATE TABLE plot_versions
  created_at TIMESTAMP ,
  CONSTRAINT pv_plot_id FOREIGN KEY (plot_id) REFERENCES plots(plot_id)
 );
+
+CREATE INDEX idx_plots_geometry
+ON plots
+USING GIST (geometry);
+
 
 CREATE TABLE plot_environmental_summary
 (
