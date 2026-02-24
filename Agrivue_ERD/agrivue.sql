@@ -228,5 +228,5 @@ CREATE TABLE yield_predictions
  created_at TIMESTAMP,
 
  CONSTRAINT yp_plot_id FOREIGN KEY(plot_id) REFERENCES plots(plot_id),
- CONSTRAINT yp_crop_id FOREIGN KEY(crop_id) REFERENCES crop_details(id)
+ CONSTRAINT yp_crop_id FOREIGN KEY(crop_id) REFERENCES crop_details(id) --check for constraint
 );
