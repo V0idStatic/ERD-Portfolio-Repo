@@ -159,7 +159,7 @@
         },
         "geometry": {
           "name": "geometry",
-          "type": "float8",
+          "type": "geometry",
           "default": null,
           "check": null,
           "notNull": false,
@@ -167,7 +167,7 @@
         },
         "centroid": {
           "name": "centroid",
-          "type": "float8",
+          "type": "geometry",
           "default": null,
           "check": null,
           "notNull": false,
@@ -510,6 +510,150 @@
         }
       }
     },
+    "crop_spacing_models": {
+      "name": "crop_spacing_models",
+      "columns": {
+        "crop_spacing_id": {
+          "name": "crop_spacing_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "spacing_cm": {
+          "name": "spacing_cm",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "density_per_hectare": {
+          "name": "density_per_hectare",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_spacing_models_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_spacing_models_pkey",
+          "columnNames": [
+            "crop_spacing_id"
+          ]
+        }
+      }
+    },
+    "crop_growth_profiles": {
+      "name": "crop_growth_profiles",
+      "columns": {
+        "crop_growth_profile_id": {
+          "name": "crop_growth_profile_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "min_rainfall": {
+          "name": "min_rainfall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "max_rainfall": {
+          "name": "max_rainfall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "soil_type": {
+          "name": "soil_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "growth_days": {
+          "name": "growth_days",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "crop_growth_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "crop_growth_profiles_pkey",
+          "columnNames": [
+            "crop_growth_profile_id"
+          ]
+        }
+      }
+    },
+    "indicator_value": {
+      "name": "indicator_value",
+      "columns": {
+        "indicator_value_id": {
+          "name": "indicator_value_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "value": {
+          "name": "value",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "season": {
+          "name": "season",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamp",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "indicator_value_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "indicator_value_pkey",
+          "columnNames": [
+            "indicator_value_id"
+          ]
+        }
+      }
+    },
     "crop_details": {
       "name": "crop_details",
       "columns": {
@@ -615,227 +759,6 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
-        }
-      }
-    },
-    "indicator_types": {
-      "name": "indicator_types",
-      "columns": {
-        "indicator_types_id": {
-          "name": "indicator_types_id",
-          "type": "serial",
-          "default": null,
-          "check": null,
-          "notNull": true,
-          "comment": null
-        },
-        "heat_index": {
-          "name": "heat_index",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "rain_fall": {
-          "name": "rain_fall",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "wind_speed": {
-          "name": "wind_speed",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "humidity": {
-          "name": "humidity",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        }
-      },
-      "comment": null,
-      "indexes": {},
-      "constraints": {
-        "indicator_types_pkey": {
-          "type": "PRIMARY KEY",
-          "name": "indicator_types_pkey",
-          "columnNames": [
-            "indicator_types_id"
-          ]
-        }
-      }
-    },
-    "indicator_value": {
-      "name": "indicator_value",
-      "columns": {
-        "indicator_value_id": {
-          "name": "indicator_value_id",
-          "type": "serial",
-          "default": null,
-          "check": null,
-          "notNull": true,
-          "comment": null
-        },
-        "indicator_types_id": {
-          "name": "indicator_types_id",
-          "type": "int4",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "value": {
-          "name": "value",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "season": {
-          "name": "season",
-          "type": "varchar",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "recorded_at": {
-          "name": "recorded_at",
-          "type": "timestamp",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        }
-      },
-      "comment": null,
-      "indexes": {},
-      "constraints": {
-        "indicator_value_pkey": {
-          "type": "PRIMARY KEY",
-          "name": "indicator_value_pkey",
-          "columnNames": [
-            "indicator_value_id"
-          ]
-        },
-        "iv_indicator_types_id": {
-          "type": "FOREIGN KEY",
-          "name": "iv_indicator_types_id",
-          "columnNames": [
-            "indicator_types_id"
-          ],
-          "targetTableName": "indicator_types",
-          "targetColumnNames": [
-            "indicator_types_id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        }
-      }
-    },
-    "crop_growth_profiles": {
-      "name": "crop_growth_profiles",
-      "columns": {
-        "crop_growth_profile_id": {
-          "name": "crop_growth_profile_id",
-          "type": "serial",
-          "default": null,
-          "check": null,
-          "notNull": true,
-          "comment": null
-        },
-        "min_rainfall": {
-          "name": "min_rainfall",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "max_rainfall": {
-          "name": "max_rainfall",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "soil_type": {
-          "name": "soil_type",
-          "type": "varchar",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "growth_days": {
-          "name": "growth_days",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        }
-      },
-      "comment": null,
-      "indexes": {},
-      "constraints": {
-        "crop_growth_profiles_pkey": {
-          "type": "PRIMARY KEY",
-          "name": "crop_growth_profiles_pkey",
-          "columnNames": [
-            "crop_growth_profile_id"
-          ]
-        }
-      }
-    },
-    "crop_spacing_models": {
-      "name": "crop_spacing_models",
-      "columns": {
-        "crop_spacing_id": {
-          "name": "crop_spacing_id",
-          "type": "serial",
-          "default": null,
-          "check": null,
-          "notNull": true,
-          "comment": null
-        },
-        "spacing_cm": {
-          "name": "spacing_cm",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "density_per_hectare": {
-          "name": "density_per_hectare",
-          "type": "float8",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        }
-      },
-      "comment": null,
-      "indexes": {},
-      "constraints": {
-        "crop_spacing_models_pkey": {
-          "type": "PRIMARY KEY",
-          "name": "crop_spacing_models_pkey",
-          "columnNames": [
-            "crop_spacing_id"
-          ]
         }
       }
     },
@@ -1049,7 +972,16 @@
         }
       },
       "comment": null,
-      "indexes": {},
+      "indexes": {
+        "idx_plots_geometry": {
+          "name": "idx_plots_geometry",
+          "unique": false,
+          "columns": [
+            "geometry"
+          ],
+          "type": "gist"
+        }
+      },
       "constraints": {
         "plots_pkey": {
           "type": "PRIMARY KEY",
@@ -1066,7 +998,7 @@
           ],
           "targetTableName": "user_role",
           "targetColumnNames": [
-            "user_id"
+            "user_role_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"

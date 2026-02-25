@@ -93,23 +93,13 @@ CREATE TABLE crop_growth_profiles
  growth_days DOUBLE PRECISION
 );
 
-CREATE TABLE indicator_types
-(
- indicator_types_id SERIAL PRIMARY KEY,
- heat_index DOUBLE PRECISION,
- rain_fall DOUBLE PRECISION,
- wind_speed DOUBLE PRECISION,
- humidity DOUBLE PRECISION
-);
 
 CREATE TABLE indicator_value
 (
  indicator_value_id SERIAL PRIMARY KEY,
- indicator_types_id INT,
  value DOUBLE PRECISION,
  season VARCHAR(50),
- recorded_at TIMESTAMP,
- CONSTRAINT iv_indicator_types_id FOREIGN KEY (indicator_types_id) REFERENCES indicator_types(indicator_types_id)
+ recorded_at TIMESTAMP
 );
 
 CREATE TABLE crop_details
