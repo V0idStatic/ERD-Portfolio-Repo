@@ -617,8 +617,32 @@
           "notNull": true,
           "comment": null
         },
-        "value": {
-          "name": "value",
+        "heat_index": {
+          "name": "heat_index",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rain_fall": {
+          "name": "rain_fall",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "wind_speed": {
+          "name": "wind_speed",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "humidity": {
+          "name": "humidity",
           "type": "float8",
           "default": null,
           "check": null,

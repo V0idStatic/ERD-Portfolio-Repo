@@ -97,7 +97,10 @@ CREATE TABLE crop_growth_profiles
 CREATE TABLE indicator_value
 (
  indicator_value_id SERIAL PRIMARY KEY,
- value DOUBLE PRECISION,
+ heat_index DOUBLE PRECISION,
+ rain_fall DOUBLE PRECISION,
+ wind_speed DOUBLE PRECISION,
+ humidity DOUBLE PRECISION,
  season VARCHAR(50),
  recorded_at TIMESTAMP
 );
