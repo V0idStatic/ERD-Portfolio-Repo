@@ -102,7 +102,7 @@ CREATE TABLE indicator_value
  wind_speed DOUBLE PRECISION,
  humidity DOUBLE PRECISION,
  season VARCHAR(50),
- recorded_at TIMESTAMP --comment
+ recorded_at TIMESTAMP --note
 );
 
 CREATE TABLE crop_details
