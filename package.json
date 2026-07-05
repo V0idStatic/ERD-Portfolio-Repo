@@ -1,0 +1,10 @@
+{
+  "name": "erd-portfolio",
+  "private": true,
+  "scripts": {
+    "collie:check": "node -e \"const fs=require('fs');const p='./CollieAI_ERD/collieAI.sql';if(!fs.readFileSync(p,'utf8').trim()){console.error('ERROR: CollieAI_ERD/collieAI.sql is empty. Add your PostgreSQL CREATE TABLE statements first.');process.exit(1)}\"",
+    "collie:build": "npm run collie:check && npx --yes @liam-hq/cli erd build --input ./CollieAI_ERD/collieAI.sql --format postgres --output-dir ./CollieAI_ERD/dist",
+    "collie:serve": "npx --yes serve ./CollieAI_ERD/dist",
+    "collie:preview": "npm run collie:build && npm run collie:serve"
+  }
+}

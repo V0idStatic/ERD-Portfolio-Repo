@@ -1,0 +1,3063 @@
+{
+  "tables": {
+    "user_auth": {
+      "name": "user_auth",
+      "columns": {
+        "auth_id": {
+          "name": "auth_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "user_auth_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "user_auth_pkey",
+          "columnNames": [
+            "auth_id"
+          ]
+        }
+      }
+    },
+    "roles": {
+      "name": "roles",
+      "columns": {
+        "role_id": {
+          "name": "role_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "role_name": {
+          "name": "role_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "roles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "roles_pkey",
+          "columnNames": [
+            "role_id"
+          ]
+        }
+      }
+    },
+    "users": {
+      "name": "users",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "auth_id": {
+          "name": "auth_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "users_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "users_pkey",
+          "columnNames": [
+            "user_id"
+          ]
+        }
+      }
+    },
+    "class_sections": {
+      "name": "class_sections",
+      "columns": {
+        "section_id": {
+          "name": "section_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "section_name": {
+          "name": "section_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "grade_level": {
+          "name": "grade_level",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "school_year": {
+          "name": "school_year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "teacher_id": {
+          "name": "teacher_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "class_sections_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "class_sections_pkey",
+          "columnNames": [
+            "section_id"
+          ]
+        }
+      }
+    },
+    "student_profiles": {
+      "name": "student_profiles",
+      "columns": {
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "section_id": {
+          "name": "section_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avatar_id": {
+          "name": "avatar_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "total_star_points": {
+          "name": "total_star_points",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_streak": {
+          "name": "current_streak",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "learning_status": {
+          "name": "learning_status",
+          "type": "text",
+          "default": "not_assessed",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_profiles_pkey",
+          "columnNames": [
+            "student_id"
+          ]
+        }
+      }
+    },
+    "parent_profiles": {
+      "name": "parent_profiles",
+      "columns": {
+        "parent_id": {
+          "name": "parent_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "contact_number": {
+          "name": "contact_number",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "preferred_notification_channel": {
+          "name": "preferred_notification_channel",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "parent_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "parent_profiles_pkey",
+          "columnNames": [
+            "parent_id"
+          ]
+        }
+      }
+    },
+    "student_parent_links": {
+      "name": "student_parent_links",
+      "columns": {
+        "student_parent_link_id": {
+          "name": "student_parent_link_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "relationship_type": {
+          "name": "relationship_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_primary_guardian": {
+          "name": "is_primary_guardian",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_parent_links_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_parent_links_pkey",
+          "columnNames": [
+            "student_parent_link_id"
+          ]
+        }
+      }
+    },
+    "math_topics": {
+      "name": "math_topics",
+      "columns": {
+        "topic_id": {
+          "name": "topic_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "topic_name": {
+          "name": "topic_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "grade_level": {
+          "name": "grade_level",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "math_topics_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "math_topics_pkey",
+          "columnNames": [
+            "topic_id"
+          ]
+        }
+      }
+    },
+    "math_skills": {
+      "name": "math_skills",
+      "columns": {
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "topic_id": {
+          "name": "topic_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "skill_name": {
+          "name": "skill_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "skill_description": {
+          "name": "skill_description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "grade_level": {
+          "name": "grade_level",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "math_skills_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "math_skills_pkey",
+          "columnNames": [
+            "skill_id"
+          ]
+        }
+      }
+    },
+    "difficulty_levels": {
+      "name": "difficulty_levels",
+      "columns": {
+        "difficulty_id": {
+          "name": "difficulty_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "difficulty_name": {
+          "name": "difficulty_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "numerical_value": {
+          "name": "numerical_value",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "difficulty_levels_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "difficulty_levels_pkey",
+          "columnNames": [
+            "difficulty_id"
+          ]
+        }
+      }
+    },
+    "math_problems": {
+      "name": "math_problems",
+      "columns": {
+        "problem_id": {
+          "name": "problem_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "difficulty_id": {
+          "name": "difficulty_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "problem_text": {
+          "name": "problem_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "correct_answer": {
+          "name": "correct_answer",
+          "type": "float8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "solution_pattern": {
+          "name": "solution_pattern",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "math_problems_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "math_problems_pkey",
+          "columnNames": [
+            "problem_id"
+          ]
+        }
+      }
+    },
+    "student_inputs": {
+      "name": "student_inputs",
+      "columns": {
+        "input_id": {
+          "name": "input_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "input_type": {
+          "name": "input_type",
+          "type": "text",
+          "default": "inputUnknown",
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "raw_file_id": {
+          "name": "raw_file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "raw_text": {
+          "name": "raw_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "extracted_text": {
+          "name": "extracted_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "processing_status": {
+          "name": "processing_status",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_inputs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_inputs_pkey",
+          "columnNames": [
+            "input_id"
+          ]
+        }
+      }
+    },
+    "file_assets": {
+      "name": "file_assets",
+      "columns": {
+        "file_id": {
+          "name": "file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "file_url": {
+          "name": "file_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "file_size_bytes": {
+          "name": "file_size_bytes",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "storage_provider": {
+          "name": "storage_provider",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "checksum": {
+          "name": "checksum",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "file_assets_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "file_assets_pkey",
+          "columnNames": [
+            "file_id"
+          ]
+        }
+      }
+    },
+    "ocr_logs": {
+      "name": "ocr_logs",
+      "columns": {
+        "ocr_id": {
+          "name": "ocr_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "input_id": {
+          "name": "input_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "extracted_text": {
+          "name": "extracted_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "model_used": {
+          "name": "model_used",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "processing_status": {
+          "name": "processing_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "ocr_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "ocr_logs_pkey",
+          "columnNames": [
+            "ocr_id"
+          ]
+        }
+      }
+    },
+    "speech_to_text_logs": {
+      "name": "speech_to_text_logs",
+      "columns": {
+        "stt_id": {
+          "name": "stt_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "input_id": {
+          "name": "input_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "transcript_text": {
+          "name": "transcript_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "model_used": {
+          "name": "model_used",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "processing_status": {
+          "name": "processing_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "speech_to_text_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "speech_to_text_logs_pkey",
+          "columnNames": [
+            "stt_id"
+          ]
+        }
+      }
+    },
+    "text_to_speech_logs": {
+      "name": "text_to_speech_logs",
+      "columns": {
+        "tts_id": {
+          "name": "tts_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "generated_audio_file_id": {
+          "name": "generated_audio_file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "voice_model": {
+          "name": "voice_model",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "text_used": {
+          "name": "text_used",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "processing_status": {
+          "name": "processing_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "text_to_speech_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "text_to_speech_logs_pkey",
+          "columnNames": [
+            "tts_id"
+          ]
+        }
+      }
+    },
+    "ai_sessions": {
+      "name": "ai_sessions",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "problem_id": {
+          "name": "problem_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "session_status": {
+          "name": "session_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "ai_sessions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "ai_sessions_pkey",
+          "columnNames": [
+            "session_id"
+          ]
+        }
+      }
+    },
+    "ai_messages": {
+      "name": "ai_messages",
+      "columns": {
+        "message_id": {
+          "name": "message_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "sender": {
+          "name": "sender",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "message_text": {
+          "name": "message_text",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "message_type": {
+          "name": "message_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "token_count": {
+          "name": "token_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "ai_messages_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "ai_messages_pkey",
+          "columnNames": [
+            "message_id"
+          ]
+        }
+      }
+    },
+    "session_states": {
+      "name": "session_states",
+      "columns": {
+        "state_id": {
+          "name": "state_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_problem_step": {
+          "name": "current_problem_step",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "expected_next_action": {
+          "name": "expected_next_action",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "failed_attempt_count": {
+          "name": "failed_attempt_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "help_request_count": {
+          "name": "help_request_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_response_outcome": {
+          "name": "last_response_outcome",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hint_level": {
+          "name": "hint_level",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "dda_triggered": {
+          "name": "dda_triggered",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "show_me_triggered": {
+          "name": "show_me_triggered",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "state_json": {
+          "name": "state_json",
+          "type": "json",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "session_states_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "session_states_pkey",
+          "columnNames": [
+            "state_id"
+          ]
+        }
+      }
+    },
+    "student_attempts": {
+      "name": "student_attempts",
+      "columns": {
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "problem_id": {
+          "name": "problem_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "submitted_answer": {
+          "name": "submitted_answer",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_correct": {
+          "name": "is_correct",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "score": {
+          "name": "score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "time_spent_seconds": {
+          "name": "time_spent_seconds",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_attempts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_attempts_pkey",
+          "columnNames": [
+            "attempt_id"
+          ]
+        }
+      }
+    },
+    "attempt_steps": {
+      "name": "attempt_steps",
+      "columns": {
+        "step_id": {
+          "name": "step_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "step_number": {
+          "name": "step_number",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_step_answer": {
+          "name": "student_step_answer",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ai_feedback": {
+          "name": "ai_feedback",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_step_correct": {
+          "name": "is_step_correct",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hint_used": {
+          "name": "hint_used",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "attempt_steps_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "attempt_steps_pkey",
+          "columnNames": [
+            "step_id"
+          ]
+        }
+      }
+    },
+    "dda_events": {
+      "name": "dda_events",
+      "columns": {
+        "dda_event_id": {
+          "name": "dda_event_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "trigger_reason": {
+          "name": "trigger_reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "previous_difficulty_id": {
+          "name": "previous_difficulty_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "new_difficulty_id": {
+          "name": "new_difficulty_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "visual_analogy_used": {
+          "name": "visual_analogy_used",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "dda_events_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "dda_events_pkey",
+          "columnNames": [
+            "dda_event_id"
+          ]
+        }
+      }
+    },
+    "show_me_breakdowns": {
+      "name": "show_me_breakdowns",
+      "columns": {
+        "breakdown_id": {
+          "name": "breakdown_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "example_problem_text": {
+          "name": "example_problem_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "animation_file_id": {
+          "name": "animation_file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "explanation_steps": {
+          "name": "explanation_steps",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "show_me_breakdowns_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "show_me_breakdowns_pkey",
+          "columnNames": [
+            "breakdown_id"
+          ]
+        }
+      }
+    },
+    "student_help_events": {
+      "name": "student_help_events",
+      "columns": {
+        "help_event_id": {
+          "name": "help_event_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "problem_id": {
+          "name": "problem_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "help_type": {
+          "name": "help_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "triggered_strategy": {
+          "name": "triggered_strategy",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "wrong_attempt_count_at_event": {
+          "name": "wrong_attempt_count_at_event",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_help_events_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_help_events_pkey",
+          "columnNames": [
+            "help_event_id"
+          ]
+        }
+      }
+    },
+    "guardrail_checks": {
+      "name": "guardrail_checks",
+      "columns": {
+        "guardrail_id": {
+          "name": "guardrail_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_math_related": {
+          "name": "is_math_related",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "prompt_injection_detected": {
+          "name": "prompt_injection_detected",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "violation_type": {
+          "name": "violation_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "action_taken": {
+          "name": "action_taken",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "guardrail_checks_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "guardrail_checks_pkey",
+          "columnNames": [
+            "guardrail_id"
+          ]
+        }
+      }
+    },
+    "system_prompts": {
+      "name": "system_prompts",
+      "columns": {
+        "prompt_id": {
+          "name": "prompt_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prompt_name": {
+          "name": "prompt_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prompt_version": {
+          "name": "prompt_version",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prompt_text": {
+          "name": "prompt_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prompt_type": {
+          "name": "prompt_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "system_prompts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "system_prompts_pkey",
+          "columnNames": [
+            "prompt_id"
+          ]
+        }
+      }
+    },
+    "prompt_usage_logs": {
+      "name": "prompt_usage_logs",
+      "columns": {
+        "usage_id": {
+          "name": "usage_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prompt_id": {
+          "name": "prompt_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "model_used": {
+          "name": "model_used",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "temperature": {
+          "name": "temperature",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "input_token_count": {
+          "name": "input_token_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "output_token_count": {
+          "name": "output_token_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "prompt_usage_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "prompt_usage_logs_pkey",
+          "columnNames": [
+            "usage_id"
+          ]
+        }
+      }
+    },
+    "student_skill_features": {
+      "name": "student_skill_features",
+      "columns": {
+        "feature_id": {
+          "name": "feature_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_attempts": {
+          "name": "total_attempts",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "correct_attempts": {
+          "name": "correct_attempts",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "accuracy_rate": {
+          "name": "accuracy_rate",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avg_time_spent": {
+          "name": "avg_time_spent",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hint_usage_rate": {
+          "name": "hint_usage_rate",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "help_request_count": {
+          "name": "help_request_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "help_request_rate": {
+          "name": "help_request_rate",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "failed_loop_count": {
+          "name": "failed_loop_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "dda_trigger_count": {
+          "name": "dda_trigger_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "show_me_count": {
+          "name": "show_me_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recent_score_avg": {
+          "name": "recent_score_avg",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_attempt_at": {
+          "name": "last_attempt_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_skill_features_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_skill_features_pkey",
+          "columnNames": [
+            "feature_id"
+          ]
+        }
+      }
+    },
+    "student_skill_predictions": {
+      "name": "student_skill_predictions",
+      "columns": {
+        "prediction_id": {
+          "name": "prediction_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "predicted_mastery_score": {
+          "name": "predicted_mastery_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "risk_level": {
+          "name": "risk_level",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recommended_difficulty_id": {
+          "name": "recommended_difficulty_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recommended_action": {
+          "name": "recommended_action",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "model_version_id": {
+          "name": "model_version_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "predicted_at": {
+          "name": "predicted_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_skill_predictions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_skill_predictions_pkey",
+          "columnNames": [
+            "prediction_id"
+          ]
+        }
+      }
+    },
+    "ml_models": {
+      "name": "ml_models",
+      "columns": {
+        "model_version_id": {
+          "name": "model_version_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "model_name": {
+          "name": "model_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "algorithm": {
+          "name": "algorithm",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "training_date": {
+          "name": "training_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "accuracy_score": {
+          "name": "accuracy_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "precision_score": {
+          "name": "precision_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recall_score": {
+          "name": "recall_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "f1_score": {
+          "name": "f1_score",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "ml_models_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "ml_models_pkey",
+          "columnNames": [
+            "model_version_id"
+          ]
+        }
+      }
+    },
+    "learning_recommendations": {
+      "name": "learning_recommendations",
+      "columns": {
+        "recommendation_id": {
+          "name": "recommendation_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "prediction_id": {
+          "name": "prediction_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recommendation_type": {
+          "name": "recommendation_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recommendation_text": {
+          "name": "recommendation_text",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "target_user_type": {
+          "name": "target_user_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "priority_level": {
+          "name": "priority_level",
+          "type": "int2",
+          "default": 3,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_completed": {
+          "name": "is_completed",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "learning_recommendations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "learning_recommendations_pkey",
+          "columnNames": [
+            "recommendation_id"
+          ]
+        }
+      }
+    },
+    "avatars": {
+      "name": "avatars",
+      "columns": {
+        "avatar_id": {
+          "name": "avatar_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "avatar_name": {
+          "name": "avatar_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "avatar_type": {
+          "name": "avatar_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "default_asset_file_id": {
+          "name": "default_asset_file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "avatars_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "avatars_pkey",
+          "columnNames": [
+            "avatar_id"
+          ]
+        }
+      }
+    },
+    "reward_transactions": {
+      "name": "reward_transactions",
+      "columns": {
+        "reward_id": {
+          "name": "reward_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "points_earned": {
+          "name": "points_earned",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reward_reason": {
+          "name": "reward_reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "reward_transactions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "reward_transactions_pkey",
+          "columnNames": [
+            "reward_id"
+          ]
+        }
+      }
+    },
+    "avatar_items": {
+      "name": "avatar_items",
+      "columns": {
+        "item_id": {
+          "name": "item_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "item_name": {
+          "name": "item_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "item_type": {
+          "name": "item_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "cost_points": {
+          "name": "cost_points",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "asset_file_id": {
+          "name": "asset_file_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "avatar_items_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "avatar_items_pkey",
+          "columnNames": [
+            "item_id"
+          ]
+        }
+      }
+    },
+    "student_avatar_items": {
+      "name": "student_avatar_items",
+      "columns": {
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "unlocked_at": {
+          "name": "unlocked_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "equipped": {
+          "name": "equipped",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_avatar_items_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_avatar_items_pkey",
+          "columnNames": [
+            "student_id",
+            "item_id"
+          ]
+        }
+      }
+    },
+    "vector_records": {
+      "name": "vector_records",
+      "columns": {
+        "vector_record_id": {
+          "name": "vector_record_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "namespace": {
+          "name": "namespace",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "source_type": {
+          "name": "source_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "source_id": {
+          "name": "source_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "embedding_id": {
+          "name": "embedding_id",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "metadata_json": {
+          "name": "metadata_json",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "vector_records_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "vector_records_pkey",
+          "columnNames": [
+            "vector_record_id"
+          ]
+        }
+      }
+    },
+    "n8n_workflow_logs": {
+      "name": "n8n_workflow_logs",
+      "columns": {
+        "workflow_log_id": {
+          "name": "workflow_log_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "workflow_name": {
+          "name": "workflow_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "execution_id": {
+          "name": "execution_id",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "input_payload_json": {
+          "name": "input_payload_json",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "output_payload_json": {
+          "name": "output_payload_json",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "n8n_workflow_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "n8n_workflow_logs_pkey",
+          "columnNames": [
+            "workflow_log_id"
+          ]
+        }
+      }
+    },
+    "api_request_logs": {
+      "name": "api_request_logs",
+      "columns": {
+        "api_log_id": {
+          "name": "api_log_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "service_name": {
+          "name": "service_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "endpoint": {
+          "name": "endpoint",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "request_method": {
+          "name": "request_method",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status_code": {
+          "name": "status_code",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "latency_ms": {
+          "name": "latency_ms",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "api_request_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "api_request_logs_pkey",
+          "columnNames": [
+            "api_log_id"
+          ]
+        }
+      }
+    },
+    "notifications": {
+      "name": "notifications",
+      "columns": {
+        "notification_id": {
+          "name": "notification_id",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recipient_user_id": {
+          "name": "recipient_user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "notification_type": {
+          "name": "notification_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_read": {
+          "name": "is_read",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "notifications_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "notifications_pkey",
+          "columnNames": [
+            "notification_id"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}
