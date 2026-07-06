@@ -47,6 +47,7 @@ CREATE TABLE student_profiles
 CREATE TABLE parent_profiles
 (
  parent_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ role_id INT, --fk
  contact_number SMALLINT,
  preferred_notification_channel TEXT,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -476,3 +477,211 @@ CREATE TABLE notifications (
  read_at TIMESTAMPTZ
 );
 
+------ RELATIONSHIPS
+
+
+
+
+ -- 1.) Orchestration, Logs & Notifications
+
+ ALTER TABLE users
+ ADD CONSTRAINT fk_users_role_id_roles_roles_id
+ FOREIGN KEY (role_id)
+ REFERENCES roles(role_id);
+ 
+ ALTER TABLE student_profiles
+ ADD CONSTRAINT fk_student_profiles_section_id_class_section_section_id
+ FOREIGN KEY (section_id)
+ REFERENCES class_sections(section_id);
+
+ ALTER TABLE parent_profiles
+ ADD CONSTRAINT fk_parent_profiles_role_id_role_role_id
+ FOREIGN KEY (role_id)
+ REFERENCES roles(role_id);
+
+ALTER TABLE student_parent_links
+ADD CONSTRAINT fk_student_parent_links_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_parent_links_parent_id_parent_profiles_parent_id
+FOREIGN KEY(parent_id)
+REFERENCES parent_profiles(parent_id);
+
+
+ -- 2.) Curriculum -> Tutoring session -> multimodal capture
+
+ ALTER TABLE math_skills
+ ADD CONSTRAINT fk_math_skills_topic_id_math_topics_topic_id
+ FOREIGN KEY (topic_id)
+ REFERENCES math_topics(topic_id);
+ 
+ ALTER TABLE math_problems
+ ADD CONSTRAINT fk_math_problems_difficulty_id_difficulty_levels_difficulty_id
+ FOREIGN KEY (difficulty_id)
+ REFERENCES difficulty_levels(difficulty_id),
+
+ ADD CONSTRAINT fk_math_problems_skill_id_math_skills_skill_id
+ FOREIGN KEY (skill_id)
+ REFERENCES math_skill(skill_id);
+
+ ALTER TABLE ai_sessions
+ ADD CONSTRAINT fk_ai_sessions_problem_id_math_problems_problem_id
+ FOREIGN KEY (problem_id)
+ REFERENCES math_problems(problem_id);
+
+ ALTER TABLE file_assets
+ ADD CONSTRAINT fk_file_assets_owner_user_id_users_user_id
+ FOREIGN KEY (owner_user_id)
+ REFERENCES users(user_id);
+
+ ALTER TABLE student_inputs
+ ADD CONSTRAINT fk_student_inputs_raw_file_id_file_assets_file_id
+ FOREIGN KEY (raw_file_id)
+ REFERENCES file_assets(file_id);
+
+ ALTER TABLE ocr_logs
+ ADD CONSTRAINT fk_ocer_logs_input_id_student_inputs_input_id
+ FOREIGN KEY (input_id)
+ REFERENCES student_inputs(input_id);
+
+ ALTER TABLE speech_to_text_logs
+ ADD CONSTRAINT fk_speech_to_text_logs_input_id_student_inputs_input_id
+ FOREIGN KEY (input_id)
+ REFERENCES student_inputs(input_id);
+
+
+ -- 3.) Conversation, state and guardrails
+
+ ALTER TABLE ai_messages
+ ADD CONSTRAINT fk_ai_messages_session_id_ai_sessions_session_id
+ FOREIGN KEY (session_id)
+ REFERENCES ai_sessions(session_id);
+
+ ALTER TABLE guardrail_checks
+ ADD CONSTRAINT fk_guardrail_checks_message_id_ai_messages_message_id
+ FOREIGN KEY (message_id)
+ REFERENCES ai_messages(message_id);
+
+ ALTER TABLE session_states
+ ADD CONSTRAINT fk_session_states_session_id_ai_sessions_session_id
+ FOREIGN KEY (session_id)
+ REFERENCES ai_sessions(session_id);
+
+ ALTER TABLE text_to_speech_logs
+ ADD CONSTRAINT fk_text_to_speech_logs_message_id_ai_messages_message_id
+ FOREIGN KEY (message_id)
+ REFERENCES ai_messages(message_id),
+
+ ADD CONSTRAINT fk_text_to_speech_logs_generated_audio_file_id_file_assets_file_id
+ FOREIGN KEY (generated_audio_file_id)
+ REFERENCES file_assets(file_id);
+
+ ALTER TABLE system_prompts
+ ADD CONSTRAINT fk_system_prompts_created_by_user_id_users_user_id
+ FOREIGN KEY (created_by_user_id)
+ REFERENCES users(user_id);
+
+ ALTER TABLE prompt_usage_logs
+ ADD CONSTRAINT fk_prompt_usage_logs_prompt_id_system_prompts_prompt_id
+ FOREIGN KEY (prompt_id)
+ REFERENCES system_prompts(prompt_id),
+
+ ADD CONSTRAINT fk_prompt_usage_logs_session_id_ai_sessions_session_id
+ FOREIGN KEY (session_id)
+ REFERENCES ai_sessions(session_id);
+
+
+  -- 4.) Attempts -> Adaptive learning -> feautures -> predictions -> recommendations
+
+ALTER TABLE student_attempts
+ADD CONSTRAINT fk_student_attempts_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id),
+
+ADD CONSTRAINT fk_student_attempts_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_attempts_problem_id_math_problems_problem_id
+FOREIGN KEY (problem_id)
+REFERENCES math_problems(problem_id);
+
+ALTER TABLE attempt_steps
+ADD CONSTRAINT fk_attempt_steps_attempt_id_student_attempts_attempt_id
+FOREIGN KEY (attempt_id)
+REFERENCES student_attempts(attempt_id);
+
+ALTER TABLE student_skill_predictions
+ADD CONSTRAINT fk_student_skill_predictions_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_skill_predictions_skill_id_math_skills_skill_id
+FOREIGN KEY (skill_id)
+REFERENCES math_skills(skill_id),
+
+ADD CONSTRAINT fk_student_skill_predictions_model_version_id_ml_models_model_version_id
+FOREIGN KEY (model_version_id)
+REFERENCES ml_models(model_version_id),
+
+ADD CONSTRAINT fk_student_skill_predictions_recommended_difficulty_id_difficulty_levels_difficulty_id
+FOREIGN KEY (recommended_difficulty_id)
+REFERENCES difficulty_levels(difficulty_id);
+
+ALTER TABLE dda_events
+ADD CONSTRAINT fk_dda_events_new_difficulty_id_difficulty_levels_difficulty_id
+FOREIGN KEY (new_difficulty_id)
+REFERENCES difficulty_levels(difficulty_id),
+
+ADD CONSTRAINT fk_dda_events_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id),
+
+ADD CONSTRAINT fk_dda_events_skill_id_math_skills_skill_id
+FOREIGN KEY (skill_id)
+REFERENCES math_skills(skill_id);
+
+ALTER TABLE show_me_breakdowns
+ADD CONSTRAINT fk_show_me_breakdowns_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id),
+
+ADD CONSTRAINT fk_show_me_breakdowns_skill_id_math_skills_skill_id
+FOREIGN KEY (skill_id)
+REFERENCES math_skills(skill_id);
+
+ALTER TABLE student_help_events
+ADD CONSTRAINT student_help_events_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id),
+
+ADD CONSTRAINT student_help_events_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT student_help_events_message_id_ai_messages_message_id
+FOREIGN KEY (message_id)
+REFERENCES ai_messages(message_id),
+
+ADD CONSTRAINT student_help_events_problem_id_math_problems_problem_id
+FOREIGN KEY (problem_id)
+REFERENCES math_problems(problem_id),
+
+ADD CONSTRAINT student_help_events_skill_id_math_skills_skill_id
+FOREIGN KEY (skill_id)
+REFERENCES math_skills(skill_id);
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

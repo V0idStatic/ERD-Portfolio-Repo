@@ -125,6 +125,19 @@
           "columnNames": [
             "user_id"
           ]
+        },
+        "fk_users_role_id_roles_roles_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_users_role_id_roles_roles_id",
+          "columnNames": [
+            "role_id"
+          ],
+          "targetTableName": "roles",
+          "targetColumnNames": [
+            "role_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -269,6 +282,19 @@
           "columnNames": [
             "student_id"
           ]
+        },
+        "fk_student_profiles_section_id_class_section_section_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_profiles_section_id_class_section_section_id",
+          "columnNames": [
+            "section_id"
+          ],
+          "targetTableName": "class_sections",
+          "targetColumnNames": [
+            "section_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -281,6 +307,14 @@
           "default": null,
           "check": null,
           "notNull": true,
+          "comment": null
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
           "comment": null
         },
         "contact_number": {
@@ -325,6 +359,19 @@
           "columnNames": [
             "parent_id"
           ]
+        },
+        "fk_parent_profiles_role_id_role_role_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_parent_profiles_role_id_role_role_id",
+          "columnNames": [
+            "role_id"
+          ],
+          "targetTableName": "roles",
+          "targetColumnNames": [
+            "role_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -389,6 +436,32 @@
           "columnNames": [
             "student_parent_link_id"
           ]
+        },
+        "fk_student_parent_links_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_parent_links_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_parent_links_parent_id_parent_profiles_parent_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_parent_links_parent_id_parent_profiles_parent_id",
+          "columnNames": [
+            "parent_id"
+          ],
+          "targetTableName": "parent_profiles",
+          "targetColumnNames": [
+            "parent_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -557,6 +630,19 @@
           "columnNames": [
             "skill_id"
           ]
+        },
+        "fk_math_skills_topic_id_math_topics_topic_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_math_skills_topic_id_math_topics_topic_id",
+          "columnNames": [
+            "topic_id"
+          ],
+          "targetTableName": "math_topics",
+          "targetColumnNames": [
+            "topic_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -677,6 +763,32 @@
           "columnNames": [
             "problem_id"
           ]
+        },
+        "fk_math_problems_difficulty_id_difficulty_levels_difficulty_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_math_problems_difficulty_id_difficulty_levels_difficulty_id",
+          "columnNames": [
+            "difficulty_id"
+          ],
+          "targetTableName": "difficulty_levels",
+          "targetColumnNames": [
+            "difficulty_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_math_problems_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_math_problems_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skill",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -765,6 +877,19 @@
           "columnNames": [
             "input_id"
           ]
+        },
+        "fk_student_inputs_raw_file_id_file_assets_file_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_inputs_raw_file_id_file_assets_file_id",
+          "columnNames": [
+            "raw_file_id"
+          ],
+          "targetTableName": "file_assets",
+          "targetColumnNames": [
+            "file_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -853,6 +978,19 @@
           "columnNames": [
             "file_id"
           ]
+        },
+        "fk_file_assets_owner_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_file_assets_owner_user_id_users_user_id",
+          "columnNames": [
+            "owner_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -933,6 +1071,19 @@
           "columnNames": [
             "ocr_id"
           ]
+        },
+        "fk_ocer_logs_input_id_student_inputs_input_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ocer_logs_input_id_student_inputs_input_id",
+          "columnNames": [
+            "input_id"
+          ],
+          "targetTableName": "student_inputs",
+          "targetColumnNames": [
+            "input_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1013,6 +1164,19 @@
           "columnNames": [
             "stt_id"
           ]
+        },
+        "fk_speech_to_text_logs_input_id_student_inputs_input_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_speech_to_text_logs_input_id_student_inputs_input_id",
+          "columnNames": [
+            "input_id"
+          ],
+          "targetTableName": "student_inputs",
+          "targetColumnNames": [
+            "input_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1093,6 +1257,32 @@
           "columnNames": [
             "tts_id"
           ]
+        },
+        "fk_text_to_speech_logs_message_id_ai_messages_message_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_text_to_speech_logs_message_id_ai_messages_message_id",
+          "columnNames": [
+            "message_id"
+          ],
+          "targetTableName": "ai_messages",
+          "targetColumnNames": [
+            "message_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_text_to_speech_logs_generated_audio_file_id_file_assets_file": {
+          "type": "FOREIGN KEY",
+          "name": "fk_text_to_speech_logs_generated_audio_file_id_file_assets_file",
+          "columnNames": [
+            "generated_audio_file_id"
+          ],
+          "targetTableName": "file_assets",
+          "targetColumnNames": [
+            "file_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1165,6 +1355,19 @@
           "columnNames": [
             "session_id"
           ]
+        },
+        "fk_ai_sessions_problem_id_math_problems_problem_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ai_sessions_problem_id_math_problems_problem_id",
+          "columnNames": [
+            "problem_id"
+          ],
+          "targetTableName": "math_problems",
+          "targetColumnNames": [
+            "problem_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1237,6 +1440,19 @@
           "columnNames": [
             "message_id"
           ]
+        },
+        "fk_ai_messages_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ai_messages_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1349,6 +1565,19 @@
           "columnNames": [
             "state_id"
           ]
+        },
+        "fk_session_states_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_session_states_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1437,6 +1666,45 @@
           "columnNames": [
             "attempt_id"
           ]
+        },
+        "fk_student_attempts_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_attempts_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_attempts_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_attempts_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_attempts_problem_id_math_problems_problem_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_attempts_problem_id_math_problems_problem_id",
+          "columnNames": [
+            "problem_id"
+          ],
+          "targetTableName": "math_problems",
+          "targetColumnNames": [
+            "problem_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1517,6 +1785,19 @@
           "columnNames": [
             "step_id"
           ]
+        },
+        "fk_attempt_steps_attempt_id_student_attempts_attempt_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_attempt_steps_attempt_id_student_attempts_attempt_id",
+          "columnNames": [
+            "attempt_id"
+          ],
+          "targetTableName": "student_attempts",
+          "targetColumnNames": [
+            "attempt_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1605,6 +1886,45 @@
           "columnNames": [
             "dda_event_id"
           ]
+        },
+        "fk_dda_events_new_difficulty_id_difficulty_levels_difficulty_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_dda_events_new_difficulty_id_difficulty_levels_difficulty_id",
+          "columnNames": [
+            "new_difficulty_id"
+          ],
+          "targetTableName": "difficulty_levels",
+          "targetColumnNames": [
+            "difficulty_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_dda_events_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_dda_events_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_dda_events_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_dda_events_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skills",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1677,6 +1997,32 @@
           "columnNames": [
             "breakdown_id"
           ]
+        },
+        "fk_show_me_breakdowns_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_show_me_breakdowns_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_show_me_breakdowns_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_show_me_breakdowns_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skills",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1773,6 +2119,71 @@
           "columnNames": [
             "help_event_id"
           ]
+        },
+        "student_help_events_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "student_help_events_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "student_help_events_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "student_help_events_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "student_help_events_message_id_ai_messages_message_id": {
+          "type": "FOREIGN KEY",
+          "name": "student_help_events_message_id_ai_messages_message_id",
+          "columnNames": [
+            "message_id"
+          ],
+          "targetTableName": "ai_messages",
+          "targetColumnNames": [
+            "message_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "student_help_events_problem_id_math_problems_problem_id": {
+          "type": "FOREIGN KEY",
+          "name": "student_help_events_problem_id_math_problems_problem_id",
+          "columnNames": [
+            "problem_id"
+          ],
+          "targetTableName": "math_problems",
+          "targetColumnNames": [
+            "problem_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "student_help_events_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "student_help_events_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skills",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1853,6 +2264,19 @@
           "columnNames": [
             "guardrail_id"
           ]
+        },
+        "fk_guardrail_checks_message_id_ai_messages_message_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_guardrail_checks_message_id_ai_messages_message_id",
+          "columnNames": [
+            "message_id"
+          ],
+          "targetTableName": "ai_messages",
+          "targetColumnNames": [
+            "message_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -1941,6 +2365,19 @@
           "columnNames": [
             "prompt_id"
           ]
+        },
+        "fk_system_prompts_created_by_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_system_prompts_created_by_user_id_users_user_id",
+          "columnNames": [
+            "created_by_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -2021,6 +2458,32 @@
           "columnNames": [
             "usage_id"
           ]
+        },
+        "fk_prompt_usage_logs_prompt_id_system_prompts_prompt_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_prompt_usage_logs_prompt_id_system_prompts_prompt_id",
+          "columnNames": [
+            "prompt_id"
+          ],
+          "targetTableName": "system_prompts",
+          "targetColumnNames": [
+            "prompt_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_prompt_usage_logs_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_prompt_usage_logs_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -2253,6 +2716,58 @@
           "columnNames": [
             "prediction_id"
           ]
+        },
+        "fk_student_skill_predictions_student_id_student_profiles_studen": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_predictions_student_id_student_profiles_studen",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_skill_predictions_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_predictions_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skills",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_skill_predictions_model_version_id_ml_models_model_v": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_predictions_model_version_id_ml_models_model_v",
+          "columnNames": [
+            "model_version_id"
+          ],
+          "targetTableName": "ml_models",
+          "targetColumnNames": [
+            "model_version_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_skill_predictions_recommended_difficulty_id_difficul": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_predictions_recommended_difficulty_id_difficul",
+          "columnNames": [
+            "recommended_difficulty_id"
+          ],
+          "targetTableName": "difficulty_levels",
+          "targetColumnNames": [
+            "difficulty_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
