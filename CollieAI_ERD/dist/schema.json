@@ -295,6 +295,19 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_profiles_avatar_id_avatars_avatar_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_profiles_avatar_id_avatars_avatar_id",
+          "columnNames": [
+            "avatar_id"
+          ],
+          "targetTableName": "avatars",
+          "targetColumnNames": [
+            "avatar_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -2628,6 +2641,32 @@
           "columnNames": [
             "feature_id"
           ]
+        },
+        "fk_student_skill_features_student_id_student_profiles_student_i": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_features_student_id_student_profiles_student_i",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_skill_features_skill_id_math_skills_skill_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_skill_features_skill_id_math_skills_skill_id",
+          "columnNames": [
+            "skill_id"
+          ],
+          "targetTableName": "math_skills",
+          "targetColumnNames": [
+            "skill_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -2968,6 +3007,19 @@
           "columnNames": [
             "recommendation_id"
           ]
+        },
+        "fk_learning_recommendations_prediction_id_student_skill_predict": {
+          "type": "FOREIGN KEY",
+          "name": "fk_learning_recommendations_prediction_id_student_skill_predict",
+          "columnNames": [
+            "prediction_id"
+          ],
+          "targetTableName": "student_skill_predictions",
+          "targetColumnNames": [
+            "prediction_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3032,6 +3084,19 @@
           "columnNames": [
             "avatar_id"
           ]
+        },
+        "fk_avatars_default_asset_file_id_file_assets_file_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_avatars_default_asset_file_id_file_assets_file_id",
+          "columnNames": [
+            "default_asset_file_id"
+          ],
+          "targetTableName": "file_asssets",
+          "targetColumnNames": [
+            "file_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3096,6 +3161,32 @@
           "columnNames": [
             "reward_id"
           ]
+        },
+        "fk_reward_transactions_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_reward_transactions_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_reward_transactions_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_reward_transactions_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3168,6 +3259,19 @@
           "columnNames": [
             "item_id"
           ]
+        },
+        "fk_avatar_items_asset_file_id_file_assets_file_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_avatar_items_asset_file_id_file_assets_file_id",
+          "columnNames": [
+            "asset_file_id"
+          ],
+          "targetTableName": "file_assets",
+          "targetColumnNames": [
+            "file_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3217,6 +3321,32 @@
             "student_id",
             "item_id"
           ]
+        },
+        "fk_student_avatar_items_item_id_avatar_items_item_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_avatar_items_item_id_avatar_items_item_id",
+          "columnNames": [
+            "item_id"
+          ],
+          "targetTableName": "avatar_items",
+          "targetColumnNames": [
+            "item_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_avatar_items_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_avatar_items_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3385,6 +3515,19 @@
           "columnNames": [
             "workflow_log_id"
           ]
+        },
+        "fk_n8n_workflow_logs_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_n8n_workflow_logs_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3481,6 +3624,32 @@
           "columnNames": [
             "api_log_id"
           ]
+        },
+        "fk_api_request_logs_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_api_request_logs_user_id_users_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_api_request_logs_session_id_ai_sessions_session_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_api_request_logs_session_id_ai_sessions_session_id",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3569,6 +3738,32 @@
           "columnNames": [
             "notification_id"
           ]
+        },
+        "fk_notifications_recipient_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_notifications_recipient_user_id_users_user_id",
+          "columnNames": [
+            "recipient_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_notifications_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_notifications_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     }

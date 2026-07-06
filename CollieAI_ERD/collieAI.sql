@@ -672,6 +672,80 @@ ADD CONSTRAINT student_help_events_skill_id_math_skills_skill_id
 FOREIGN KEY (skill_id)
 REFERENCES math_skills(skill_id);
 
+ALTER TABLE student_skill_features
+ADD CONSTRAINT fk_student_skill_features_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_skill_features_skill_id_math_skills_skill_id
+FOREIGN KEY (skill_id)
+REFERENCES math_skills(skill_id);
+
+ALTER TABLE learning_recommendations
+ADD CONSTRAINT fk_learning_recommendations_prediction_id_student_skill_predictions_prediction_id
+FOREIGN KEY (prediction_id)
+REFERENCES student_skill_predictions(prediction_id);
+
+
+
+  -- 5.) Engagement, orchestration and output
+
+ALTER TABLE reward_transactions
+ADD CONSTRAINT fk_reward_transactions_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_reward_transactions_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id);
+
+ALTER TABLE avatars
+ADD CONSTRAINT fk_avatars_default_asset_file_id_file_assets_file_id
+FOREIGN KEY (default_asset_file_id)
+REFERENCES file_asssets(file_id);
+
+ALTER TABLE student_profiles
+ADD CONSTRAINT fk_student_profiles_avatar_id_avatars_avatar_id
+FOREIGN KEY (avatar_id)
+REFERENCES avatars(avatar_id);
+
+ALTER TABLE avatar_items
+ADD CONSTRAINT fk_avatar_items_asset_file_id_file_assets_file_id
+FOREIGN KEY (asset_file_id)
+REFERENCES file_assets(file_id);
+
+ALTER TABLE student_avatar_items
+ADD CONSTRAINT fk_student_avatar_items_item_id_avatar_items_item_id
+FOREIGN KEY (item_id)
+REFERENCES avatar_items(item_id),
+
+ADD CONSTRAINT fk_student_avatar_items_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id);
+
+ALTER TABLE n8n_workflow_logs
+ADD CONSTRAINT fk_n8n_workflow_logs_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id);
+
+ALTER TABLE api_request_logs
+ADD CONSTRAINT fk_api_request_logs_user_id_users_user_id
+FOREIGN KEY (user_id)
+REFERENCES users(user_id),
+
+ADD CONSTRAINT fk_api_request_logs_session_id_ai_sessions_session_id
+FOREIGN KEY (session_id)
+REFERENCES ai_sessions(session_id);
+
+ALTER TABLE notifications
+ADD CONSTRAINT fk_notifications_recipient_user_id_users_user_id
+FOREIGN KEY (recipient_user_id)
+REFERENCES users(user_id),
+
+ADD CONSTRAINT fk_notifications_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id);
+
 
 
 
