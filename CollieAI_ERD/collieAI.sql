@@ -221,6 +221,7 @@ CREATE TABLE parent_profiles
  attempt_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  session_id INT, --fk
  problem_id INT, --fk
+ student_id INT,
  submitted_answer TEXT,
  is_correct BOOLEAN,
  score NUMERIC (5,2),
