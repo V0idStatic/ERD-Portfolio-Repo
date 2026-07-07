@@ -523,7 +523,7 @@ REFERENCES parent_profiles(parent_id);
 
  ADD CONSTRAINT fk_math_problems_skill_id_math_skills_skill_id
  FOREIGN KEY (skill_id)
- REFERENCES math_skill(skill_id);
+ REFERENCES math_skills(skill_id);
 
  ALTER TABLE ai_sessions
  ADD CONSTRAINT fk_ai_sessions_problem_id_math_problems_problem_id
@@ -702,7 +702,7 @@ REFERENCES ai_sessions(session_id);
 ALTER TABLE avatars
 ADD CONSTRAINT fk_avatars_default_asset_file_id_file_assets_file_id
 FOREIGN KEY (default_asset_file_id)
-REFERENCES file_asssets(file_id);
+REFERENCES file_assets(file_id);
 
 ALTER TABLE student_profiles
 ADD CONSTRAINT fk_student_profiles_avatar_id_avatars_avatar_id

@@ -796,7 +796,7 @@
           "columnNames": [
             "skill_id"
           ],
-          "targetTableName": "math_skill",
+          "targetTableName": "math_skills",
           "targetColumnNames": [
             "skill_id"
           ],
@@ -3091,7 +3091,7 @@
           "columnNames": [
             "default_asset_file_id"
           ],
-          "targetTableName": "file_asssets",
+          "targetTableName": "file_assets",
           "targetColumnNames": [
             "file_id"
           ],
