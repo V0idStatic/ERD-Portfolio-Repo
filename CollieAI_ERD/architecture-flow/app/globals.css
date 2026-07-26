@@ -138,12 +138,12 @@ button { cursor: pointer; }
 }
 .shape-cloud .cloud-art {
   --cloud-fill: color-mix(in srgb, #fff 72%, var(--node-soft));
-  position:absolute; z-index:0; left:15px; top:1px; width:260px; height:110px;
+  position:absolute; z-index:0; left:0; top:1px; width:290px; height:116px;
   background:
-    radial-gradient(circle at 29% 64%, var(--cloud-fill) 0 38px, transparent 39px),
-    radial-gradient(circle at 50% 42%, var(--cloud-fill) 0 54px, transparent 55px),
-    radial-gradient(circle at 73% 64%, var(--cloud-fill) 0 40px, transparent 41px),
-    linear-gradient(var(--cloud-fill),var(--cloud-fill)) 48px 58px / 167px 42px no-repeat;
+    radial-gradient(circle at 25% 66%, var(--cloud-fill) 0 45px, transparent 46px),
+    radial-gradient(circle at 50% 40%, var(--cloud-fill) 0 60px, transparent 61px),
+    radial-gradient(circle at 75% 66%, var(--cloud-fill) 0 47px, transparent 48px),
+    linear-gradient(var(--cloud-fill),var(--cloud-fill)) 34px 64px / 222px 46px no-repeat;
   filter:
     drop-shadow(0 -1.5px 0 var(--node-line))
     drop-shadow(1.5px 0 0 var(--node-line))
