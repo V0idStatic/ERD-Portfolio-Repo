@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CollieAI System Architecture",
+  title: "LemmaAI System Architecture",
   description:
     "An interactive architecture map for CollieAI's adaptive learning platform.",
   icons: {
