@@ -202,6 +202,93 @@ button { cursor: pointer; }
 }
 .docs-primary-only .node-copy span { display:none !important; }
 
+/* Keep export typography inside its shape while the sliders change size. */
+.docs-custom-export .architecture-node {
+  box-sizing:border-box;
+}
+.docs-custom-export .shape-service,
+.docs-custom-export .shape-database {
+  height:100px;
+  min-height:100px;
+  overflow:hidden;
+}
+.docs-custom-export .shape-terminal {
+  height:62px;
+  min-height:62px;
+  overflow:hidden;
+}
+.docs-custom-export .node-inner {
+  min-width:0;
+  min-height:0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.docs-custom-export .node-copy {
+  min-width:0;
+  min-height:0;
+  max-width:100%;
+  overflow:hidden;
+}
+.docs-custom-export .node-copy strong,
+.docs-custom-export .node-copy span {
+  max-width:100%;
+  overflow:hidden;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  text-overflow:ellipsis;
+}
+.docs-custom-export .node-copy strong {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.docs-custom-export .node-copy span {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.docs-custom-export:not(.document-export-mode) .node-copy strong {
+  font-size:min(calc(13px * var(--docs-title-scale, 1)), 18px);
+}
+.docs-custom-export:not(.document-export-mode) .node-copy span {
+  font-size:min(calc(10px * var(--docs-description-scale, 1)), 13px);
+}
+.document-export-mode .node-copy strong {
+  font-size:min(calc(19px * var(--docs-title-scale, 1)), 22px);
+}
+.document-export-mode .node-copy span {
+  font-size:min(calc(13px * var(--docs-description-scale, 1)), 14px);
+}
+.document-export-mode .shape-decision .node-copy {
+  max-width:154px;
+  max-height:78px;
+}
+.document-export-mode .shape-decision .node-copy strong {
+  font-size:min(calc(16px * var(--docs-title-scale, 1)), 18px);
+}
+.document-export-mode .shape-decision .node-copy span {
+  font-size:min(calc(10.5px * var(--docs-description-scale, 1)), 12px);
+}
+.docs-custom-export .shape-cloud .node-copy {
+  max-width:190px;
+  max-height:58px;
+}
+.docs-custom-export .shape-cloud .node-copy strong {
+  font-size:min(calc(19px * var(--docs-title-scale, 1)), 18px);
+}
+.docs-custom-export .shape-cloud .node-copy span {
+  font-size:min(calc(13px * var(--docs-description-scale, 1)), 13px);
+  -webkit-line-clamp:1;
+}
+.docs-custom-export .shape-terminal .node-copy strong {
+  font-size:min(calc(19px * var(--docs-title-scale, 1)), 17px);
+  -webkit-line-clamp:1;
+}
+.docs-custom-export .shape-terminal .node-copy span {
+  font-size:min(calc(13px * var(--docs-description-scale, 1)), 10px);
+  -webkit-line-clamp:1;
+}
+
 .inspector {
   position: fixed; z-index: 30; top: 82px; right: 14px; width: 310px; max-height: calc(100vh - 96px);
   display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d8e1ea; border-radius: 16px;
