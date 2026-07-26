@@ -61,7 +61,14 @@ import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type NodeShape = "service" | "decision" | "database" | "cloud" | "terminal" | "legend";
+type NodeShape =
+  | "service"
+  | "decision"
+  | "database"
+  | "cloud"
+  | "terminal"
+  | "legend"
+  | "legend-key";
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
@@ -96,6 +103,14 @@ type ArchitectureNodeData = {
   legendColor?: string;
   legendOpacity?: number;
   legendNodeIds?: string[];
+  legendEntries?: LegendKeyEntry[];
+};
+
+type LegendKeyEntry = {
+  id: string;
+  label: string;
+  color: string;
+  count: number;
 };
 
 type LegendDraft = {
@@ -161,6 +176,31 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
     );
   }
 
+  if (data.shape === "legend-key") {
+    return (
+      <div className={`architecture-node shape-legend-key ${selected ? "is-selected" : ""}`}>
+        <div className="legend-key-head">
+          <span>
+            <strong>{data.label || "Legend"}</strong>
+            <small>Drag to move</small>
+          </span>
+          <LayoutDashboard size={17} strokeWidth={2.1} aria-hidden="true" />
+        </div>
+        <div className="legend-key-list">
+          {(data.legendEntries ?? []).map((entry) => (
+            <div className="legend-key-entry" key={entry.id}>
+              <i style={{ backgroundColor: entry.color }} aria-hidden="true" />
+              <span>
+                <strong>{entry.label}</strong>
+                <small>{entry.count} component{entry.count === 1 ? "" : "s"}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
@@ -212,7 +252,10 @@ const n = (
 
 const getLegendFrame = (allNodes: ArchitectureNode[], nodeIds: string[]) => {
   const members = allNodes.filter(
-    (node) => node.data.shape !== "legend" && nodeIds.includes(node.id),
+    (node) =>
+      node.data.shape !== "legend" &&
+      node.data.shape !== "legend-key" &&
+      nodeIds.includes(node.id),
   );
   if (!members.length) return null;
 
@@ -228,6 +271,58 @@ const getLegendFrame = (allNodes: ArchitectureNode[], nodeIds: string[]) => {
     width: Math.max(360, bounds.width + horizontalPadding * 2),
     height: Math.max(230, bounds.height + topPadding + bottomPadding),
   };
+};
+
+const synchronizeLegendKey = (allNodes: ArchitectureNode[]) => {
+  const legends = allNodes.filter((node) => node.data.shape === "legend");
+  const existingKey = allNodes.find((node) => node.data.shape === "legend-key");
+  const withoutKey = allNodes.filter((node) => node.data.shape !== "legend-key");
+
+  if (!legends.length) return withoutKey;
+
+  const entries: LegendKeyEntry[] = legends.map((legend) => ({
+    id: legend.id,
+    label: legend.data.label || "Untitled legend",
+    color: legend.data.legendColor ?? "#0ea5c6",
+    count: legend.data.legendNodeIds?.length ?? 0,
+  }));
+  const width = 250;
+  const height = 67 + entries.length * 43;
+
+  if (existingKey) {
+    return [
+      ...withoutKey,
+      {
+        ...existingKey,
+        data: { ...existingKey.data, legendEntries: entries },
+        style: { ...existingKey.style, width, height, zIndex: 5 },
+        deletable: false,
+      },
+    ];
+  }
+
+  const right = Math.max(
+    ...legends.map((legend) => legend.position.x + Number(legend.style?.width ?? 420)),
+  );
+  const top = Math.min(...legends.map((legend) => legend.position.y));
+  return [
+    ...withoutKey,
+    {
+      id: `legend-key-${Date.now()}`,
+      type: "architecture",
+      position: { x: right + 70, y: top },
+      data: {
+        label: "Legend",
+        description: "",
+        shape: "legend-key",
+        icon: "dashboard",
+        tone: "slate",
+        legendEntries: entries,
+      },
+      style: { width, height, zIndex: 5 },
+      deletable: false,
+    },
+  ];
 };
 
 const initialNodes: ArchitectureNode[] = [
@@ -436,7 +531,7 @@ function FlowWorkspace() {
       setActivePageId(restoredActive);
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-        setNodes(parsed.nodes ?? []);
+        setNodes(synchronizeLegendKey(parsed.nodes ?? []));
         setEdges(parsed.edges ?? []);
       } else if (restoredActive !== "main") {
         setNodes([]);
@@ -449,17 +544,22 @@ function FlowWorkspace() {
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
+  const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
-  const componentNodes = nodes.filter((node) => node.data.shape !== "legend");
+  const componentNodes = nodes.filter(
+    (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key",
+  );
 
   const updateSelected = useCallback(
     (patch: Partial<ArchitectureNodeData>) => {
       if (!selectedId) return;
-      setNodes((current) =>
-        current.map((node) =>
+      setNodes((current) => {
+        const selectedShape = current.find((node) => node.id === selectedId)?.data.shape;
+        const updated = current.map((node) =>
           node.id === selectedId ? { ...node, data: { ...node.data, ...patch } } : node,
-        ),
-      );
+        );
+        return selectedShape === "legend" ? synchronizeLegendKey(updated) : updated;
+      });
     },
     [selectedId, setNodes],
   );
@@ -547,7 +647,7 @@ function FlowWorkspace() {
     }
     try {
       const parsed = JSON.parse(stored) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-      setNodes(parsed.nodes ?? []);
+      setNodes(synchronizeLegendKey(parsed.nodes ?? []));
       setEdges(parsed.edges ?? []);
     } catch {
       setNodes(pageId === "main" ? initialNodes : []);
@@ -1071,7 +1171,7 @@ function FlowWorkspace() {
       },
     };
 
-    setNodes((current) => [legendNode, ...current]);
+    setNodes((current) => synchronizeLegendKey([legendNode, ...current]));
     setSelectedId(id);
     setSelectedEdgeId(null);
     setLegendCreatorOpen(false);
@@ -1082,7 +1182,7 @@ function FlowWorkspace() {
   const updateLegendMembers = (legendId: string, nodeIds: string[]) => {
     setNodes((current) => {
       const frame = getLegendFrame(current, nodeIds);
-      return current.map((node) =>
+      return synchronizeLegendKey(current.map((node) =>
         node.id === legendId
           ? {
               ...node,
@@ -1095,7 +1195,7 @@ function FlowWorkspace() {
               },
             }
           : node,
-      );
+      ));
     });
   };
 
@@ -1106,7 +1206,9 @@ function FlowWorkspace() {
   };
 
   const removeLegendArea = (legendId: string) => {
-    setNodes((current) => current.filter((node) => node.id !== legendId));
+    setNodes((current) =>
+      synchronizeLegendKey(current.filter((node) => node.id !== legendId)),
+    );
     setSelectedId(null);
     setInspectorOpen(false);
   };
@@ -1270,6 +1372,14 @@ function FlowWorkspace() {
           edges={edges}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
+          onNodesDelete={(deletedNodes) => {
+            if (deletedNodes.some((node) => node.data.shape === "legend")) {
+              const deletedIds = new Set(deletedNodes.map((node) => node.id));
+              setNodes((current) =>
+                synchronizeLegendKey(current.filter((node) => !deletedIds.has(node.id))),
+              );
+            }
+          }}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           connectionMode={ConnectionMode.Loose}
@@ -1302,6 +1412,7 @@ function FlowWorkspace() {
             nodeColor={(node) => {
               const data = node.data as ArchitectureNodeData;
               if (data.shape === "legend") return data.legendColor ?? "#0ea5c6";
+              if (data.shape === "legend-key") return "#334155";
               const tone = data.tone;
               return tone === "violet" ? "#8b5cf6" : tone === "amber" ? "#f59e0b" : "#21b6d7";
             }}
@@ -1330,6 +1441,8 @@ function FlowWorkspace() {
                 ? "CONNECTION INSPECTOR"
                 : selectedLegend
                   ? "LEGEND AREA INSPECTOR"
+                  : selectedLegendKey
+                    ? "LEGEND KEY INSPECTOR"
                   : "NODE INSPECTOR"}
             </span>
             <strong>
@@ -1337,6 +1450,8 @@ function FlowWorkspace() {
                 ? "Edit connection"
                 : selectedLegend
                   ? "Edit mapped area"
+                  : selectedLegendKey
+                    ? "Edit stacked identifiers"
                   : "Edit component"}
             </strong>
           </div>
@@ -1344,7 +1459,33 @@ function FlowWorkspace() {
             <X size={18} />
           </button>
         </div>
-        {selectedLegend ? (
+        {selectedLegendKey ? (
+          <div className="inspector-body">
+            <label>
+              <span>Legend title</span>
+              <input
+                value={selectedLegendKey.data.label}
+                onChange={(event) => updateSelected({ label: event.target.value })}
+              />
+            </label>
+            <div className="legend-key-inspector-list">
+              {(selectedLegendKey.data.legendEntries ?? []).map((entry) => (
+                <div key={entry.id}>
+                  <i style={{ backgroundColor: entry.color }} />
+                  <span>
+                    <strong>{entry.label}</strong>
+                    <small>{entry.count} component{entry.count === 1 ? "" : "s"}</small>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="inspector-tip">
+              <CircleHelp size={16} />
+              This card updates automatically. Drag it anywhere on the canvas and edit each area to
+              change its label or color.
+            </div>
+          </div>
+        ) : selectedLegend ? (
           <div className="inspector-body">
             <label>
               <span>Legend label</span>
