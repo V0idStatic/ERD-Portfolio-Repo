@@ -315,6 +315,7 @@ function FlowWorkspace() {
   const [docsShowDescriptions, setDocsShowDescriptions] = useState(true);
   const [docsTitleScale, setDocsTitleScale] = useState(1);
   const [docsDescriptionScale, setDocsDescriptionScale] = useState(1);
+  const [docsEdgeLabelScale, setDocsEdgeLabelScale] = useState(1);
   const [docsExportZoom, setDocsExportZoom] = useState(1);
   const [docsPreviewReady, setDocsPreviewReady] = useState(false);
   const [docsPreviewing, setDocsPreviewing] = useState(false);
@@ -678,6 +679,16 @@ function FlowWorkspace() {
     viewport.style.setProperty("--docs-description-scale", String(docsDescriptionScale));
   };
 
+  const prepareExportEdgeLabelStyles = (viewport: HTMLElement, scale: number) => {
+    viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
+      const existingSize = Number.parseFloat(getComputedStyle(label).fontSize);
+      const baseSize = Number.isFinite(existingSize) ? existingSize : 12;
+      label.dataset.exportBaseFontSize ??= String(baseSize);
+      const preservedSize = Number.parseFloat(label.dataset.exportBaseFontSize);
+      label.style.fontSize = `${(Number.isFinite(preservedSize) ? preservedSize : baseSize) * scale}px`;
+    });
+  };
+
   const clearDocsViewportStyles = (viewport: HTMLElement) => {
     viewport.classList.remove(
       "document-export-mode",
@@ -686,6 +697,10 @@ function FlowWorkspace() {
     );
     viewport.style.removeProperty("--docs-title-scale");
     viewport.style.removeProperty("--docs-description-scale");
+    viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
+      label.style.removeProperty("font-size");
+      delete label.dataset.exportBaseFontSize;
+    });
   };
 
   const prepareExportSafeSvgPaint = (viewport: HTMLElement) => {
@@ -780,6 +795,7 @@ function FlowWorkspace() {
       );
 
       prepareExportSafeSvgPaint(viewport);
+      prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
       const { page, renderScale, translateX, translateY } = getDocsLayout(mode);
 
       const blob = await toBlob(viewport, {
@@ -853,6 +869,7 @@ function FlowWorkspace() {
             0.4,
           );
           prepareExportSafeSvgPaint(viewport);
+          prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
           const renderedCanvas = await toCanvas(viewport, {
             backgroundColor: docsExportMode === "readable" ? "#ffffff" : "#f6f8fb",
             cacheBust: false,
@@ -914,6 +931,7 @@ function FlowWorkspace() {
     docsShowDescriptions,
     docsTitleScale,
     docsDescriptionScale,
+    docsEdgeLabelScale,
     edges,
     nodes,
   ]);
@@ -1690,6 +1708,21 @@ function FlowWorkspace() {
                   </label>
                   <label className="docs-range-control">
                     <span>
+                      <strong>Connection label size</strong>
+                      <output>{Math.round(docsEdgeLabelScale * 100)}%</output>
+                    </span>
+                    <input
+                      type="range"
+                      min="0.75"
+                      max="1.75"
+                      step="0.05"
+                      value={docsEdgeLabelScale}
+                      onChange={(event) => setDocsEdgeLabelScale(Number(event.target.value))}
+                    />
+                    <small>Adjusts text attached to connection lines.</small>
+                  </label>
+                  <label className="docs-range-control">
+                    <span>
                       <strong>Export zoom</strong>
                       <output>{Math.round(docsExportZoom * 100)}%</output>
                     </span>
@@ -1710,6 +1743,7 @@ function FlowWorkspace() {
                       setDocsShowDescriptions(true);
                       setDocsTitleScale(1);
                       setDocsDescriptionScale(1);
+                      setDocsEdgeLabelScale(1);
                       setDocsExportZoom(1);
                     }}
                   >
