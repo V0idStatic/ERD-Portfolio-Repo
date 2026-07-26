@@ -57,7 +57,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import { toBlob, toPng } from "html-to-image";
+import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -316,11 +316,13 @@ function FlowWorkspace() {
   const [docsTitleScale, setDocsTitleScale] = useState(1);
   const [docsDescriptionScale, setDocsDescriptionScale] = useState(1);
   const [docsExportZoom, setDocsExportZoom] = useState(1);
-  const [docsPreviewUrl, setDocsPreviewUrl] = useState<string | null>(null);
+  const [docsPreviewReady, setDocsPreviewReady] = useState(false);
   const [docsPreviewing, setDocsPreviewing] = useState(false);
   const [docsInspectZoom, setDocsInspectZoom] = useState(1.6);
   const [docsPreviewPan, setDocsPreviewPan] = useState({ x: 0, y: 0 });
-  const docsPreviewUrlRef = useRef<string | null>(null);
+  const docsPreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const docsPreviewRenderIdRef = useRef(0);
+  const docsPreviewQueueRef = useRef<Promise<void>>(Promise.resolve());
   const docsPreviewDrag = useRef<{
     pointerId: number;
     startX: number;
@@ -823,65 +825,83 @@ function FlowWorkspace() {
   };
 
   useEffect(() => {
+    const renderId = ++docsPreviewRenderIdRef.current;
+
     if (!docsExportOpen || nodes.length === 0) {
-      if (docsPreviewUrlRef.current) {
-        URL.revokeObjectURL(docsPreviewUrlRef.current);
-        docsPreviewUrlRef.current = null;
-      }
-      setDocsPreviewUrl(null);
+      setDocsPreviewReady(false);
+      setDocsPreviewing(false);
       return;
     }
 
     let cancelled = false;
-    const timer = window.setTimeout(async () => {
-      const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
-      if (!viewport) return;
+    const timer = window.setTimeout(() => {
+      const renderPreview = async () => {
+        if (cancelled || renderId !== docsPreviewRenderIdRef.current) return;
 
-      setDocsPreviewing(true);
-      setDocsViewportStyles(viewport, docsExportMode);
-      try {
-        await document.fonts.ready;
-        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-        const { page, renderScale, translateX, translateY } = getDocsLayout(
-          docsExportMode,
-          0.18,
-        );
-        prepareExportSafeSvgPaint(viewport);
-        const previewBlob = await toBlob(viewport, {
-          backgroundColor: docsExportMode === "readable" ? "#ffffff" : "#f6f8fb",
-          cacheBust: false,
-          pixelRatio: 1,
-          width: page.width,
-          height: page.height,
-          style: {
-            width: `${page.width}px`,
-            height: `${page.height}px`,
-            transformOrigin: "top left",
-            transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
-          },
-          filter: (domNode) =>
-            !(
-              domNode instanceof HTMLElement &&
-              (domNode.classList.contains("react-flow__handle") ||
-                domNode.classList.contains("react-flow__edgeupdater"))
-            ),
-        });
-        if (!previewBlob) throw new Error("Preview image could not be created");
-        const previewUrl = URL.createObjectURL(previewBlob);
-        if (cancelled) {
-          URL.revokeObjectURL(previewUrl);
-          return;
+        const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
+        if (!viewport) return;
+
+        setDocsPreviewing(true);
+        setDocsViewportStyles(viewport, docsExportMode);
+        try {
+          await document.fonts.ready;
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          if (cancelled || renderId !== docsPreviewRenderIdRef.current) return;
+
+          const { page, renderScale, translateX, translateY } = getDocsLayout(
+            docsExportMode,
+            0.4,
+          );
+          prepareExportSafeSvgPaint(viewport);
+          const renderedCanvas = await toCanvas(viewport, {
+            backgroundColor: docsExportMode === "readable" ? "#ffffff" : "#f6f8fb",
+            cacheBust: false,
+            pixelRatio: 1,
+            width: page.width,
+            height: page.height,
+            style: {
+              width: `${page.width}px`,
+              height: `${page.height}px`,
+              transformOrigin: "top left",
+              transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
+            },
+            filter: (domNode) =>
+              !(
+                domNode instanceof HTMLElement &&
+                (domNode.classList.contains("react-flow__handle") ||
+                  domNode.classList.contains("react-flow__edgeupdater"))
+              ),
+          });
+          if (cancelled || renderId !== docsPreviewRenderIdRef.current) return;
+
+          const previewCanvas = docsPreviewCanvasRef.current;
+          const context = previewCanvas?.getContext("2d");
+          if (!previewCanvas || !context) throw new Error("Preview canvas is unavailable");
+
+          previewCanvas.width = renderedCanvas.width;
+          previewCanvas.height = renderedCanvas.height;
+          context.imageSmoothingEnabled = true;
+          context.imageSmoothingQuality = "high";
+          context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+          context.drawImage(renderedCanvas, 0, 0);
+          setDocsPreviewReady(true);
+        } catch {
+          if (!cancelled && renderId === docsPreviewRenderIdRef.current) {
+            setDocsPreviewReady(false);
+          }
+        } finally {
+          clearDocsViewportStyles(viewport);
+          if (!cancelled && renderId === docsPreviewRenderIdRef.current) {
+            setDocsPreviewing(false);
+          }
         }
-        if (docsPreviewUrlRef.current) URL.revokeObjectURL(docsPreviewUrlRef.current);
-        docsPreviewUrlRef.current = previewUrl;
-        setDocsPreviewUrl(previewUrl);
-      } catch {
-        if (!cancelled) setDocsPreviewUrl(null);
-      } finally {
-        clearDocsViewportStyles(viewport);
-        if (!cancelled) setDocsPreviewing(false);
-      }
-    }, 80);
+      };
+
+      const queuedRender = docsPreviewQueueRef.current
+        .catch(() => undefined)
+        .then(renderPreview);
+      docsPreviewQueueRef.current = queuedRender;
+    }, 24);
 
     return () => {
       cancelled = true;
@@ -1554,9 +1574,9 @@ function FlowWorkspace() {
                     </div>
                   </div>
                   <div
-                    className={`docs-preview-stage ${docsPreviewUrl ? "is-draggable" : ""}`}
+                    className={`docs-preview-stage ${docsPreviewReady ? "is-draggable" : ""}`}
                     onPointerDown={(event) => {
-                      if (!docsPreviewUrl) return;
+                      if (!docsPreviewReady) return;
                       event.currentTarget.setPointerCapture(event.pointerId);
                       docsPreviewDrag.current = {
                         pointerId: event.pointerId,
@@ -1584,36 +1604,35 @@ function FlowWorkspace() {
                       docsPreviewDrag.current = null;
                     }}
                     onWheel={(event) => {
-                      if (!docsPreviewUrl) return;
+                      if (!docsPreviewReady) return;
                       event.preventDefault();
                       changeDocsInspectZoom(event.deltaY < 0 ? 0.2 : -0.2);
                     }}
                   >
-                    {docsPreviewUrl ? (
-                      <div
-                        className="docs-preview-image-shell"
-                        style={{
-                          transform: `translate(${docsPreviewPan.x}px, ${docsPreviewPan.y}px) scale(${docsInspectZoom})`,
-                        }}
-                      >
-                        <img
-                          src={docsPreviewUrl}
-                          alt="Preview of the document PNG export"
-                          draggable={false}
-                        />
-                      </div>
-                    ) : (
+                    <div
+                      className={`docs-preview-image-shell ${docsPreviewReady ? "" : "is-empty"}`}
+                      style={{
+                        transform: `translate(${docsPreviewPan.x}px, ${docsPreviewPan.y}px) scale(${docsInspectZoom})`,
+                      }}
+                    >
+                      <canvas
+                        ref={docsPreviewCanvasRef}
+                        role="img"
+                        aria-label="Preview of the document PNG export"
+                      />
+                    </div>
+                    {!docsPreviewReady ? (
                       <div className="docs-preview-loading">
                         {docsPreviewing ? <LoaderCircle className="spin" size={18} /> : <FileText size={18} />}
                         <span>{docsPreviewing ? "Updating preview…" : "Preview unavailable"}</span>
                       </div>
-                    )}
-                    {docsPreviewing && docsPreviewUrl ? (
+                    ) : null}
+                    {docsPreviewing && docsPreviewReady ? (
                       <span className="preview-refreshing">
                         <LoaderCircle className="spin" size={13} /> Updating
                       </span>
                     ) : null}
-                    {docsPreviewUrl ? (
+                    {docsPreviewReady ? (
                       <span className="preview-drag-hint">Drag to inspect · scroll to zoom</span>
                     ) : null}
                   </div>
