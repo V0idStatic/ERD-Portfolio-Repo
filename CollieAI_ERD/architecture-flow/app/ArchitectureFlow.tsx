@@ -58,10 +58,10 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
-import type { ComponentType } from "react";
+import type { ComponentType, CSSProperties } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type NodeShape = "service" | "decision" | "database" | "cloud" | "terminal";
+type NodeShape = "service" | "decision" | "database" | "cloud" | "terminal" | "legend";
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
@@ -93,6 +93,16 @@ type ArchitectureNodeData = {
   shape: NodeShape;
   icon: NodeIcon;
   tone: NodeTone;
+  legendColor?: string;
+  legendOpacity?: number;
+  legendNodeIds?: string[];
+};
+
+type LegendDraft = {
+  label: string;
+  color: string;
+  opacity: number;
+  nodeIds: string[];
 };
 
 type ArchitectureNode = Node<ArchitectureNodeData, "architecture">;
@@ -121,6 +131,36 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
 
 function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
+  if (data.shape === "legend") {
+    const color = data.legendColor ?? "#0ea5c6";
+    const opacity = data.legendOpacity ?? 0.12;
+    const normalized = color.replace("#", "");
+    const red = Number.parseInt(normalized.slice(0, 2), 16);
+    const green = Number.parseInt(normalized.slice(2, 4), 16);
+    const blue = Number.parseInt(normalized.slice(4, 6), 16);
+    const fill = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+
+    return (
+      <div
+        className={`architecture-node shape-legend ${selected ? "is-selected" : ""}`}
+        style={
+          {
+            "--legend-color": color,
+            "--legend-fill": fill,
+          } as CSSProperties
+        }
+      >
+        <div className="legend-area-label">
+          <i aria-hidden="true" />
+          <span>
+            <strong>{data.label || "Untitled legend"}</strong>
+            <small>{data.legendNodeIds?.length ?? 0} components</small>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
@@ -169,6 +209,26 @@ const n = (
   position: { x, y },
   data: { label, description, shape, icon, tone },
 });
+
+const getLegendFrame = (allNodes: ArchitectureNode[], nodeIds: string[]) => {
+  const members = allNodes.filter(
+    (node) => node.data.shape !== "legend" && nodeIds.includes(node.id),
+  );
+  if (!members.length) return null;
+
+  const bounds = getNodesBounds(members);
+  const horizontalPadding = 72;
+  const topPadding = 88;
+  const bottomPadding = 62;
+  return {
+    position: {
+      x: bounds.x - horizontalPadding,
+      y: bounds.y - topPadding,
+    },
+    width: Math.max(360, bounds.width + horizontalPadding * 2),
+    height: Math.max(230, bounds.height + topPadding + bottomPadding),
+  };
+};
 
 const initialNodes: ArchitectureNode[] = [
   n("start", 910, 10, "Start", "Student opens CollieAI", "terminal", "play", "emerald"),
@@ -298,6 +358,13 @@ const createNodeDraft = (): ArchitectureNodeData => ({
   tone: "cyan",
 });
 
+const createLegendDraft = (): LegendDraft => ({
+  label: "User",
+  color: "#0ea5c6",
+  opacity: 0.12,
+  nodeIds: [],
+});
+
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
 const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
@@ -310,6 +377,7 @@ function FlowWorkspace() {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [creatorOpen, setCreatorOpen] = useState(false);
+  const [legendCreatorOpen, setLegendCreatorOpen] = useState(false);
   const [docsExportOpen, setDocsExportOpen] = useState(false);
   const [docsExportMode, setDocsExportMode] = useState<DocsExportMode>("readable");
   const [docsShowDescriptions, setDocsShowDescriptions] = useState(true);
@@ -339,6 +407,7 @@ function FlowWorkspace() {
   const [deleteIntent, setDeleteIntent] = useState<DeleteIntent | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [nodeDraft, setNodeDraft] = useState<ArchitectureNodeData>(createNodeDraft);
+  const [legendDraft, setLegendDraft] = useState<LegendDraft>(createLegendDraft);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
@@ -379,7 +448,9 @@ function FlowWorkspace() {
   }, [setEdges, setNodes]);
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
+  const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
+  const componentNodes = nodes.filter((node) => node.data.shape !== "legend");
 
   const updateSelected = useCallback(
     (patch: Partial<ArchitectureNodeData>) => {
@@ -973,6 +1044,73 @@ function FlowWorkspace() {
     setInspectorOpen(true);
   };
 
+  const addLegendArea = () => {
+    if (!legendDraft.label.trim() || legendDraft.nodeIds.length === 0) return;
+    const frame = getLegendFrame(nodes, legendDraft.nodeIds);
+    if (!frame) return;
+
+    const id = `legend-${Date.now()}`;
+    const legendNode: ArchitectureNode = {
+      id,
+      type: "architecture",
+      position: frame.position,
+      data: {
+        label: legendDraft.label.trim(),
+        description: "",
+        shape: "legend",
+        icon: "dashboard",
+        tone: "slate",
+        legendColor: legendDraft.color,
+        legendOpacity: legendDraft.opacity,
+        legendNodeIds: legendDraft.nodeIds,
+      },
+      style: {
+        width: frame.width,
+        height: frame.height,
+        zIndex: -1,
+      },
+    };
+
+    setNodes((current) => [legendNode, ...current]);
+    setSelectedId(id);
+    setSelectedEdgeId(null);
+    setLegendCreatorOpen(false);
+    setLegendDraft(createLegendDraft());
+    setInspectorOpen(true);
+  };
+
+  const updateLegendMembers = (legendId: string, nodeIds: string[]) => {
+    setNodes((current) => {
+      const frame = getLegendFrame(current, nodeIds);
+      return current.map((node) =>
+        node.id === legendId
+          ? {
+              ...node,
+              ...(frame ? { position: frame.position } : {}),
+              data: { ...node.data, legendNodeIds: nodeIds },
+              style: {
+                ...node.style,
+                ...(frame ? { width: frame.width, height: frame.height } : {}),
+                zIndex: -1,
+              },
+            }
+          : node,
+      );
+    });
+  };
+
+  const fitLegendToMembers = (legendId: string) => {
+    const legend = nodes.find((node) => node.id === legendId);
+    if (!legend) return;
+    updateLegendMembers(legendId, legend.data.legendNodeIds ?? []);
+  };
+
+  const removeLegendArea = (legendId: string) => {
+    setNodes((current) => current.filter((node) => node.id !== legendId));
+    setSelectedId(null);
+    setInspectorOpen(false);
+  };
+
   return (
     <main className="architecture-shell">
       <header className="topbar">
@@ -997,6 +1135,16 @@ function FlowWorkspace() {
           </button>
           <button className="button secondary" onClick={() => setCreatorOpen(true)}>
             <Plus size={15} /> <span className="button-label">Add node</span>
+          </button>
+          <button
+            className="button secondary"
+            onClick={() => {
+              setLegendDraft(createLegendDraft());
+              setLegendCreatorOpen(true);
+            }}
+            title="Create a colored legend area around selected components"
+          >
+            <LayoutDashboard size={15} /> <span className="button-label">Add legend</span>
           </button>
           <button className="button secondary" onClick={resetDiagram} title="Restore original diagram">
             <RefreshCcw size={15} /> <span className="button-label">Reset</span>
@@ -1143,6 +1291,7 @@ function FlowWorkspace() {
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.18}
           maxZoom={1.5}
+          elevateNodesOnSelect={false}
           deleteKeyCode={["Backspace", "Delete"]}
           proOptions={{ hideAttribution: true }}
         >
@@ -1151,7 +1300,9 @@ function FlowWorkspace() {
             pannable
             zoomable
             nodeColor={(node) => {
-              const tone = (node.data as ArchitectureNodeData).tone;
+              const data = node.data as ArchitectureNodeData;
+              if (data.shape === "legend") return data.legendColor ?? "#0ea5c6";
+              const tone = data.tone;
               return tone === "violet" ? "#8b5cf6" : tone === "amber" ? "#f59e0b" : "#21b6d7";
             }}
             maskColor="rgba(241,245,249,.72)"
@@ -1174,14 +1325,109 @@ function FlowWorkspace() {
       <aside className={`inspector ${inspectorOpen && (selectedNode || selectedEdge) ? "is-open" : ""}`}>
         <div className="inspector-head">
           <div>
-            <span>{selectedEdge ? "CONNECTION INSPECTOR" : "NODE INSPECTOR"}</span>
-            <strong>{selectedEdge ? "Edit connection" : "Edit component"}</strong>
+            <span>
+              {selectedEdge
+                ? "CONNECTION INSPECTOR"
+                : selectedLegend
+                  ? "LEGEND AREA INSPECTOR"
+                  : "NODE INSPECTOR"}
+            </span>
+            <strong>
+              {selectedEdge
+                ? "Edit connection"
+                : selectedLegend
+                  ? "Edit mapped area"
+                  : "Edit component"}
+            </strong>
           </div>
           <button aria-label="Close inspector" onClick={() => setInspectorOpen(false)}>
             <X size={18} />
           </button>
         </div>
-        {selectedNode ? (
+        {selectedLegend ? (
+          <div className="inspector-body">
+            <label>
+              <span>Legend label</span>
+              <input
+                value={selectedLegend.data.label}
+                onChange={(event) => updateSelected({ label: event.target.value })}
+              />
+            </label>
+            <label className="legend-color-control">
+              <span>Area color</span>
+              <div>
+                <input
+                  type="color"
+                  value={selectedLegend.data.legendColor ?? "#0ea5c6"}
+                  onChange={(event) => updateSelected({ legendColor: event.target.value })}
+                />
+                <output>{selectedLegend.data.legendColor ?? "#0ea5c6"}</output>
+              </div>
+            </label>
+            <label className="line-label-size">
+              <span>Transparency</span>
+              <div>
+                <input
+                  type="range"
+                  min="0.04"
+                  max="0.32"
+                  step="0.02"
+                  value={selectedLegend.data.legendOpacity ?? 0.12}
+                  onChange={(event) =>
+                    updateSelected({ legendOpacity: Number(event.target.value) })
+                  }
+                />
+                <output>{Math.round((selectedLegend.data.legendOpacity ?? 0.12) * 100)}%</output>
+              </div>
+              <small>Lower values keep the architecture easier to read.</small>
+            </label>
+            <fieldset>
+              <legend>Components in this area</legend>
+              <div className="legend-member-list">
+                {componentNodes.map((node) => {
+                  const memberIds = selectedLegend.data.legendNodeIds ?? [];
+                  const checked = memberIds.includes(node.id);
+                  return (
+                    <label key={node.id} className="legend-member-option">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          const nextIds = checked
+                            ? memberIds.filter((id) => id !== node.id)
+                            : [...memberIds, node.id];
+                          updateLegendMembers(selectedLegend.id, nextIds);
+                        }}
+                      />
+                      <span>{node.data.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+            <button
+              type="button"
+              className="fit-legend-button"
+              disabled={!selectedLegend.data.legendNodeIds?.length}
+              onClick={() => fitLegendToMembers(selectedLegend.id)}
+            >
+              <Maximize2 size={15} />
+              Fit area to selected components
+            </button>
+            <button
+              type="button"
+              className="delete-connection"
+              onClick={() => removeLegendArea(selectedLegend.id)}
+            >
+              <Trash2 size={16} />
+              Remove legend area
+            </button>
+            <div className="inspector-tip">
+              <CircleHelp size={16} />
+              Drag the colored area anywhere on the canvas. Use Fit area after moving its components.
+            </div>
+          </div>
+        ) : selectedNode ? (
           <div className="inspector-body">
             <label>
               <span>Title</span>
@@ -1440,6 +1686,127 @@ function FlowWorkspace() {
               <button className="create-node-submit" type="submit" disabled={!nodeDraft.label.trim()}>
                 <Plus size={16} />
                 Add to current view
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+      {legendCreatorOpen ? (
+        <div className="creator-backdrop" onMouseDown={() => setLegendCreatorOpen(false)}>
+          <form
+            className="node-creator legend-creator"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-legend-title"
+            onMouseDown={(event) => event.stopPropagation()}
+            onSubmit={(event) => {
+              event.preventDefault();
+              addLegendArea();
+            }}
+          >
+            <div className="inspector-head">
+              <div>
+                <span>NEW MAP AREA</span>
+                <strong id="create-legend-title">Create a draggable legend</strong>
+              </div>
+              <button
+                type="button"
+                aria-label="Close legend creator"
+                onClick={() => setLegendCreatorOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="creator-body">
+              <label>
+                <span>Legend label</span>
+                <input
+                  autoFocus
+                  value={legendDraft.label}
+                  placeholder="Example: User, Backend, AI services"
+                  onChange={(event) =>
+                    setLegendDraft({ ...legendDraft, label: event.target.value })
+                  }
+                />
+              </label>
+              <div className="legend-appearance-grid">
+                <label className="legend-color-control">
+                  <span>Area color</span>
+                  <div>
+                    <input
+                      type="color"
+                      value={legendDraft.color}
+                      onChange={(event) =>
+                        setLegendDraft({ ...legendDraft, color: event.target.value })
+                      }
+                    />
+                    <output>{legendDraft.color}</output>
+                  </div>
+                </label>
+                <label className="line-label-size">
+                  <span>Transparency</span>
+                  <div>
+                    <input
+                      type="range"
+                      min="0.04"
+                      max="0.32"
+                      step="0.02"
+                      value={legendDraft.opacity}
+                      onChange={(event) =>
+                        setLegendDraft({
+                          ...legendDraft,
+                          opacity: Number(event.target.value),
+                        })
+                      }
+                    />
+                    <output>{Math.round(legendDraft.opacity * 100)}%</output>
+                  </div>
+                </label>
+              </div>
+              <fieldset>
+                <legend>Select components inside this legend</legend>
+                <div className="legend-member-list legend-member-create-list">
+                  {componentNodes.length ? (
+                    componentNodes.map((node) => {
+                      const checked = legendDraft.nodeIds.includes(node.id);
+                      return (
+                        <label key={node.id} className="legend-member-option">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setLegendDraft({
+                                ...legendDraft,
+                                nodeIds: checked
+                                  ? legendDraft.nodeIds.filter((id) => id !== node.id)
+                                  : [...legendDraft.nodeIds, node.id],
+                              })
+                            }
+                          />
+                          <span>{node.data.label}</span>
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <p className="legend-empty-state">Add components before creating a legend area.</p>
+                  )}
+                </div>
+              </fieldset>
+              <div className="legend-selection-summary">
+                <LayoutDashboard size={16} />
+                <span>
+                  {legendDraft.nodeIds.length
+                    ? `${legendDraft.nodeIds.length} components selected`
+                    : "Select at least one component"}
+                </span>
+              </div>
+              <button
+                className="create-node-submit"
+                type="submit"
+                disabled={!legendDraft.label.trim() || legendDraft.nodeIds.length === 0}
+              >
+                <Plus size={16} />
+                Create legend area
               </button>
             </div>
           </form>
