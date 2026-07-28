@@ -912,3 +912,159 @@ button { cursor: pointer; }
   .topbar-actions { gap:3px; }
   .button { width:32px; height:32px; }
 }
+
+/* ===== Flow Animation Panel ===== */
+.animation-panel {
+  position:fixed; z-index:31; top:82px; right:14px; width:360px; max-height:calc(100vh - 96px);
+  display:flex; flex-direction:column; overflow:hidden; border:1px solid #d8e1ea; border-radius:16px;
+  background:rgba(255,255,255,.98); box-shadow:0 22px 55px rgba(15,23,42,.18);
+  transform:translateX(calc(100% + 30px)); opacity:0; pointer-events:none; transition:.24s ease;
+}
+.animation-panel.is-open { transform:translateX(0); opacity:1; pointer-events:auto; }
+.animation-panel-body { overflow:auto; padding:15px; display:grid; gap:14px; }
+.animation-sequence-selector { display:grid; gap:8px; }
+.animation-sequence-selector select {
+  width:100%; padding:9px 10px; border:1px solid #d6e0e8; border-radius:9px; color:#1e293b;
+  background:#fbfdff; font-size:12px; outline:none;
+}
+.animation-sequence-selector select:focus { border-color:#28afcb; box-shadow:0 0 0 3px #dff6fb; }
+.guided-flow-builder {
+  display:grid; gap:10px; padding:12px; border:1px solid #b9e5ed; border-radius:11px; background:#f0fbfd;
+}
+.guided-flow-builder > div:first-child { display:grid; gap:3px; }
+.guided-flow-builder > div:first-child > span { color:#0b8fa9; font:750 8px/1 var(--font-geist-mono); letter-spacing:.12em; }
+.guided-flow-builder strong { color:#294154; font-size:11px; }
+.guided-flow-builder p { margin:0; color:#687a8b; font-size:9px; line-height:1.45; }
+.guided-branch-list { display:grid; gap:7px; }
+.guided-branch-list label { display:grid; grid-template-columns:minmax(0,1fr) 105px; align-items:center; gap:8px; }
+.guided-branch-list label > span { overflow:hidden; color:#40556a; font-size:9.5px; font-weight:750; text-overflow:ellipsis; white-space:nowrap; }
+.guided-branch-list select {
+  width:100%; border:1px solid #b9dce4; border-radius:7px; outline:none; padding:6px 7px; color:#245267; background:#fff; font-size:9px; font-weight:700;
+}
+.guided-flow-create {
+  min-height:34px; display:flex; align-items:center; justify-content:center; gap:7px; border:0; border-radius:8px;
+  color:#fff; background:#0b8fa9; box-shadow:0 6px 14px rgba(14,165,198,.18); font-size:10px; font-weight:750;
+}
+.guided-flow-empty { padding:8px; border:1px dashed #b9dce4; border-radius:8px; text-align:center; }
+.animation-sequence-actions { display:flex; gap:6px; flex-wrap:wrap; }
+.animation-sequence-actions .button { height:32px; padding:0 9px; font-size:10px; }
+.animation-empty {
+  display:grid; gap:8px; justify-items:center; padding:24px 12px; text-align:center; color:#64748b;
+}
+.animation-empty svg { color:#0ea5c6; }
+.animation-empty strong { color:#334155; font-size:13px; }
+.animation-empty p { margin:0; font-size:10px; line-height:1.5; }
+.animation-empty .button { margin-top:4px; }
+
+.animation-step-list { display:grid; gap:8px; }
+.animation-step-list-header { display:flex; align-items:center; justify-content:space-between; }
+.animation-step-list-header > span { color:#526276; font-size:10px; font-weight:750; letter-spacing:.05em; text-transform:uppercase; }
+.animation-step-list-header .button { height:28px; padding:0 8px; font-size:9px; }
+.animation-steps { display:grid; gap:6px; }
+.animation-step {
+  display:grid; grid-template-columns:auto 1fr; gap:8px; padding:10px;
+  border:1px solid #e2e8ef; border-radius:10px; background:#fff; transition:.16s ease;
+}
+.animation-step.is-current { border-color:#0ea5c6; background:#f0fbfd; box-shadow:0 0 0 2px #dff6fb; }
+.animation-step-handle { display:flex; flex-direction:column; align-items:center; gap:4px; padding-top:2px; }
+.animation-step-number {
+  width:22px; height:22px; display:grid; place-items:center; border-radius:50%;
+  color:#fff; background:#0ea5c6; font-size:10px; font-weight:800;
+}
+.animation-step-content { min-width:0; display:grid; gap:6px; }
+.animation-step-elements { display:flex; flex-wrap:wrap; gap:4px; }
+.animation-step-element {
+  padding:2px 7px; border-radius:5px; background:#eef2f6; color:#334155;
+  font-size:9px; font-weight:650; line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;
+}
+.animation-step-element.is-missing { background:#fff0f3; color:#be123c; }
+.animation-step-controls { display:grid; gap:4px; }
+.animation-step-timing { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.animation-step-timing label {
+  display:grid; gap:2px; grid-template-columns:auto 1fr auto; align-items:center;
+}
+.animation-step-timing label > span { color:#64748b; font-size:8px; font-weight:700; text-transform:uppercase; }
+.animation-step-timing input { width:100%; height:3px; accent-color:#0ea5c6; }
+.animation-step-timing output { min-width:30px; color:#087d97; font-size:8px; font-weight:800; text-align:right; }
+.animation-step-actions { display:flex; gap:4px; justify-content:flex-end; }
+.animation-step-actions .button { height:26px; min-width:26px; padding:0; border-radius:6px; font-size:10px; }
+
+.animation-playback {
+  display:grid; gap:10px; padding:12px; border:1px solid #dce4eb; border-radius:12px; background:#f8fafc;
+}
+.animation-playback-main { display:flex; gap:8px; align-items:center; justify-content:center; }
+.animation-playback-main .button { height:36px; }
+.animation-playback-main .button.primary { min-width:90px; }
+.animation-playback-settings { display:flex; gap:12px; align-items:center; justify-content:center; }
+.animation-loop-toggle {
+  display:flex; align-items:center; gap:6px; cursor:pointer; font-size:10px; font-weight:650; color:#526276;
+}
+.animation-loop-toggle input { accent-color:#0ea5c6; }
+.animation-loop-toggle svg { color:#0ea5c6; }
+.animation-speed { display:flex; align-items:center; gap:6px; font-size:10px; font-weight:650; color:#526276; }
+.animation-speed select {
+  padding:3px 6px; border:1px solid #d6e0e8; border-radius:6px; color:#1e293b;
+  background:#fff; font-size:10px; outline:none;
+}
+.animation-progress {
+  text-align:center; color:#475569; font-size:10px; font-weight:700; padding:6px 0 2px;
+}
+
+/* Presentation mode bar */
+.presentation-bar {
+  position:fixed; z-index:40; top:0; left:0; right:0; height:44px;
+  display:flex; align-items:center; justify-content:center; gap:16px;
+  background:linear-gradient(180deg,#0f172a,#1e293b); color:#fff; font-size:12px; font-weight:700;
+  box-shadow:0 4px 20px rgba(15,23,42,.35);
+}
+.presentation-bar .button { background:rgba(255,255,255,.15); border-color:transparent; color:#fff; }
+.presentation-bar .button:hover { background:rgba(255,255,255,.25); }
+.presentation-bar-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
+
+/* Animation state classes for nodes */
+.architecture-node.anim-active {
+  animation: anim-node-pulse 1.2s ease-in-out infinite;
+}
+.architecture-node.anim-completed {
+  opacity:0.65;
+}
+@keyframes anim-node-pulse {
+  0%, 100% { box-shadow:0 0 0 4px color-mix(in srgb, var(--node) 22%, transparent), 0 8px 22px rgba(30,41,59,.09); }
+  50% { box-shadow:0 0 0 8px color-mix(in srgb, var(--node) 35%, transparent), 0 12px 28px rgba(30,41,59,.13); }
+}
+
+/* A single, soft pulse traces the connector from source to destination. */
+.react-flow__edge.anim-edge-active .react-flow__edge-path {
+  stroke:#64748b !important;
+  stroke-width:1.7px !important;
+  stroke-linecap:round;
+  stroke-dasharray:none !important;
+  filter:none !important;
+  animation:none !important;
+}
+.react-flow__edge.anim-edge-completed .react-flow__edge-path {
+  stroke:#94a3b8 !important;
+  stroke-width:1.7 !important;
+}
+.connector-water-pulse {
+  fill:none;
+  pointer-events:none;
+  stroke:#f8ffff;
+  stroke-width:4.5px;
+  stroke-linecap:round;
+  stroke-dasharray:.075 1;
+  stroke-dashoffset:1.075;
+  filter:drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 0 6px rgba(43,224,246,.98)) drop-shadow(0 0 15px rgba(43,224,246,.72));
+  animation:water-connector-flow .9s cubic-bezier(.24,.72,.34,1) 1 both;
+}
+@keyframes water-connector-flow {
+  from { stroke-dashoffset:1.075; }
+  to { stroke-dashoffset:0; }
+}
+
+@media (max-width:760px) {
+  .animation-panel { top:auto; bottom:8px; left:8px; right:8px; width:auto; max-height:76vh; }
+  .animation-panel.is-open { transform:translateY(0); }
+  .presentation-bar { height:50px; font-size:10px; padding:0 10px; justify-content:space-between; }
+  .presentation-bar-label { max-width:50vw; }
+}

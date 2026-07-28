@@ -2,12 +2,15 @@
 
 import {
   addEdge,
+  BaseEdge,
   Background,
   BackgroundVariant,
   Connection,
   ConnectionMode,
   Controls,
   Edge,
+  EdgeProps,
+  getSmoothStepPath,
   getNodesBounds,
   Handle,
   MarkerType,
@@ -31,6 +34,7 @@ import {
   Check,
   CircleHelp,
   Cloud,
+  Copy,
   Database,
   Download,
   FolderOpen,
@@ -40,17 +44,23 @@ import {
   HardDrive,
   History as HistoryIcon,
   LayoutDashboard,
+  List,
   LoaderCircle,
   Maximize2,
   MessageSquareText,
   Network,
+  Pause,
   Play,
   Plus,
   RefreshCcw,
+  Repeat,
   RotateCcw,
   Route,
   Server,
+  SkipBack,
+  SkipForward,
   Sparkles,
+  Square,
   Trash2,
   UserRound,
   Workflow,
@@ -113,6 +123,7 @@ type ArchitectureNodeData = {
   legendOpacity?: number;
   legendNodeIds?: string[];
   legendEntries?: LegendKeyEntry[];
+  _animState?: "inactive" | "active" | "completed";
 };
 
 type LegendKeyEntry = {
@@ -130,6 +141,21 @@ type LegendDraft = {
 };
 
 type ArchitectureNode = Node<ArchitectureNodeData, "architecture">;
+
+type AnimationStep = {
+  id: string;
+  elementIds: string[];
+  duration: number;
+  delayAfter: number;
+};
+
+type AnimationSequence = {
+  id: string;
+  name: string;
+  loop: boolean;
+  playbackSpeed: number;
+  steps: AnimationStep[];
+};
 
 const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: number }>> = {
   play: Play,
@@ -229,11 +255,12 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
     );
   }
 
+  const animState = data._animState;
   return (
     <div
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
         selected ? "is-selected" : ""
-      }`}
+      } ${animState ? `anim-${animState}` : ""}`}
     >
       <Handle type="source" position={Position.Top} id="top" />
       {data.shape === "cloud" ? (
@@ -277,6 +304,44 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
 }
 
 const nodeTypes = { architecture: ArchitectureNodeCard };
+
+function FlowingConnectorEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  markerEnd,
+  style,
+  data,
+}: EdgeProps) {
+  const [edgePath] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+    borderRadius: 8,
+  });
+
+  return (
+    <>
+      <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
+      <path
+        d={edgePath}
+        pathLength={1}
+        className="connector-water-pulse"
+        style={{ animationDuration: `${Number(data?._flowDuration) || 900}ms` }}
+        aria-hidden="true"
+      />
+    </>
+  );
+}
+
+const edgeTypes = { flowing: FlowingConnectorEdge };
 
 const n = (
   id: string,
@@ -513,7 +578,7 @@ const MAX_HISTORY_ENTRIES = 40;
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
   JSON.stringify({ nodes, edges }, (key, value) =>
-    ["selected", "dragging", "resizing", "measured"].includes(key) ? undefined : value,
+    ["selected", "dragging", "resizing", "measured", "_animState"].includes(key) ? undefined : value,
   );
 
 const describeDiagramChange = (
@@ -531,6 +596,12 @@ const describeDiagramChange = (
   if (edgeDelta < 0) changes.push(`Removed ${Math.abs(edgeDelta)} connection${edgeDelta === -1 ? "" : "s"}`);
   return changes.join(" · ") || "Updated layout or content";
 };
+
+const removeAnimationEdgeClasses = (className?: string) =>
+  (className ?? "")
+    .split(/\s+/)
+    .filter((name) => name && name !== "anim-edge-active" && name !== "anim-edge-completed")
+    .join(" ");
 
 function FlowWorkspace() {
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureNode>(initialNodes);
@@ -578,6 +649,19 @@ function FlowWorkspace() {
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const historyReadyRef = useRef(false);
   const lastHistorySignatureRef = useRef("");
+  const animationStorageKeySuffix = useCallback((pageId: string) => `collieai-animation-${pageId}`, []);
+  const [animationOpen, setAnimationOpen] = useState(false);
+  const [animationMode, setAnimationMode] = useState<"editing" | "presentation">("editing");
+  const [animationSequences, setAnimationSequences] = useState<AnimationSequence[]>([]);
+  const [animationBranchChoices, setAnimationBranchChoices] = useState<Record<string, string>>({});
+  const [activeSequenceId, setActiveSequenceId] = useState<string | null>(null);
+  const [currentStepIndex, setCurrentStepIndex] = useState(-1);
+  const [animationPlaying, setAnimationPlaying] = useState(false);
+  const [animationPaused, setAnimationPaused] = useState(false);
+  const [animActiveIds, setAnimActiveIds] = useState<Set<string>>(new Set());
+  const [animCompletedIds, setAnimCompletedIds] = useState<Set<string>>(new Set());
+  const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
 
   useEffect(() => {
@@ -609,6 +693,21 @@ function FlowWorkspace() {
       lastHistorySignatureRef.current = restoredHistory[0]
         ? diagramSignature(restoredHistory[0].nodes, restoredHistory[0].edges)
         : "";
+      const storedAnimation = window.localStorage.getItem(`collieai-animation-${restoredActive}`);
+      if (storedAnimation) {
+        try {
+          const parsed = JSON.parse(storedAnimation) as {
+            sequences?: AnimationSequence[];
+            activeSequenceId?: string;
+            branchChoices?: Record<string, string>;
+          };
+          setAnimationSequences(parsed.sequences ?? []);
+          setAnimationBranchChoices(parsed.branchChoices ?? {});
+          if (parsed.activeSequenceId && (parsed.sequences ?? []).some((s: AnimationSequence) => s.id === parsed.activeSequenceId)) {
+            setActiveSequenceId(parsed.activeSequenceId);
+          }
+        } catch { /* ignore */ }
+      }
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
         setNodes(synchronizeLegendKey(parsed.nodes ?? []));
@@ -632,7 +731,6 @@ function FlowWorkspace() {
   const componentNodes = nodes.filter(
     (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key",
   );
-
   const updateSelected = useCallback(
     (patch: Partial<ArchitectureNodeData>) => {
       if (!selectedId) return;
@@ -713,10 +811,21 @@ function FlowWorkspace() {
   };
 
   const persistCurrentPage = () => {
-    window.localStorage.setItem(pageStorageKey(activePageId), JSON.stringify({ nodes, edges }));
+    const cleanNodes = nodes.map((n) => {
+      const { _animState, ...cleanData } = n.data;
+      return { ...n, data: cleanData };
+    });
+    window.localStorage.setItem(pageStorageKey(activePageId), JSON.stringify({ nodes: cleanNodes, edges }));
     if (activePageId === "main") {
-      window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes, edges }));
+      window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: cleanNodes, edges }));
     }
+  };
+
+  const persistAnimationData = () => {
+    window.localStorage.setItem(
+      `collieai-animation-${activePageId}`,
+      JSON.stringify({ sequences: animationSequences, activeSequenceId, branchChoices: animationBranchChoices }),
+    );
   };
 
   const loadHistory = (pageId: string) => {
@@ -765,6 +874,9 @@ function FlowWorkspace() {
     loadHistory(pageId);
     setSelectedId(null);
     setSelectedEdgeId(null);
+    setAnimationOpen(false);
+    if (animationMode === "presentation") stopPlayback();
+    else clearAnimationEffects();
     setInspectorOpen(false);
     setPagesOpen(false);
     setHistoryOpen(false);
@@ -866,9 +978,401 @@ function FlowWorkspace() {
     setDeleteConfirmation("");
   };
 
+  const activeSequence = animationSequences.find((s) => s.id === activeSequenceId) ?? null;
+
+  const clearAnimationEffects = useCallback(() => {
+    if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    animationTimerRef.current = null;
+    animationFrameRef.current = null;
+    setAnimationPlaying(false);
+    setAnimationPaused(false);
+    setAnimActiveIds(new Set());
+    setAnimCompletedIds(new Set());
+    setCurrentStepIndex(-1);
+  }, []);
+
+  const createSequence = () => {
+    const newSeq: AnimationSequence = {
+      id: `anim-${Date.now()}`,
+      name: `Sequence ${animationSequences.length + 1}`,
+      loop: false,
+      playbackSpeed: 1,
+      steps: [],
+    };
+    const next = [...animationSequences, newSeq];
+    setAnimationSequences(next);
+    setActiveSequenceId(newSeq.id);
+    clearAnimationEffects();
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const decisionNodesWithBranches = nodes.filter(
+    (node) =>
+      node.data.shape === "decision" &&
+      edges.filter((edgeItem) => edgeItem.source === node.id).length > 1,
+  );
+
+  const buildGuidedSequence = () => {
+    const start = nodes.find((node) => node.id === "start") ?? nodes.find(
+      (node) => !edges.some((edgeItem) => edgeItem.target === node.id),
+    );
+    if (!start) return;
+
+    const steps: AnimationStep[] = [{
+      id: `step-${Date.now()}-start`,
+      elementIds: [start.id],
+      duration: 900,
+      delayAfter: 180,
+    }];
+    const visited = new Set([start.id]);
+    let currentId = start.id;
+    for (let index = 0; index < 80; index += 1) {
+      const outgoing = edges.filter((edgeItem) => edgeItem.source === currentId);
+      if (!outgoing.length) break;
+      const chosenEdgeId = animationBranchChoices[currentId];
+      const nextEdge = outgoing.find((edgeItem) => edgeItem.id === chosenEdgeId) ?? outgoing[0];
+      if (visited.has(nextEdge.target)) break;
+      steps.push({
+        id: `step-${Date.now()}-${index}`,
+        elementIds: [nextEdge.id, nextEdge.target],
+        duration: 900,
+        delayAfter: 180,
+      });
+      visited.add(nextEdge.target);
+      currentId = nextEdge.target;
+    }
+
+    const sequence: AnimationSequence = {
+      id: `anim-${Date.now()}`,
+      name: `Guided flow ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`,
+      loop: false,
+      playbackSpeed: 1,
+      steps,
+    };
+    setAnimationSequences((previous) => [...previous, sequence]);
+    setActiveSequenceId(sequence.id);
+    clearAnimationEffects();
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const duplicateSequence = (seqId: string) => {
+    const seq = animationSequences.find((s) => s.id === seqId);
+    if (!seq) return;
+    const copy: AnimationSequence = {
+      ...JSON.parse(JSON.stringify(seq)),
+      id: `anim-${Date.now()}`,
+      name: `${seq.name} (copy)`,
+    };
+    setAnimationSequences((prev) => [...prev, copy]);
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const renameSequence = (seqId: string, name: string) => {
+    setAnimationSequences((prev) => prev.map((s) => (s.id === seqId ? { ...s, name } : s)));
+  };
+
+  const deleteSequence = (seqId: string) => {
+    clearAnimationEffects();
+    setAnimationSequences((prev) => {
+      const next = prev.filter((s) => s.id !== seqId);
+      if (activeSequenceId === seqId) {
+        setActiveSequenceId(next.length > 0 ? next[next.length - 1].id : null);
+      }
+      return next;
+    });
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const addStep = (elementIds: string[]) => {
+    if (!activeSequence) return;
+    const newStep: AnimationStep = {
+      id: `step-${Date.now()}`,
+      elementIds,
+      duration: 1200,
+      delayAfter: 300,
+    };
+    setAnimationSequences((prev) =>
+      prev.map((s) =>
+        s.id === activeSequenceId ? { ...s, steps: [...s.steps, newStep] } : s,
+      ),
+    );
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const removeStep = (stepId: string) => {
+    setAnimationSequences((prev) =>
+      prev.map((s) =>
+        s.id === activeSequenceId
+          ? { ...s, steps: s.steps.filter((st) => st.id !== stepId) }
+          : s,
+      ),
+    );
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const duplicateStep = (stepId: string) => {
+    if (!activeSequence) return;
+    const idx = activeSequence.steps.findIndex((st) => st.id === stepId);
+    if (idx === -1) return;
+    const copy: AnimationStep = {
+      ...JSON.parse(JSON.stringify(activeSequence.steps[idx])),
+      id: `step-${Date.now()}`,
+    };
+    setAnimationSequences((prev) =>
+      prev.map((s) =>
+        s.id === activeSequenceId
+          ? { ...s, steps: [...s.steps.slice(0, idx + 1), copy, ...s.steps.slice(idx + 1)] }
+          : s,
+      ),
+    );
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const moveStep = (stepId: string, direction: -1 | 1) => {
+    if (!activeSequence) return;
+    const idx = activeSequence.steps.findIndex((st) => st.id === stepId);
+    if (idx === -1) return;
+    const target = idx + direction;
+    if (target < 0 || target >= activeSequence.steps.length) return;
+    const steps = [...activeSequence.steps];
+    [steps[idx], steps[target]] = [steps[target], steps[idx]];
+    setAnimationSequences((prev) =>
+      prev.map((s) => (s.id === activeSequenceId ? { ...s, steps } : s)),
+    );
+    window.setTimeout(persistAnimationData, 0);
+  };
+
+  const updateStep = (stepId: string, patch: Partial<AnimationStep>) => {
+    setAnimationSequences((prev) =>
+      prev.map((s) =>
+        s.id === activeSequenceId
+          ? { ...s, steps: s.steps.map((st) => (st.id === stepId ? { ...st, ...patch } : st)) }
+          : s,
+      ),
+    );
+  };
+
+  const toggleLoop = () => {
+    if (!activeSequence) return;
+    setAnimationSequences((prev) =>
+      prev.map((s) =>
+        s.id === activeSequenceId ? { ...s, loop: !s.loop } : s,
+      ),
+    );
+  };
+
+  const setPlaybackSpeed = (speed: number) => {
+    if (!activeSequence) return;
+    setAnimationSequences((prev) =>
+      prev.map((s) => (s.id === activeSequenceId ? { ...s, playbackSpeed: speed } : s)),
+    );
+  };
+
+  const playStep = useCallback((stepIndex: number) => {
+    if (!activeSequence || stepIndex < 0 || stepIndex >= activeSequence.steps.length) {
+      clearAnimationEffects();
+      return;
+    }
+    const step = activeSequence.steps[stepIndex];
+    const speed = activeSequence.playbackSpeed || 1;
+    const effectiveDuration = step.duration / speed;
+
+    setCurrentStepIndex(stepIndex);
+    const edgeIds = step.elementIds.filter((id) => edges.some((e) => e.id === id));
+    // Playback is intentionally connector-only: nodes remain still and the
+    // travelling light can never extend beyond the actual SVG edge path.
+    setAnimActiveIds(new Set(edgeIds));
+    if (edgeIds.length > 0) {
+      setEdges((prev) =>
+        prev.map((e) =>
+          edgeIds.includes(e.id)
+            ? {
+                ...e,
+                className: `${removeAnimationEdgeClasses(e.className)} anim-edge-active`.trim(),
+                type: "flowing",
+                data: { ...e.data, _flowDuration: effectiveDuration },
+                animated: false,
+                style: {
+                  ...e.style,
+                  stroke: "#64748b",
+                  strokeWidth: 1.7,
+                  strokeDasharray: undefined,
+                },
+              }
+            : e,
+        ),
+      );
+    }
+
+    animationTimerRef.current = setTimeout(() => {
+      setAnimCompletedIds((prev) => {
+        const next = new Set(prev);
+        edgeIds.forEach((id) => next.add(id));
+        return next;
+      });
+      setAnimActiveIds(new Set());
+
+      const edgeIdsCompleted = step.elementIds.filter((id) => edges.some((e) => e.id === id));
+      if (edgeIdsCompleted.length > 0) {
+        setEdges((prev) =>
+          prev.map((e) =>
+            edgeIdsCompleted.includes(e.id)
+              ? {
+                  ...e,
+                  className: `${removeAnimationEdgeClasses(e.className)} anim-edge-completed`.trim(),
+                  type: "smoothstep",
+                  data: { ...e.data, _flowDuration: undefined },
+                  animated: false,
+                  style: { ...e.style, stroke: "#94a3b8", strokeWidth: 1.7, strokeDasharray: undefined },
+                }
+              : e,
+          ),
+        );
+      }
+
+      const delay = (step.delayAfter || 300) / speed;
+      animationTimerRef.current = setTimeout(() => {
+        const nextIndex = stepIndex + 1;
+        if (nextIndex < activeSequence.steps.length) {
+          playStep(nextIndex);
+        } else if (activeSequence.loop) {
+          setAnimCompletedIds(new Set());
+          setCurrentStepIndex(-1);
+          playStep(0);
+        } else {
+          clearAnimationEffects();
+        }
+      }, delay);
+    }, effectiveDuration);
+  }, [activeSequence, edges, setEdges, clearAnimationEffects]);
+
+  const startPlayback = useCallback(() => {
+    if (!activeSequence || activeSequence.steps.length === 0) return;
+    setAnimationMode("presentation");
+    setCurrentStepIndex(-1);
+    setAnimActiveIds(new Set());
+    setAnimCompletedIds(new Set());
+    playStep(0);
+  }, [activeSequence, playStep]);
+
+  const pausePlayback = () => {
+    if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+    setAnimationPaused(true);
+    setAnimationPlaying(false);
+  };
+
+  const resumePlayback = useCallback(() => {
+    if (!animationPaused || currentStepIndex < 0) return;
+    setAnimationPaused(false);
+    const speed = activeSequence?.playbackSpeed || 1;
+    const step = activeSequence?.steps[currentStepIndex];
+    if (!step) return;
+    const remaining = step.duration / speed;
+    animationTimerRef.current = setTimeout(() => {
+      setAnimCompletedIds((prev) => {
+        const next = new Set(prev);
+        step.elementIds
+          .filter((id) => edges.some((edge) => edge.id === id))
+          .forEach((id) => next.add(id));
+        return next;
+      });
+      setAnimActiveIds(new Set());
+      const delay = (step.delayAfter || 300) / speed;
+      animationTimerRef.current = setTimeout(() => {
+        const nextIndex = currentStepIndex + 1;
+        if (nextIndex < (activeSequence?.steps.length || 0)) {
+          playStep(nextIndex);
+        } else if (activeSequence?.loop) {
+          setAnimCompletedIds(new Set());
+          setCurrentStepIndex(-1);
+          playStep(0);
+        } else {
+          clearAnimationEffects();
+        }
+      }, delay);
+    }, remaining);
+  }, [animationPaused, currentStepIndex, activeSequence, playStep, clearAnimationEffects, edges]);
+
+  const goToStep = (stepIndex: number) => {
+    if (!activeSequence || stepIndex < 0 || stepIndex >= activeSequence.steps.length) return;
+    clearAnimationEffects();
+    setAnimCompletedIds(new Set());
+    if (stepIndex > 0) {
+      const completed = new Set<string>();
+      for (let i = 0; i < stepIndex; i++) {
+        activeSequence.steps[i].elementIds
+          .filter((id) => edges.some((edge) => edge.id === id))
+          .forEach((id) => completed.add(id));
+      }
+      setAnimCompletedIds(completed);
+    }
+    setCurrentStepIndex(stepIndex);
+  };
+
+  const previousStep = () => {
+    if (!activeSequence) return;
+    const prev = Math.max(0, currentStepIndex - 1);
+    clearAnimationEffects();
+    goToStep(prev);
+  };
+
+  const nextStep = useCallback(() => {
+    if (!activeSequence) return;
+    const nxt = Math.min(activeSequence.steps.length - 1, currentStepIndex + 1);
+    clearAnimationEffects();
+    goToStep(nxt);
+  }, [activeSequence, currentStepIndex, clearAnimationEffects]);
+
+  const stopPlayback = useCallback(() => {
+    clearAnimationEffects();
+    setAnimationMode("editing");
+    setEdges((prev) =>
+      prev.map((e) => ({
+        ...e,
+        className: removeAnimationEdgeClasses(e.className),
+        type: "smoothstep",
+        data: { ...e.data, _flowDuration: undefined },
+        animated: false,
+        style: { ...e.style, stroke: "#64748b", strokeWidth: 1.7, strokeDasharray: undefined },
+      })),
+    );
+  }, [clearAnimationEffects, setEdges]);
+
+  const exitPresentationMode = useCallback(() => {
+    stopPlayback();
+  }, [stopPlayback]);
+
+  useEffect(() => {
+    if (animationMode !== "presentation") return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") exitPresentationMode();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [animationMode, exitPresentationMode]);
+
+  useEffect(() => {
+    return () => {
+      if (animationTimerRef.current) clearTimeout(animationTimerRef.current);
+      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    };
+  }, []);
+
+  const tryAddElementToSequence = useCallback((elementId: string) => {
+    if (!activeSequence || animationMode !== "editing") return;
+    const lastStep = activeSequence.steps[activeSequence.steps.length - 1];
+    if (lastStep && lastStep.elementIds.length < 2 && !lastStep.elementIds.includes(elementId)) {
+      updateStep(lastStep.id, { elementIds: [...lastStep.elementIds, elementId] });
+    } else {
+      addStep([elementId]);
+    }
+  }, [activeSequence, animationMode]);
+
   const saveDiagram = () => {
     persistCurrentPage();
     persistPageIndex(pages, activePageId, trashedPages);
+    persistAnimationData();
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1400);
   };
@@ -1511,11 +2015,25 @@ function FlowWorkspace() {
             <span className="button-label">{exporting ? "Rendering…" : "Export PNG"}</span>
           </button>
           <button
+            className={`button secondary ${animationOpen ? "active" : ""}`}
+            onClick={() => {
+              setAnimationOpen((open) => !open);
+              setPagesOpen(false);
+              setInspectorOpen(false);
+              setHistoryOpen(false);
+            }}
+            title="Create and play highlight animation sequences"
+          >
+            <List size={15} />
+            <span className="button-label">Flow Animation</span>
+          </button>
+          <button
             className={`button secondary tool-duplicate ${historyOpen ? "active" : ""}`}
             onClick={() => {
               setHistoryOpen((open) => !open);
               setPagesOpen(false);
               setInspectorOpen(false);
+              setAnimationOpen(false);
             }}
             title="Open auto-save version history"
           >
@@ -1676,13 +2194,38 @@ function FlowWorkspace() {
         </div>
       </aside>
 
+      {animationMode === "presentation" && (
+        <div className="presentation-bar">
+          <span className="presentation-bar-label">
+            Presentation Mode — Step {currentStepIndex + 1} of {activeSequence?.steps.length ?? 0}
+            {activeSequence && currentStepIndex >= 0 && currentStepIndex < activeSequence.steps.length ? (
+              <> &mdash; {activeSequence.steps[currentStepIndex].elementIds.map((eid) => {
+                const n = nodes.find((nd) => nd.id === eid);
+                const ed = edges.find((eg) => eg.id === eid);
+                return n ? n.data.label : ed ? `Connection: ${ed.source} → ${ed.target}` : eid;
+              }).join(", ")}</>
+            ) : null}
+          </span>
+          <button className="button secondary" onClick={stopPlayback} title="Stop presentation (Esc)">
+            <Square size={14} /> <span className="button-label">Stop</span>
+          </button>
+        </div>
+      )}
       <section className="canvas-wrap" aria-label="CollieAI architecture canvas">
         <ReactFlow
-          nodes={nodes}
+          nodes={nodes.map((node) => {
+            if (!animActiveIds.size && !animCompletedIds.size) return node;
+            let state: "inactive" | "active" | "completed" = "inactive";
+            if (animActiveIds.has(node.id)) state = "active";
+            else if (animCompletedIds.has(node.id)) state = "completed";
+            return { ...node, data: { ...node.data, _animState: state } };
+          })}
           edges={edges}
           nodeTypes={nodeTypes}
-          onNodesChange={onNodesChange}
+          edgeTypes={edgeTypes}
+          onNodesChange={animationMode === "presentation" ? () => {} : onNodesChange}
           onNodesDelete={(deletedNodes) => {
+            if (animationMode === "presentation") return;
             if (deletedNodes.some((node) => node.data.shape === "legend")) {
               const deletedIds = new Set(deletedNodes.map((node) => node.id));
               setNodes((current) =>
@@ -1690,20 +2233,34 @@ function FlowWorkspace() {
               );
             }
           }}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
+          onEdgesChange={animationMode === "presentation" ? () => {} : onEdgesChange}
+          onConnect={animationMode === "presentation" ? () => {} : onConnect}
           connectionMode={ConnectionMode.Loose}
+          nodesDraggable={animationMode !== "presentation"}
+          nodesFocusable={animationMode !== "presentation"}
+          elementsSelectable={animationMode !== "presentation"}
           onNodeClick={(_, node) => {
+            if (animationMode === "presentation") return;
+            if (animationOpen && activeSequence) {
+              tryAddElementToSequence(node.id);
+              return;
+            }
             setSelectedId(node.id);
             setSelectedEdgeId(null);
             setInspectorOpen(true);
           }}
           onEdgeClick={(_, edgeItem) => {
+            if (animationMode === "presentation") return;
+            if (animationOpen && activeSequence) {
+              tryAddElementToSequence(edgeItem.id);
+              return;
+            }
             setSelectedEdgeId(edgeItem.id);
             setSelectedId(null);
             setInspectorOpen(true);
           }}
           onPaneClick={() => {
+            if (animationMode === "presentation") return;
             setSelectedId(null);
             setSelectedEdgeId(null);
           }}
@@ -1712,7 +2269,7 @@ function FlowWorkspace() {
           minZoom={0.18}
           maxZoom={1.5}
           elevateNodesOnSelect={false}
-          deleteKeyCode={["Backspace", "Delete"]}
+          deleteKeyCode={animationMode === "presentation" ? [] : ["Backspace", "Delete"]}
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#cbd5e1" />
@@ -1742,6 +2299,226 @@ function FlowWorkspace() {
           </Panel>
         </ReactFlow>
       </section>
+
+      <aside className={`animation-panel ${animationOpen ? "is-open" : ""}`} aria-label="Flow animation sequencer">
+        <div className="inspector-head">
+          <div>
+            <span>FLOW ANIMATION</span>
+            <strong>{activeSequence ? activeSequence.name : "No sequence selected"}</strong>
+          </div>
+          <button aria-label="Close animation panel" onClick={() => { setAnimationOpen(false); if (animationMode === "presentation") stopPlayback(); }}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="animation-panel-body">
+          {/* Sequence selector */}
+          <div className="animation-sequence-selector">
+            <select
+              value={activeSequenceId ?? ""}
+              onChange={(e) => {
+                clearAnimationEffects();
+                setActiveSequenceId(e.target.value || null);
+              }}
+              aria-label="Select animation sequence"
+            >
+              {animationSequences.length === 0 && <option value="">No sequences</option>}
+              {animationSequences.map((seq) => (
+                <option key={seq.id} value={seq.id}>{seq.name}</option>
+              ))}
+            </select>
+            <div className="animation-sequence-actions">
+              <button className="button secondary" onClick={createSequence} title="Create new sequence"><Plus size={14} /></button>
+              {activeSequence && (
+                <>
+                  <button className="button secondary" onClick={() => duplicateSequence(activeSequence.id)} title="Duplicate sequence"><Copy size={14} /></button>
+                  <button className="button secondary" onClick={() => {
+                    const name = window.prompt("Rename sequence", activeSequence.name);
+                    if (name?.trim()) renameSequence(activeSequence.id, name.trim());
+                  }} title="Rename sequence"><FileText size={14} /></button>
+                  <button className="button secondary" onClick={() => {
+                    if (window.confirm(`Delete "${activeSequence.name}"?`)) deleteSequence(activeSequence.id);
+                  }} title="Delete sequence"><Trash2 size={14} /></button>
+                </>
+              )}
+            </div>
+          </div>
+
+          <section className="guided-flow-builder">
+            <div>
+              <span>GUIDED PATH</span>
+              <strong>Choose each decision outcome</strong>
+              <p>Each diamond follows the selected connection label when the sequence is generated.</p>
+            </div>
+            {decisionNodesWithBranches.length ? (
+              <div className="guided-branch-list">
+                {decisionNodesWithBranches.map((node) => {
+                  const outgoing = edges.filter((edgeItem) => edgeItem.source === node.id);
+                  const selectedEdgeId = animationBranchChoices[node.id] ?? outgoing[0].id;
+                  return (
+                    <label key={node.id}>
+                      <span>{node.data.label}</span>
+                      <select
+                        value={selectedEdgeId}
+                        onChange={(event) =>
+                          setAnimationBranchChoices((previous) => ({
+                            ...previous,
+                            [node.id]: event.target.value,
+                          }))
+                        }
+                      >
+                        {outgoing.map((edgeItem, index) => (
+                          <option key={edgeItem.id} value={edgeItem.id}>
+                            {edgeItem.label || `Option ${index + 1}`}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="guided-flow-empty">No branching diamonds are available on this page.</p>
+            )}
+            <button className="guided-flow-create" onClick={buildGuidedSequence}>
+              <Route size={15} /> Generate selected flow
+            </button>
+          </section>
+
+          {activeSequence && (
+            <>
+              {/* Step list */}
+              <div className="animation-step-list">
+                <div className="animation-step-list-header">
+                  <span>Steps ({activeSequence.steps.length})</span>
+                  {activeSequence.steps.length > 0 && (
+                    <button className="button secondary" onClick={() => {
+                      if (window.confirm("Clear all steps?")) {
+                        setAnimationSequences((prev) =>
+                          prev.map((s) => s.id === activeSequenceId ? { ...s, steps: [] } : s)
+                        );
+                        window.setTimeout(persistAnimationData, 0);
+                      }
+                    }} title="Clear all steps"><Trash2 size={12} /> Clear</button>
+                  )}
+                </div>
+                {activeSequence.steps.length === 0 && (
+                  <div className="animation-empty">
+                    <List size={22} />
+                    <strong>No steps yet</strong>
+                    <p>Click nodes or connectors on the diagram to add them to this sequence.</p>
+                  </div>
+                )}
+                <div className="animation-steps">
+                  {activeSequence.steps.map((step, index) => (
+                    <div key={step.id} className={`animation-step ${currentStepIndex === index && animationMode === "presentation" ? "is-current" : ""}`}>
+                      <div className="animation-step-handle">
+                        <span className="animation-step-number">{index + 1}</span>
+                      </div>
+                      <div className="animation-step-content">
+                        <div className="animation-step-elements">
+                          {step.elementIds.map((eid) => {
+                            const n = nodes.find((nd) => nd.id === eid);
+                            const ed = edges.find((eg) => eg.id === eid);
+                            const missing = !n && !ed;
+                            return (
+                              <span key={eid} className={`animation-step-element ${missing ? "is-missing" : ""}`} title={eid}>
+                                {missing ? "⚠ Missing element" : n ? n.data.label : `Connection: ${ed!.source} → ${ed!.target}`}
+                              </span>
+                            );
+                          })}
+                        </div>
+                        <div className="animation-step-controls">
+                          <div className="animation-step-timing">
+                            <label>
+                              <span>Dur.</span>
+                              <input
+                                type="range"
+                                min="200" max="4000" step="100"
+                                value={step.duration}
+                                onChange={(e) => updateStep(step.id, { duration: Number(e.target.value) })}
+                              />
+                              <output>{(step.duration / 1000).toFixed(1)}s</output>
+                            </label>
+                            <label>
+                              <span>Delay</span>
+                              <input
+                                type="range"
+                                min="0" max="3000" step="100"
+                                value={step.delayAfter}
+                                onChange={(e) => updateStep(step.id, { delayAfter: Number(e.target.value) })}
+                              />
+                              <output>{(step.delayAfter / 1000).toFixed(1)}s</output>
+                            </label>
+                          </div>
+                          <div className="animation-step-actions">
+                            <button className="button secondary" onClick={() => moveStep(step.id, -1)} disabled={index === 0} title="Move up"><SkipBack size={12} /></button>
+                            <button className="button secondary" onClick={() => moveStep(step.id, 1)} disabled={index === activeSequence.steps.length - 1} title="Move down"><SkipForward size={12} /></button>
+                            <button className="button secondary" onClick={() => duplicateStep(step.id)} title="Duplicate step"><Copy size={12} /></button>
+                            <button className="button secondary" onClick={() => removeStep(step.id)} title="Remove step"><X size={12} /></button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Playback controls */}
+              <div className="animation-playback">
+                <div className="animation-playback-main">
+                  <button className="button secondary" onClick={previousStep} disabled={currentStepIndex <= 0 || animationPlaying} title="Previous step"><SkipBack size={15} /></button>
+                  {animationPaused ? (
+                    <button className="button primary" onClick={resumePlayback} title="Resume"><Play size={15} /> <span className="button-label">Resume</span></button>
+                  ) : animationPlaying ? (
+                    <button className="button primary" onClick={pausePlayback} title="Pause"><Pause size={15} /> <span className="button-label">Pause</span></button>
+                  ) : (
+                    <button className="button primary" onClick={startPlayback} disabled={activeSequence.steps.length === 0} title="Play"><Play size={15} /> <span className="button-label">Play</span></button>
+                  )}
+                  <button className="button secondary" onClick={nextStep} disabled={currentStepIndex >= activeSequence.steps.length - 1 || animationPlaying} title="Next step"><SkipForward size={15} /></button>
+                  <button className="button secondary" onClick={stopPlayback} disabled={!animationPlaying && !animationPaused} title="Stop"><Square size={15} /></button>
+                </div>
+                <div className="animation-playback-settings">
+                  <label className="animation-loop-toggle">
+                    <input type="checkbox" checked={activeSequence.loop} onChange={toggleLoop} />
+                    <Repeat size={13} />
+                    <span>Loop</span>
+                  </label>
+                  <label className="animation-speed">
+                    <span>Speed</span>
+                    <select value={activeSequence.playbackSpeed} onChange={(e) => setPlaybackSpeed(Number(e.target.value))}>
+                      <option value={0.5}>0.5×</option>
+                      <option value={0.75}>0.75×</option>
+                      <option value={1}>1×</option>
+                      <option value={1.5}>1.5×</option>
+                      <option value={2}>2×</option>
+                    </select>
+                  </label>
+                </div>
+                {currentStepIndex >= 0 && (
+                  <div className="animation-progress">
+                    Step {currentStepIndex + 1} of {activeSequence.steps.length}
+                    {activeSequence.steps[currentStepIndex] && (
+                      <> &mdash; {activeSequence.steps[currentStepIndex].elementIds.map((eid) => {
+                        const n = nodes.find((nd) => nd.id === eid);
+                        const ed = edges.find((eg) => eg.id === eid);
+                        return n ? n.data.label : ed ? `${ed.source} → ${ed.target}` : eid;
+                      }).join(", ")}</>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+          {!animationSequences.length && (
+            <div className="animation-empty">
+              <List size={22} />
+              <strong>No animation sequences</strong>
+              <p>Create a sequence to get started. Then click nodes and connectors in the order you want them to highlight.</p>
+              <button className="button primary" onClick={createSequence}><Plus size={15} /> Create first sequence</button>
+            </div>
+          )}
+        </div>
+      </aside>
 
       <aside className={`inspector ${inspectorOpen && (selectedNode || selectedEdge) ? "is-open" : ""}`}>
         <div className="inspector-head">
