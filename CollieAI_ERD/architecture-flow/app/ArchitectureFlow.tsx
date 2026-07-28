@@ -38,6 +38,7 @@ import {
   GitBranch,
   GraduationCap,
   HardDrive,
+  History as HistoryIcon,
   LayoutDashboard,
   LoaderCircle,
   Maximize2,
@@ -73,6 +74,13 @@ type NodeShape =
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
+type DiagramHistoryEntry = {
+  id: string;
+  timestamp: string;
+  summary: string;
+  nodes: ArchitectureNode[];
+  edges: Edge[];
+};
 type NodeIcon =
   | "play"
   | "app"
@@ -232,8 +240,8 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
         <svg className="cloud-art" viewBox="0 0 290 116" aria-hidden="true">
           <defs>
             <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="color-mix(in srgb, #fff 88%, var(--node-soft))" />
-              <stop offset="100%" stop-color="color-mix(in srgb, #fff 50%, var(--node-soft))" />
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#ffffff" />
             </linearGradient>
           </defs>
           <path fill="url(#cloudFill)" d="M34 100 C12 100 4 84 4 66 C4 44 16 30 34 28 C36 14 52 4 72 4 C94 4 108 16 114 28 C124 12 144 4 168 4 C198 4 218 20 226 36 C250 34 286 46 286 74 C286 96 264 100 244 100 Z" />
@@ -500,6 +508,29 @@ const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
 const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
 const pageStorageKey = (pageId: string) => `collieai-architecture-page-${pageId}`;
+const historyStorageKey = (pageId: string) => `collieai-architecture-history-${pageId}`;
+const MAX_HISTORY_ENTRIES = 40;
+
+const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
+  JSON.stringify({ nodes, edges }, (key, value) =>
+    ["selected", "dragging", "resizing", "measured"].includes(key) ? undefined : value,
+  );
+
+const describeDiagramChange = (
+  previous: DiagramHistoryEntry | undefined,
+  nodes: ArchitectureNode[],
+  edges: Edge[],
+) => {
+  if (!previous) return "Created first saved version";
+  const nodeDelta = nodes.length - previous.nodes.length;
+  const edgeDelta = edges.length - previous.edges.length;
+  const changes: string[] = [];
+  if (nodeDelta > 0) changes.push(`Added ${nodeDelta} component${nodeDelta === 1 ? "" : "s"}`);
+  if (nodeDelta < 0) changes.push(`Removed ${Math.abs(nodeDelta)} component${nodeDelta === -1 ? "" : "s"}`);
+  if (edgeDelta > 0) changes.push(`Added ${edgeDelta} connection${edgeDelta === 1 ? "" : "s"}`);
+  if (edgeDelta < 0) changes.push(`Removed ${Math.abs(edgeDelta)} connection${edgeDelta === -1 ? "" : "s"}`);
+  return changes.join(" · ") || "Updated layout or content";
+};
 
 function FlowWorkspace() {
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureNode>(initialNodes);
@@ -534,6 +565,9 @@ function FlowWorkspace() {
   const [trashedPages, setTrashedPages] = useState<DiagramPage[]>([]);
   const [activePageId, setActivePageId] = useState("main");
   const [pagesOpen, setPagesOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<DiagramHistoryEntry[]>([]);
+  const [autoSaveState, setAutoSaveState] = useState<"saved" | "saving">("saved");
   const [trashOpen, setTrashOpen] = useState(false);
   const [deleteIntent, setDeleteIntent] = useState<DeleteIntent | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -542,6 +576,8 @@ function FlowWorkspace() {
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
+  const historyReadyRef = useRef(false);
+  const lastHistorySignatureRef = useRef("");
   const { fitView, screenToFlowPosition } = useReactFlow();
 
   useEffect(() => {
@@ -565,6 +601,14 @@ function FlowWorkspace() {
       setPages(restoredPages);
       setTrashedPages(parsedIndex?.trashedPages ?? []);
       setActivePageId(restoredActive);
+      const storedHistory = window.localStorage.getItem(historyStorageKey(restoredActive));
+      const restoredHistory = storedHistory
+        ? (JSON.parse(storedHistory) as DiagramHistoryEntry[])
+        : [];
+      setHistoryEntries(restoredHistory);
+      lastHistorySignatureRef.current = restoredHistory[0]
+        ? diagramSignature(restoredHistory[0].nodes, restoredHistory[0].edges)
+        : "";
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
         setNodes(synchronizeLegendKey(parsed.nodes ?? []));
@@ -576,6 +620,9 @@ function FlowWorkspace() {
     } catch {
       window.localStorage.removeItem(PAGE_INDEX_KEY);
     }
+    window.setTimeout(() => {
+      historyReadyRef.current = true;
+    }, 0);
   }, [setEdges, setNodes]);
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
@@ -672,6 +719,20 @@ function FlowWorkspace() {
     }
   };
 
+  const loadHistory = (pageId: string) => {
+    try {
+      const stored = window.localStorage.getItem(historyStorageKey(pageId));
+      const nextHistory = stored ? (JSON.parse(stored) as DiagramHistoryEntry[]) : [];
+      setHistoryEntries(nextHistory);
+      lastHistorySignatureRef.current = nextHistory[0]
+        ? diagramSignature(nextHistory[0].nodes, nextHistory[0].edges)
+        : "";
+    } catch {
+      setHistoryEntries([]);
+      lastHistorySignatureRef.current = "";
+    }
+  };
+
   const loadPage = (pageId: string) => {
     const stored =
       window.localStorage.getItem(pageStorageKey(pageId)) ??
@@ -698,12 +759,18 @@ function FlowWorkspace() {
     }
     persistCurrentPage();
     persistPageIndex(pages, pageId);
+    historyReadyRef.current = false;
     setActivePageId(pageId);
     loadPage(pageId);
+    loadHistory(pageId);
     setSelectedId(null);
     setSelectedEdgeId(null);
     setInspectorOpen(false);
     setPagesOpen(false);
+    setHistoryOpen(false);
+    window.setTimeout(() => {
+      historyReadyRef.current = true;
+    }, 0);
     window.setTimeout(() => fitView({ padding: 0.12, duration: 450 }), 40);
   };
 
@@ -718,6 +785,8 @@ function FlowWorkspace() {
     persistPageIndex(nextPages, page.id);
     setPages(nextPages);
     setActivePageId(page.id);
+    setHistoryEntries([]);
+    lastHistorySignatureRef.current = "";
     setNodes([]);
     setEdges([]);
     setSelectedId(null);
@@ -782,6 +851,7 @@ function FlowWorkspace() {
   const permanentlyDeletePage = (page: DiagramPage) => {
     const nextTrashedPages = trashedPages.filter((item) => item.id !== page.id);
     window.localStorage.removeItem(pageStorageKey(page.id));
+    window.localStorage.removeItem(historyStorageKey(page.id));
     setTrashedPages(nextTrashedPages);
     persistPageIndex(pages, activePageId, nextTrashedPages);
   };
@@ -801,6 +871,94 @@ function FlowWorkspace() {
     persistPageIndex(pages, activePageId, trashedPages);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1400);
+  };
+
+  useEffect(() => {
+    if (!historyReadyRef.current) return;
+    setAutoSaveState("saving");
+    const autoSaveTimer = window.setTimeout(() => {
+      const signature = diagramSignature(nodes, edges);
+      const cleanDiagram = JSON.parse(signature) as {
+        nodes: ArchitectureNode[];
+        edges: Edge[];
+      };
+      window.localStorage.setItem(
+        pageStorageKey(activePageId),
+        JSON.stringify(cleanDiagram),
+      );
+      if (activePageId === "main") {
+        window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(cleanDiagram));
+      }
+      window.localStorage.setItem(
+        PAGE_INDEX_KEY,
+        JSON.stringify({ pages, trashedPages, activePageId }),
+      );
+
+      if (signature !== lastHistorySignatureRef.current) {
+        const entry: DiagramHistoryEntry = {
+          id: `history-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          summary: describeDiagramChange(historyEntries[0], cleanDiagram.nodes, cleanDiagram.edges),
+          nodes: cleanDiagram.nodes,
+          edges: cleanDiagram.edges,
+        };
+        const nextHistory = [entry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
+        setHistoryEntries(nextHistory);
+        window.localStorage.setItem(historyStorageKey(activePageId), JSON.stringify(nextHistory));
+        lastHistorySignatureRef.current = signature;
+      }
+      setAutoSaveState("saved");
+    }, 900);
+
+    return () => window.clearTimeout(autoSaveTimer);
+  }, [activePageId, edges, historyEntries, nodes, pages, trashedPages]);
+
+  const restoreHistoryEntry = (entry: DiagramHistoryEntry) => {
+    const currentSignature = diagramSignature(nodes, edges);
+    const currentDiagram = JSON.parse(currentSignature) as {
+      nodes: ArchitectureNode[];
+      edges: Edge[];
+    };
+    const recoveryEntry: DiagramHistoryEntry = {
+      id: `history-${Date.now()}-recovery`,
+      timestamp: new Date().toISOString(),
+      summary: "Before restoring an earlier version",
+      nodes: currentDiagram.nodes,
+      edges: currentDiagram.edges,
+    };
+    const restoredEntry: DiagramHistoryEntry = {
+      ...entry,
+      id: `history-${Date.now()}-restored`,
+      timestamp: new Date().toISOString(),
+      summary: `Restored version from ${new Date(entry.timestamp).toLocaleString()}`,
+    };
+    const nextHistory = [restoredEntry, recoveryEntry, ...historyEntries].slice(
+      0,
+      MAX_HISTORY_ENTRIES,
+    );
+    historyReadyRef.current = false;
+    setNodes(synchronizeLegendKey(entry.nodes));
+    setEdges(entry.edges);
+    setHistoryEntries(nextHistory);
+    lastHistorySignatureRef.current = diagramSignature(entry.nodes, entry.edges);
+    window.localStorage.setItem(
+      pageStorageKey(activePageId),
+      JSON.stringify({ nodes: entry.nodes, edges: entry.edges }),
+    );
+    window.localStorage.setItem(historyStorageKey(activePageId), JSON.stringify(nextHistory));
+    if (activePageId === "main") {
+      window.localStorage.setItem(
+        LEGACY_STORAGE_KEY,
+        JSON.stringify({ nodes: entry.nodes, edges: entry.edges }),
+      );
+    }
+    setSelectedId(null);
+    setSelectedEdgeId(null);
+    setInspectorOpen(false);
+    window.setTimeout(() => {
+      historyReadyRef.current = true;
+      fitView({ padding: 0.12, duration: 450 });
+    }, 40);
   };
 
   const exportPng = async () => {
@@ -914,10 +1072,31 @@ function FlowWorkspace() {
     viewport.querySelectorAll<SVGPathElement>(".decision-art path").forEach((path) => {
       const node = path.closest<HTMLElement>(".architecture-node");
       const stroke = node
-        ? getComputedStyle(node).getPropertyValue("--node-line").trim()
-        : "#94a3b8";
+        ? getComputedStyle(node).getPropertyValue("--node").trim()
+        : "#0ea5c6";
       path.setAttribute("fill", "#ffffff");
-      path.setAttribute("stroke", stroke || "#94a3b8");
+      path.setAttribute("stroke", stroke || "#0ea5c6");
+      path.setAttribute("stroke-width", "2.5");
+    });
+    viewport.querySelectorAll<SVGElement>(".database-art .db-body").forEach((path) => {
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      path.setAttribute("fill", "#ffffff");
+      path.setAttribute("stroke", color || "#0ea5c6");
+      path.setAttribute("stroke-width", "2");
+    });
+    viewport.querySelectorAll<SVGElement>(".database-art .db-top").forEach((path) => {
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      path.setAttribute("fill", "#ffffff");
+      path.setAttribute("stroke", color || "#0ea5c6");
+      path.setAttribute("stroke-width", "2");
+    });
+    viewport.querySelectorAll<SVGElement>(".cloud-art path").forEach((path) => {
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      path.setAttribute("fill", "#ffffff");
+      path.setAttribute("stroke", color || "#0ea5c6");
       path.setAttribute("stroke-width", "2.5");
     });
     viewport.querySelectorAll<SVGRectElement>(".react-flow__edge-textbg").forEach((rect) => {
@@ -1271,6 +1450,41 @@ function FlowWorkspace() {
           >
             <FolderOpen size={15} /> <span className="button-label">Pages ({pages.length})</span>
           </button>
+          <button className="button secondary export-button" onClick={() => setDocsExportOpen(true)} disabled={exporting} title="Export a readable one-page document PNG">
+            {exporting ? <LoaderCircle className="spin" size={15} /> : <FileText size={15} />}
+            <span className="button-label">Docs PNG</span>
+          </button>
+          <button className="button secondary export-button" onClick={exportPng} disabled={exporting} title="Export a smart-cropped high-resolution PNG">
+            {exporting ? <LoaderCircle className="spin" size={15} /> : <Download size={15} />}
+            <span className="button-label">{exporting ? "Rendering…" : "Export PNG"}</span>
+          </button>
+          <button
+            className={`button secondary ${historyOpen ? "active" : ""}`}
+            onClick={() => {
+              setHistoryOpen((open) => !open);
+              setPagesOpen(false);
+              setInspectorOpen(false);
+            }}
+            title="Open auto-save version history"
+          >
+            <HistoryIcon size={15} />
+            <span className="button-label">History ({historyEntries.length})</span>
+          </button>
+          <button className="button primary" onClick={saveDiagram}>
+            {autoSaveState === "saving" ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
+            <span className="button-label">
+              {autoSaveState === "saving" ? "Saving…" : saved ? "Saved" : "Auto-saved"}
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <nav className="tool-navbar" aria-label="Diagram tools">
+        <div className="tool-navbar-label">
+          <span>DIAGRAM TOOLS</span>
+          <strong>Build and organize your architecture</strong>
+        </div>
+        <div className="tool-navbar-actions">
           <button className="button secondary" onClick={() => setCreatorOpen(true)}>
             <Plus size={15} /> <span className="button-label">Add node</span>
           </button>
@@ -1288,16 +1502,7 @@ function FlowWorkspace() {
             <RefreshCcw size={15} /> <span className="button-label">Reset</span>
           </button>
           <button
-            className="button secondary export-button"
-            onClick={() => setDocsExportOpen(true)}
-            disabled={exporting}
-            title="Export a readable one-page document PNG"
-          >
-            {exporting ? <LoaderCircle className="spin" size={15} /> : <FileText size={15} />}
-            <span className="button-label">Docs PNG</span>
-          </button>
-          <button
-            className="button secondary export-button"
+            className="button secondary export-button tool-duplicate"
             onClick={exportPng}
             disabled={exporting}
             title="Export a smart-cropped high-resolution PNG"
@@ -1305,11 +1510,26 @@ function FlowWorkspace() {
             {exporting ? <LoaderCircle className="spin" size={15} /> : <Download size={15} />}
             <span className="button-label">{exporting ? "Rendering…" : "Export PNG"}</span>
           </button>
-          <button className="button primary" onClick={saveDiagram}>
-            <Check size={15} /> <span className="button-label">{saved ? "Saved" : "Save layout"}</span>
+          <button
+            className={`button secondary tool-duplicate ${historyOpen ? "active" : ""}`}
+            onClick={() => {
+              setHistoryOpen((open) => !open);
+              setPagesOpen(false);
+              setInspectorOpen(false);
+            }}
+            title="Open auto-save version history"
+          >
+            <HistoryIcon size={15} />
+            <span className="button-label">History ({historyEntries.length})</span>
+          </button>
+          <button className="button primary tool-duplicate" onClick={saveDiagram}>
+            {autoSaveState === "saving" ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
+            <span className="button-label">
+              {autoSaveState === "saving" ? "Savingâ€¦" : saved ? "Saved" : "Auto-saved"}
+            </span>
           </button>
         </div>
-      </header>
+      </nav>
 
       <aside className={`page-manager ${pagesOpen ? "is-open" : ""}`} aria-label="Architecture pages">
         <div className="inspector-head">
@@ -1399,6 +1619,60 @@ function FlowWorkspace() {
               </div>
             ) : null}
           </section>
+        </div>
+      </aside>
+
+      <aside className={`history-panel ${historyOpen ? "is-open" : ""}`} aria-label="Version history">
+        <div className="inspector-head">
+          <div>
+            <span>VERSION HISTORY</span>
+            <strong>Auto-saved changes</strong>
+          </div>
+          <button aria-label="Close history" onClick={() => setHistoryOpen(false)}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className="history-panel-body">
+          <div className="history-autosave-status">
+            {autoSaveState === "saving" ? <LoaderCircle className="spin" size={15} /> : <Check size={15} />}
+            <span>
+              <strong>{autoSaveState === "saving" ? "Saving changes" : "All changes saved"}</strong>
+              <small>Versions are grouped after you pause editing.</small>
+            </span>
+          </div>
+          {historyEntries.length ? (
+            <div className="history-list">
+              {historyEntries.map((entry, index) => (
+                <article className="history-entry" key={entry.id}>
+                  <div className="history-entry-marker" />
+                  <div className="history-entry-copy">
+                    <strong>{index === 0 ? "Current version" : entry.summary}</strong>
+                    <time dateTime={entry.timestamp}>
+                      {new Date(entry.timestamp).toLocaleString([], {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                    {index === 0 ? <small>{entry.summary}</small> : null}
+                    <small>{entry.nodes.length} components Â· {entry.edges.length} connections</small>
+                  </div>
+                  {index > 0 ? (
+                    <button onClick={() => restoreHistoryEntry(entry)} title="Restore this version">
+                      <RotateCcw size={14} /> Restore
+                    </button>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="history-empty">
+              <HistoryIcon size={22} />
+              <strong>No saved versions yet</strong>
+              <p>Make a diagram change and pause briefly to create the first version.</p>
+            </div>
+          )}
         </div>
       </aside>
 
