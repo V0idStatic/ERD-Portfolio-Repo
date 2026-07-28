@@ -14,6 +14,7 @@ import {
   MiniMap,
   Node,
   NodeProps,
+  NodeResizer,
   Panel,
   Position,
   ReactFlow,
@@ -144,8 +145,9 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
   check: Check,
 };
 
-function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
+function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
+  const resizeFrame = useRef<number | null>(null);
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
     const opacity = data.legendOpacity ?? 0.12;
@@ -179,6 +181,24 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
   if (data.shape === "legend-key") {
     return (
       <div className={`architecture-node shape-legend-key ${selected ? "is-selected" : ""}`}>
+        <NodeResizer
+          minWidth={190}
+          minHeight={110}
+          isVisible={selected}
+          autoScale={false}
+          color="#0ea5c6"
+          handleStyle={{ width: 10, height: 10, borderRadius: 3 }}
+          onResize={(_, params) => {
+            const scale = Math.max(0.45, params.height / 240);
+            if (resizeFrame.current !== null) window.cancelAnimationFrame(resizeFrame.current);
+            resizeFrame.current = window.requestAnimationFrame(() => {
+              document
+                .querySelector<HTMLElement>(`[data-id="${id}"] .shape-legend-key`)
+                ?.style.setProperty("--legend-scale", String(scale));
+              resizeFrame.current = null;
+            });
+          }}
+        />
         <div className="legend-key-head">
           <span>
             <strong>{data.label || "Legend"}</strong>
@@ -209,11 +229,27 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
     >
       <Handle type="source" position={Position.Top} id="top" />
       {data.shape === "cloud" ? (
-        <span className="cloud-art" aria-hidden="true" />
+        <svg className="cloud-art" viewBox="0 0 290 116" aria-hidden="true">
+          <defs>
+            <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="color-mix(in srgb, #fff 88%, var(--node-soft))" />
+              <stop offset="100%" stop-color="color-mix(in srgb, #fff 50%, var(--node-soft))" />
+            </linearGradient>
+          </defs>
+          <path fill="url(#cloudFill)" d="M34 100 C12 100 4 84 4 66 C4 44 16 30 34 28 C36 14 52 4 72 4 C94 4 108 16 114 28 C124 12 144 4 168 4 C198 4 218 20 226 36 C250 34 286 46 286 74 C286 96 264 100 244 100 Z" />
+        </svg>
+      ) : null}
+      {data.shape === "database" ? (
+        <svg className="database-art" viewBox="0 0 270 80" aria-hidden="true">
+          <path className="db-body" d="M27 48 L27 66 A108 8 0 0 0 243 66 L243 48 A108 8 0 0 1 27 48 Z" />
+          <path className="db-body" d="M27 28 L27 46 A108 8 0 0 0 243 46 L243 28 A108 8 0 0 1 27 28 Z" />
+          <path className="db-body" d="M27 8 L27 26 A108 8 0 0 0 243 26 L243 8 A108 8 0 0 1 27 8 Z" />
+          <ellipse className="db-top" cx="135" cy="8" rx="108" ry="8" />
+        </svg>
       ) : null}
       {data.shape === "decision" ? (
         <svg className="decision-art" viewBox="0 0 230 126" aria-hidden="true">
-          <path fill="#ffffff" d="M115 2 L228 63 L115 124 L2 63 Z" />
+          <path d="M115 2 L228 63 L115 124 L2 63 Z" />
         </svg>
       ) : null}
       <div className="node-inner">
@@ -295,7 +331,7 @@ const synchronizeLegendKey = (allNodes: ArchitectureNode[]) => {
       {
         ...existingKey,
         data: { ...existingKey.data, legendEntries: entries },
-        style: { ...existingKey.style, width, height, zIndex: 5 },
+        style: { ...existingKey.style, zIndex: 5 },
         deletable: false,
       },
     ];
@@ -319,7 +355,7 @@ const synchronizeLegendKey = (allNodes: ArchitectureNode[]) => {
         tone: "slate",
         legendEntries: entries,
       },
-      style: { width, height, zIndex: 5 },
+      style: { width, height, zIndex: 5, "--legend-scale": 1 } as CSSProperties,
       deletable: false,
     },
   ];
@@ -1219,7 +1255,7 @@ function FlowWorkspace() {
         <div className="brand">
           <span className="brand-mark"><Network size={19} /></span>
           <div>
-            <strong>CollieAI</strong>
+            <strong>LemmaAI</strong>
             <span>System architecture</span>
           </div>
         </div>
@@ -1594,7 +1630,24 @@ function FlowWorkspace() {
                     className={selectedNode.data.shape === option.value ? "active" : ""}
                     onClick={() => updateSelected({ shape: option.value })}
                   >
-                    <i className={`shape-preview shape-${option.value}`} />
+                    {option.value === "database" ? (
+                      <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
+                        <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
+                        <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
+                        <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
+                        <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
+                      </svg>
+                    ) : option.value === "cloud" ? (
+                      <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
+                        <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
+                      </svg>
+                    ) : option.value === "decision" ? (
+                      <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
+                        <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                    ) : (
+                      <i className={`shape-preview shape-preview-${option.value}`} />
+                    )}
                     {option.label}
                   </button>
                 ))}
@@ -1782,7 +1835,24 @@ function FlowWorkspace() {
                         })
                       }
                     >
-                      <i className={`shape-preview shape-${option.value}`} />
+                      {option.value === "database" ? (
+                        <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
+                          <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
+                          <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
+                          <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
+                          <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
+                        </svg>
+                      ) : option.value === "cloud" ? (
+                        <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
+                          <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
+                        </svg>
+                      ) : option.value === "decision" ? (
+                        <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
+                          <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
+                        </svg>
+                      ) : (
+                        <i className={`shape-preview shape-preview-${option.value}`} />
+                      )}
                       {option.label}
                     </button>
                   ))}
@@ -1798,7 +1868,6 @@ function FlowWorkspace() {
                         type="button"
                         key={option.value}
                         title={option.label}
-                        aria-label={option.label}
                         className={nodeDraft.icon === option.value ? "active" : ""}
                         onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value })}
                       >
