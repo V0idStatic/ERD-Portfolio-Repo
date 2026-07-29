@@ -116,6 +116,8 @@ type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose";
 type ArchitectureNodeData = {
   label: string;
   description?: string;
+  titleSize?: number;
+  descriptionSize?: number;
   shape: NodeShape;
   icon: NodeIcon;
   tone: NodeTone;
@@ -250,6 +252,12 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
         selected ? "is-selected" : ""
       } ${animState ? `anim-${animState}` : ""}`}
+      style={
+        {
+          "--node-title-size": `${data.titleSize ?? 13}px`,
+          "--node-description-size": `${data.descriptionSize ?? 10}px`,
+        } as CSSProperties
+      }
     >
       {data.shape !== "legend-key" && data.shape !== "legend" && (
         <NodeResizer
@@ -686,6 +694,8 @@ function FlowWorkspace() {
   const [deleteIntent, setDeleteIntent] = useState<DeleteIntent | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [nodeDraft, setNodeDraft] = useState<ArchitectureNodeData>(createNodeDraft);
+  const [applyTitleSizeToAll, setApplyTitleSizeToAll] = useState(false);
+  const [applyDescriptionSizeToAll, setApplyDescriptionSizeToAll] = useState(false);
   const [legendDraft, setLegendDraft] = useState<LegendDraft>(createLegendDraft);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -834,6 +844,17 @@ function FlowWorkspace() {
     },
     [selectedId, setNodes],
   );
+
+  const updateTextSize = (key: "titleSize" | "descriptionSize", value: number, applyToAll: boolean) => {
+    if (!selectedId) return;
+    setNodes((current) =>
+      current.map((node) => {
+        const isComponent = node.data.shape !== "legend" && node.data.shape !== "legend-key";
+        if (!isComponent || (!applyToAll && node.id !== selectedId)) return node;
+        return { ...node, data: { ...node.data, [key]: value } };
+      }),
+    );
+  };
 
   const onConnect = useCallback(
     (connection: Connection) =>
@@ -2876,6 +2897,65 @@ function FlowWorkspace() {
                 onChange={(event) => updateSelected({ description: event.target.value })}
               />
             </label>
+            <fieldset>
+              <legend>Text size</legend>
+              <label className="line-label-size">
+                <span>Title size</span>
+                <div>
+                  <input
+                    type="range"
+                    min="8"
+                    max="42"
+                    step="1"
+                    value={selectedNode.data.titleSize ?? 13}
+                    onChange={(event) =>
+                      updateTextSize("titleSize", Number(event.target.value), applyTitleSizeToAll)
+                    }
+                  />
+                  <output>{selectedNode.data.titleSize ?? 13}px</output>
+                </div>
+              </label>
+              <label className="description-toggle inspector-apply-toggle">
+                <span>
+                  <strong>Apply title size to all</strong>
+                  <small>Changes every component title.</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={applyTitleSizeToAll}
+                  onChange={(event) => setApplyTitleSizeToAll(event.target.checked)}
+                />
+                <i aria-hidden="true" />
+              </label>
+              <label className="line-label-size">
+                <span>Description size</span>
+                <div>
+                  <input
+                    type="range"
+                    min="7"
+                    max="32"
+                    step="1"
+                    value={selectedNode.data.descriptionSize ?? 10}
+                    onChange={(event) =>
+                      updateTextSize("descriptionSize", Number(event.target.value), applyDescriptionSizeToAll)
+                    }
+                  />
+                  <output>{selectedNode.data.descriptionSize ?? 10}px</output>
+                </div>
+              </label>
+              <label className="description-toggle inspector-apply-toggle">
+                <span>
+                  <strong>Apply description size to all</strong>
+                  <small>Changes every component description.</small>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={applyDescriptionSizeToAll}
+                  onChange={(event) => setApplyDescriptionSizeToAll(event.target.checked)}
+                />
+                <i aria-hidden="true" />
+              </label>
+            </fieldset>
             <fieldset>
               <legend>Shape</legend>
               <div className="option-grid shape-grid">
