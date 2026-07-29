@@ -25,6 +25,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useUpdateNodeInternals,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import {
@@ -307,7 +308,7 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
             <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
           ))}
       {data.shape === "cloud" ? (
-        <svg className="cloud-art" viewBox="0 0 290 116" aria-hidden="true">
+        <svg className="cloud-art" viewBox="0 0 290 116" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="cloudFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#ffffff" />
@@ -318,7 +319,7 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
         </svg>
       ) : null}
       {data.shape === "database" ? (
-        <svg className="database-art" viewBox="0 0 270 80" aria-hidden="true">
+        <svg className="database-art" viewBox="0 0 270 80" preserveAspectRatio="none" aria-hidden="true">
           <path className="db-body" d="M27 48 L27 66 A108 8 0 0 0 243 66 L243 48 A108 8 0 0 1 27 48 Z" />
           <path className="db-body" d="M27 28 L27 46 A108 8 0 0 0 243 46 L243 28 A108 8 0 0 1 27 28 Z" />
           <path className="db-body" d="M27 8 L27 26 A108 8 0 0 0 243 26 L243 8 A108 8 0 0 1 27 8 Z" />
@@ -326,14 +327,16 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
         </svg>
       ) : null}
       {data.shape === "decision" ? (
-        <svg className="decision-art" viewBox="0 0 230 126" aria-hidden="true">
+        <svg className="decision-art" viewBox="0 0 230 126" preserveAspectRatio="none" aria-hidden="true">
           <path d="M115 2 L228 63 L115 124 L2 63 Z" />
         </svg>
       ) : null}
       <div className="node-inner">
-        <span className="node-icon" aria-hidden="true">
-          <Icon size={17} strokeWidth={2.2} />
-        </span>
+        {data.shape !== "database" && data.shape !== "decision" ? (
+          <span className="node-icon" aria-hidden="true">
+            <Icon size={17} strokeWidth={2.2} />
+          </span>
+        ) : null}
         <div className="node-copy">
           <strong>{data.label}</strong>
           {data.description ? <span>{data.description}</span> : null}
@@ -353,6 +356,14 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
 }
 
 const nodeTypes = { architecture: ArchitectureNodeCard };
+
+const defaultShapeSize = (shape: NodeShape) => {
+  if (shape === "decision") return { width: 230, height: 126 };
+  if (shape === "cloud") return { width: 290, height: 118 };
+  if (shape === "database") return { width: 270, height: 78 };
+  if (shape === "terminal") return { width: 250, height: 62 };
+  return { width: 270, height: 78 };
+};
 
 function FlowingConnectorEdge({
   id,
@@ -715,7 +726,9 @@ function FlowWorkspace() {
   const [animCompletedIds, setAnimCompletedIds] = useState<Set<string>>(new Set());
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
+  const updateNodeInternals = useUpdateNodeInternals();
 
   useEffect(() => {
     // React Flow's internal ResizeObserver can occasionally finish a resize
@@ -828,6 +841,35 @@ function FlowWorkspace() {
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
+  const historyGroups = historyEntries.reduce<{ key: string; label: string; entries: DiagramHistoryEntry[] }[]>(
+    (groups, entry) => {
+      const date = new Date(entry.timestamp);
+      const key = [date.getFullYear(), date.getMonth(), date.getDate()].join("-");
+      const existing = groups.find((group) => group.key === key);
+      if (existing) {
+        existing.entries.push(entry);
+        return groups;
+      }
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const isSameDay = (candidate: Date) =>
+        candidate.getFullYear() === date.getFullYear() &&
+        candidate.getMonth() === date.getMonth() &&
+        candidate.getDate() === date.getDate();
+      groups.push({
+        key,
+        label: isSameDay(today)
+          ? "Today"
+          : isSameDay(yesterday)
+            ? "Yesterday"
+            : date.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric", year: "numeric" }),
+        entries: [entry],
+      });
+      return groups;
+    },
+    [],
+  );
   const componentNodes = nodes.filter(
     (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key",
   );
@@ -847,13 +889,50 @@ function FlowWorkspace() {
 
   const updateTextSize = (key: "titleSize" | "descriptionSize", value: number, applyToAll: boolean) => {
     if (!selectedId) return;
+    const affectedNodeIds: string[] = [];
     setNodes((current) =>
       current.map((node) => {
         const isComponent = node.data.shape !== "legend" && node.data.shape !== "legend-key";
         if (!isComponent || (!applyToAll && node.id !== selectedId)) return node;
-        return { ...node, data: { ...node.data, [key]: value } };
+        affectedNodeIds.push(node.id);
+        const nextData = { ...node.data, [key]: value };
+        const base = defaultShapeSize(node.data.shape);
+        const textScale = Math.max(
+          1,
+          (nextData.titleSize ?? 13) / 13,
+          (nextData.descriptionSize ?? 10) / 10,
+        );
+        const shapeScale = 1 + (textScale - 1) * 0.55;
+        const requiredWidth = Math.ceil(base.width * shapeScale);
+        const requiredHeight = Math.ceil(base.height * shapeScale);
+        return {
+          ...node,
+          data: nextData,
+          // Keep React Flow's measured node box in sync with the card style.
+          // Without these two properties, some nodes keep their old outer
+          // dimensions after a global text-size update.
+          width: requiredWidth,
+          height: requiredHeight,
+          style: {
+            ...node.style,
+            // This is derived from the text scale, so reducing text restores
+            // the node to its normal compact dimensions as well.
+            width: requiredWidth,
+            height: requiredHeight,
+          },
+        };
       }),
     );
+    // React Flow needs one post-render measurement for the actively selected
+    // node (its resize handles are mounted there). Updating every node on
+    // every slider tick is costly and makes the “apply to all” slider lag.
+    if (textSizeMeasureTimerRef.current) window.clearTimeout(textSizeMeasureTimerRef.current);
+    textSizeMeasureTimerRef.current = window.setTimeout(() => {
+      // One batched post-render measurement updates every connection anchor
+      // without making the global slider wait for one node at a time.
+      updateNodeInternals(affectedNodeIds);
+      textSizeMeasureTimerRef.current = null;
+    }, 0);
   };
 
   const onConnect = useCallback(
@@ -2384,11 +2463,18 @@ function FlowWorkspace() {
           </div>
           {historyEntries.length ? (
             <div className="history-list">
-              {historyEntries.map((entry, index) => (
+              {historyGroups.map((group, groupIndex) => (
+                <details className="history-date-group" key={group.key} defaultOpen={groupIndex === 0}>
+                  <summary>
+                    <span>{group.label}</span>
+                    <small>{group.entries.length} version{group.entries.length === 1 ? "" : "s"}</small>
+                  </summary>
+                  <div className="history-date-entries">
+              {group.entries.map((entry) => (
                 <article className="history-entry" key={entry.id}>
                   <div className="history-entry-marker" />
                   <div className="history-entry-copy">
-                    <strong>{index === 0 ? "Current version" : entry.summary}</strong>
+                    <strong>{entry.id === historyEntries[0]?.id ? "Current version" : entry.summary}</strong>
                     <time dateTime={entry.timestamp}>
                       {new Date(entry.timestamp).toLocaleString([], {
                         month: "short",
@@ -2397,15 +2483,18 @@ function FlowWorkspace() {
                         minute: "2-digit",
                       })}
                     </time>
-                    {index === 0 ? <small>{entry.summary}</small> : null}
+                    {entry.id === historyEntries[0]?.id ? <small>{entry.summary}</small> : null}
                     <small>{entry.nodes.length} components Â· {entry.edges.length} connections</small>
                   </div>
-                  {index > 0 ? (
+                  {entry.id !== historyEntries[0]?.id ? (
                     <button onClick={() => restoreHistoryEntry(entry)} title="Restore this version">
                       <RotateCcw size={14} /> Restore
                     </button>
                   ) : null}
                 </article>
+              ))}
+                  </div>
+                </details>
               ))}
             </div>
           ) : (
@@ -2923,7 +3012,12 @@ function FlowWorkspace() {
                 <input
                   type="checkbox"
                   checked={applyTitleSizeToAll}
-                  onChange={(event) => setApplyTitleSizeToAll(event.target.checked)}
+                  onChange={(event) => {
+                    setApplyTitleSizeToAll(event.target.checked);
+                    if (event.target.checked) {
+                      updateTextSize("titleSize", selectedNode.data.titleSize ?? 13, true);
+                    }
+                  }}
                 />
                 <i aria-hidden="true" />
               </label>
@@ -2951,7 +3045,12 @@ function FlowWorkspace() {
                 <input
                   type="checkbox"
                   checked={applyDescriptionSizeToAll}
-                  onChange={(event) => setApplyDescriptionSizeToAll(event.target.checked)}
+                  onChange={(event) => {
+                    setApplyDescriptionSizeToAll(event.target.checked);
+                    if (event.target.checked) {
+                      updateTextSize("descriptionSize", selectedNode.data.descriptionSize ?? 10, true);
+                    }
+                  }}
                 />
                 <i aria-hidden="true" />
               </label>
