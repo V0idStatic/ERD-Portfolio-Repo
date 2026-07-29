@@ -375,29 +375,46 @@ function FlowingConnectorEdge({
   targetPosition,
   markerEnd,
   style,
-  data,
+  label,
+  labelStyle,
+  labelBgStyle,
+  labelBgPadding,
+  labelBgBorderRadius,
 }: EdgeProps) {
-  const [edgePath] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    targetX,
-    targetY,
-    sourcePosition,
-    targetPosition,
-    borderRadius: 8,
-  });
-
+  const connectorLength = Math.hypot(targetX - sourceX, targetY - sourceY);
+  const portsAreAligned =
+    Math.abs(targetX - sourceX) < 24 || Math.abs(targetY - sourceY) < 24;
+  const useDirectPath = portsAreAligned || connectorLength < 100;
+  const [d, mx, my] = useDirectPath
+    ? [
+        `M${sourceX},${sourceY} L${targetX},${targetY}`,
+        (sourceX + targetX) / 2,
+        (sourceY + targetY) / 2,
+      ]
+    : getSmoothStepPath({
+        sourceX,
+        sourceY,
+        targetX,
+        targetY,
+        sourcePosition,
+        targetPosition,
+        borderRadius: 8,
+      });
   return (
-    <>
-      <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
-      <path
-        d={edgePath}
-        pathLength={1}
-        className="connector-water-pulse"
-        style={{ animationDuration: `${Number(data?._flowDuration) || 900}ms` }}
-        aria-hidden="true"
-      />
-    </>
+    <BaseEdge
+      id={id}
+      path={d}
+      markerEnd={markerEnd}
+      style={style}
+      label={label}
+      labelX={mx}
+      labelY={my}
+      labelStyle={labelStyle}
+      labelBgStyle={labelBgStyle}
+      labelBgPadding={labelBgPadding}
+      labelBgBorderRadius={labelBgBorderRadius}
+      interactionWidth={24}
+    />
   );
 }
 
@@ -544,7 +561,7 @@ const edge = (
   label,
   sourceHandle: sourceHandle ?? "bottom-0",
   targetHandle: targetHandle ?? "top-0",
-  type: "smoothstep",
+  type: "flowing",
   animated: dashed,
   markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
   style: { stroke: "#64748b", strokeWidth: 1.7, strokeDasharray: dashed ? "6 5" : undefined },
@@ -941,7 +958,10 @@ function FlowWorkspace() {
         addEdge(
           {
             ...connection,
-            type: "smoothstep",
+            // Use the responsive connector path for user-created links. It
+            // stays directly straight for nearby ports and only routes when
+            // there is enough distance to need a corner.
+            type: "flowing",
             markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
             style: { stroke: "#64748b", strokeWidth: 1.7 },
             labelStyle: { fill: "#334155", fontWeight: 700, fontSize: 12 },
@@ -1421,7 +1441,7 @@ function FlowWorkspace() {
               ? {
                   ...e,
                   className: `${removeAnimationEdgeClasses(e.className)} anim-edge-completed`.trim(),
-                  type: "smoothstep",
+                  type: "flowing",
                   data: { ...e.data, _flowDuration: undefined },
                   animated: false,
                   style: { ...e.style, stroke: "#94a3b8", strokeWidth: 1.7, strokeDasharray: undefined },
@@ -1531,7 +1551,7 @@ function FlowWorkspace() {
       prev.map((e) => ({
         ...e,
         className: removeAnimationEdgeClasses(e.className),
-        type: "smoothstep",
+        type: "flowing",
         data: { ...e.data, _flowDuration: undefined },
         animated: false,
         style: { ...e.style, stroke: "#64748b", strokeWidth: 1.7, strokeDasharray: undefined },
