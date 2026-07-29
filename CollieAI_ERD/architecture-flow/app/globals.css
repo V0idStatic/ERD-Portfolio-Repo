@@ -63,6 +63,19 @@ button { cursor: pointer; }
 .react-flow__edge-path { transition: stroke .15s ease; }
 .react-flow__edge:hover .react-flow__edge-path { stroke: #0ea5c6 !important; stroke-width: 2.5 !important; }
 .react-flow__edge.selected .react-flow__edge-path { stroke: #0b9cba !important; stroke-width: 3 !important; }
+.edge-bend-control {
+  fill:#fff; stroke:#0ea5c6; stroke-width:3; cursor:grab;
+  filter:drop-shadow(0 2px 3px rgba(15,23,42,.18));
+}
+.edge-bend-control:active { cursor:grabbing; }
+.edge-joint-add {
+  fill:#0ea5c6; stroke:#fff; stroke-width:2; cursor:copy;
+  filter:drop-shadow(0 1px 2px rgba(15,23,42,.18));
+}
+.reset-connection-route {
+  min-height:38px; display:flex; align-items:center; justify-content:center; gap:7px;
+  border:1px solid #b9dfe7; border-radius:9px; color:#087d97; background:#f0fbfd; font-weight:750;
+}
 .react-flow__controls {
   border: 1px solid #dbe4ec !important; border-radius: 10px !important; overflow: hidden;
   box-shadow: 0 10px 28px rgba(15,23,42,.08) !important;
@@ -352,6 +365,44 @@ button { cursor: pointer; }
 .docs-export-snapshot .legend-key-entry strong {
   font-size:clamp(8px,3.75cqh,36px);
   letter-spacing:-.02em;
+}
+
+/* Regular PNG export uses the live typography, but prevents the cloned canvas
+   from clipping the final character of text inside flex-based cards. */
+.png-export-snapshot .node-copy {
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+.png-export-snapshot .node-copy strong,
+.png-export-snapshot .node-copy span {
+  max-width:100% !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:normal !important;
+  -webkit-line-clamp:unset !important;
+}
+.png-export-snapshot .legend-area-label strong,
+.png-export-snapshot .legend-key-head strong,
+.png-export-snapshot .legend-key-entry strong {
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+}
+
+/* Docs PNG uses the same no-clipping rules as the regular PNG exporter. */
+.docs-export-snapshot .node-copy {
+  flex:1 1 auto !important;
+  min-width:0 !important;
+  overflow:visible !important;
+}
+.docs-export-snapshot .node-copy strong,
+.docs-export-snapshot .node-copy span {
+  max-width:100% !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:normal !important;
+  -webkit-line-clamp:unset !important;
 }
 
 /* Keep export typography inside its shape while the sliders change size. */

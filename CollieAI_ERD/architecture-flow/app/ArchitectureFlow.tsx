@@ -71,7 +71,7 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
-import type { ComponentType, CSSProperties } from "react";
+import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type NodeShape =
@@ -85,6 +85,7 @@ type NodeShape =
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
+type EdgeBend = { x: number; y: number };
 type DiagramHistoryEntry = {
   id: string;
   timestamp: string;
@@ -380,12 +381,27 @@ function FlowingConnectorEdge({
   labelBgStyle,
   labelBgPadding,
   labelBgBorderRadius,
+  selected,
+  data,
 }: EdgeProps) {
+  const edgeData = (data ?? {}) as {
+    bend?: EdgeBend;
+    joints?: EdgeBend[];
+    onJointsChange?: (joints: EdgeBend[]) => void;
+  };
+  // Keep one editable elbow control, like a classic orthogonal diagram line.
+  const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
   const connectorLength = Math.hypot(targetX - sourceX, targetY - sourceY);
   const portsAreAligned =
     Math.abs(targetX - sourceX) < 24 || Math.abs(targetY - sourceY) < 24;
   const useDirectPath = portsAreAligned || connectorLength < 100;
-  const [d, mx, my] = useDirectPath
+  const [d, mx, my] = joint
+    ? [
+        `M${sourceX},${sourceY} L${sourceX},${joint.y} L${joint.x},${joint.y} L${joint.x},${targetY} L${targetX},${targetY}`,
+        joint.x,
+        joint.y,
+      ]
+    : useDirectPath
     ? [
         `M${sourceX},${sourceY} L${targetX},${targetY}`,
         (sourceX + targetX) / 2,
@@ -400,8 +416,33 @@ function FlowingConnectorEdge({
         targetPosition,
         borderRadius: 8,
       });
+  const dragJoint = (event: ReactPointerEvent<SVGCircleElement>) => {
+    event.stopPropagation();
+    const svg = event.currentTarget.ownerSVGElement;
+    if (!svg || !edgeData.onJointsChange) return;
+    const toFlowPoint = (clientX: number, clientY: number): EdgeBend => {
+      const matrix = svg.getScreenCTM();
+      if (!matrix) return { x: clientX, y: clientY };
+      const point = svg.createSVGPoint();
+      point.x = clientX;
+      point.y = clientY;
+      const converted = point.matrixTransform(matrix.inverse());
+      return { x: converted.x, y: converted.y };
+    };
+    const move = (moveEvent: PointerEvent) => {
+      edgeData.onJointsChange?.([toFlowPoint(moveEvent.clientX, moveEvent.clientY)]);
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop, { once: true });
+  };
+  const jointControl = joint ?? { x: mx, y: my };
   return (
-    <BaseEdge
+    <>
+      <BaseEdge
       id={id}
       path={d}
       markerEnd={markerEnd}
@@ -413,8 +454,22 @@ function FlowingConnectorEdge({
       labelBgStyle={labelBgStyle}
       labelBgPadding={labelBgPadding}
       labelBgBorderRadius={labelBgBorderRadius}
-      interactionWidth={24}
-    />
+        interactionWidth={24}
+      />
+      {selected ? (
+        <circle
+          className="edge-bend-control"
+          cx={jointControl.x}
+          cy={jointControl.y}
+          r={7}
+          onPointerDown={dragJoint}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            edgeData.onJointsChange?.([]);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 
@@ -996,6 +1051,30 @@ function FlowWorkspace() {
     },
     [selectedEdgeId, setEdges],
   );
+
+  const updateEdgeJoints = useCallback(
+    (edgeId: string, joints: EdgeBend[]) => {
+      setEdges((current) =>
+        current.map((edgeItem) =>
+          edgeItem.id === edgeId
+            ? { ...edgeItem, data: { ...edgeItem.data, joints } }
+            : edgeItem,
+        ),
+      );
+    },
+    [setEdges],
+  );
+
+  const resetSelectedEdgeBend = () => {
+    if (!selectedEdgeId) return;
+    setEdges((current) =>
+      current.map((edgeItem) => {
+        if (edgeItem.id !== selectedEdgeId) return edgeItem;
+        const { bend: _bend, joints: _joints, ...data } = edgeItem.data ?? {};
+        return { ...edgeItem, data };
+      }),
+    );
+  };
 
   const setEdgeStyle = (dashed: boolean) => {
     if (!selectedEdge) return;
@@ -1697,6 +1776,7 @@ function FlowWorkspace() {
     setInspectorOpen(false);
     setNodes((current) => current.map((node) => ({ ...node, selected: false })));
     setEdges((current) => current.map((edgeItem) => ({ ...edgeItem, selected: false })));
+    viewport.classList.add("png-export-snapshot");
 
     try {
       await document.fonts.ready;
@@ -1725,16 +1805,17 @@ function FlowWorkspace() {
       const dataUrl = await toPng(viewport, {
         backgroundColor: "#f6f8fb",
         cacheBust: true,
-        pixelRatio: 1,
-        width: exportWidth,
-        height: exportHeight,
+        // Keep the cloned canvas at its original logical size. Resolution is
+        // added by pixelRatio; scaling its CSS box caused narrow cards to clip
+        // the last characters of titles on larger pages.
+        pixelRatio: renderScale,
+        width: cropWidth,
+        height: cropHeight,
         style: {
-          width: `${exportWidth}px`,
-          height: `${exportHeight}px`,
+          width: `${cropWidth}px`,
+          height: `${cropHeight}px`,
           transformOrigin: "top left",
-          transform: `translate(${(padding - bounds.x) * renderScale}px, ${
-            (padding - bounds.y) * renderScale
-          }px) scale(${renderScale})`,
+          transform: `translate(${padding - bounds.x}px, ${padding - bounds.y}px)`,
         },
         filter: (domNode) =>
           !(
@@ -1755,6 +1836,7 @@ function FlowWorkspace() {
     } catch {
       setExportNotice("PNG export could not finish. Try closing other large tabs and export again.");
     } finally {
+      viewport.classList.remove("png-export-snapshot");
       setExporting(false);
       window.setTimeout(() => setExportNotice(null), 5200);
     }
@@ -2572,7 +2654,14 @@ function FlowWorkspace() {
             else if (animCompletedIds.has(node.id)) state = "completed";
             return { ...node, data: { ...node.data, _animState: state } };
           })}
-          edges={edges}
+          edges={edges.map((edgeItem) => ({
+            ...edgeItem,
+            selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
+            data: {
+              ...edgeItem.data,
+              onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
+            },
+          }))}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={animationMode === "presentation" ? () => {} : onNodesChange}
@@ -3232,6 +3321,9 @@ function FlowWorkspace() {
               <i>→</i>
               <span>{nodes.find((node) => node.id === selectedEdge.target)?.data.label}</span>
             </div>
+            <button className="reset-connection-route" onClick={resetSelectedEdgeBend}>
+              <Route size={16} /> Reset line route
+            </button>
             <button className="delete-connection" onClick={removeSelectedEdge}>
               <Trash2 size={16} />
               Remove connection
