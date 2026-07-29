@@ -303,6 +303,26 @@ button { cursor: pointer; }
   font-size:calc(10.5px * var(--docs-description-scale, 1));
 }
 .docs-hide-titles .node-copy strong { display:none !important; }
+/* Description-only export must not affect the title element at all. */
+.docs-hide-descriptions .node-copy strong {
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+}
+.docs-hide-descriptions .node-copy {
+  flex:1 1 auto !important;
+  width:auto !important;
+  max-width:none !important;
+  overflow:visible !important;
+}
+.docs-hide-descriptions .node-copy strong {
+  width:100% !important;
+  max-width:100% !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:normal !important;
+  -webkit-line-clamp:unset !important;
+}
 .docs-hide-descriptions .node-copy span { display:none !important; }
 
 /* Keep export typography inside its shape while the sliders change size. */

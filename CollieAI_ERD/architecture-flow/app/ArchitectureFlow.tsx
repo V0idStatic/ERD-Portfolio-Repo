@@ -699,7 +699,7 @@ function FlowWorkspace() {
   const [docsPreviewReady, setDocsPreviewReady] = useState(false);
   const [docsPreviewing, setDocsPreviewing] = useState(false);
   const [docsPreviewRefreshTick, setDocsPreviewRefreshTick] = useState(0);
-  const [docsInspectZoom, setDocsInspectZoom] = useState(1.6);
+  const [docsInspectZoom, setDocsInspectZoom] = useState(1);
   const [docsPreviewPan, setDocsPreviewPan] = useState({ x: 0, y: 0 });
   const docsPreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const docsPreviewRenderIdRef = useRef(0);
@@ -1761,12 +1761,19 @@ function FlowWorkspace() {
   };
 
   const setDocsViewportStyles = (viewport: HTMLElement, mode: DocsExportMode) => {
-    viewport.classList.add("docs-custom-export");
-    if (mode === "readable") viewport.classList.add("document-export-mode");
+    const hasTypographyOverride =
+      mode === "readable" || docsTitleScale !== 1 || docsDescriptionScale !== 1;
+
+    // Visibility is independent from typography: hiding a title or
+    // description must leave every remaining label at its original size.
+    if (hasTypographyOverride) {
+      viewport.classList.add("docs-custom-export");
+      if (mode === "readable") viewport.classList.add("document-export-mode");
+      viewport.style.setProperty("--docs-title-scale", String(docsTitleScale));
+      viewport.style.setProperty("--docs-description-scale", String(docsDescriptionScale));
+    }
     if (!docsShowTitles) viewport.classList.add("docs-hide-titles");
     if (!docsShowDescriptions) viewport.classList.add("docs-hide-descriptions");
-    viewport.style.setProperty("--docs-title-scale", String(docsTitleScale));
-    viewport.style.setProperty("--docs-description-scale", String(docsDescriptionScale));
   };
 
   const prepareExportEdgeLabelStyles = (viewport: HTMLElement, scale: number) => {
@@ -2060,6 +2067,26 @@ function FlowWorkspace() {
     nodes,
   ]);
 
+  const openDocsExport = () => {
+    // Each document-export session starts from the live diagram exactly as it
+    // is now. Export-only changes are temporary and begin only after the user
+    // changes an option in this dialog.
+    setDocsExportMode("full-design");
+    setDocsShowTitles(true);
+    setDocsShowDescriptions(true);
+    setDocsTitleScale(1);
+    setDocsDescriptionScale(1);
+    setDocsEdgeLabelScale(1);
+    setDocsExportZoom(1);
+    setDocsPreviewPan({ x: 0, y: 0 });
+    // Start fitted so the preview shows the same complete arrangement as the
+    // live canvas. The user can zoom in only when they choose to inspect it.
+    setDocsInspectZoom(1);
+    setDocsPreviewReady(false);
+    setDocsPreviewRefreshTick((tick) => tick + 1);
+    setDocsExportOpen(true);
+  };
+
   const resetDiagram = () => {
     window.localStorage.removeItem(pageStorageKey(activePageId));
     if (activePageId === "main") window.localStorage.removeItem(LEGACY_STORAGE_KEY);
@@ -2270,7 +2297,7 @@ function FlowWorkspace() {
           >
             <FolderOpen size={15} /> <span className="button-label">Pages ({pages.length})</span>
           </button>
-          <button className="button secondary export-button" onClick={() => setDocsExportOpen(true)} disabled={exporting} title="Export a readable one-page document PNG">
+          <button className="button secondary export-button" onClick={openDocsExport} disabled={exporting} title="Export a readable one-page document PNG">
             {exporting ? <LoaderCircle className="spin" size={15} /> : <FileText size={15} />}
             <span className="button-label">Docs PNG</span>
           </button>
@@ -3567,103 +3594,19 @@ function FlowWorkspace() {
               </button>
             </div>
             <div className="creator-body docs-export-body">
-              <div className="docs-format-grid">
-                <button
-                  type="button"
-                  className={`docs-format-card ${docsExportMode === "readable" ? "active" : ""}`}
-                  onClick={() => setDocsExportMode("readable")}
-                >
-                  <span className="docs-format-icon"><FileText size={21} /></span>
-                  <strong>Readable overview</strong>
-                  <p>Keeps the complete design while enlarging names, descriptions, icons, and connections.</p>
-                  <i>{docsExportMode === "readable" ? <Check size={14} /> : null}</i>
-                </button>
-                <button
-                  type="button"
-                  className={`docs-format-card ${docsExportMode === "full-design" ? "active" : ""}`}
-                  onClick={() => setDocsExportMode("full-design")}
-                >
-                  <span className="docs-format-icon"><Sparkles size={21} /></span>
-                  <strong>Full visual design</strong>
-                  <p>Preserves every icon, description, color, shape, and connection at its original proportions.</p>
-                  <i>{docsExportMode === "full-design" ? <Check size={14} /> : null}</i>
-                </button>
-              </div>
               <div className="docs-preview-workspace">
                 <section className="docs-preview-panel" aria-label="Document export preview">
                   <div className="docs-preview-head">
                     <div>
                       <span>LIVE PREVIEW</span>
-                      <strong>
-                        {docsExportMode === "readable"
-                          ? "Readable overview"
-                          : "Full visual design"}
-                      </strong>
+                      <strong>Original visual design</strong>
                     </div>
                     <div className="docs-preview-toolbar">
                       <small>Export {Math.round(docsExportZoom * 100)}%</small>
-                      <button
-                        type="button"
-                        aria-label="Zoom preview out"
-                        onClick={() => changeDocsInspectZoom(-0.2)}
-                      >
-                        <ZoomOut size={14} />
-                      </button>
-                      <output>{Math.round(docsInspectZoom * 100)}%</output>
-                      <button
-                        type="button"
-                        aria-label="Zoom preview in"
-                        onClick={() => changeDocsInspectZoom(0.2)}
-                      >
-                        <ZoomIn size={14} />
-                      </button>
-                      <button type="button" className="fit-preview" onClick={fitDocsPreview}>
-                        <Maximize2 size={13} /> Fit
-                      </button>
                     </div>
                   </div>
-                  <div
-                    className={`docs-preview-stage ${docsPreviewReady ? "is-draggable" : ""}`}
-                    onPointerDown={(event) => {
-                      if (!docsPreviewReady) return;
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                      docsPreviewDrag.current = {
-                        pointerId: event.pointerId,
-                        startX: event.clientX,
-                        startY: event.clientY,
-                        panX: docsPreviewPan.x,
-                        panY: docsPreviewPan.y,
-                      };
-                    }}
-                    onPointerMove={(event) => {
-                      const drag = docsPreviewDrag.current;
-                      if (!drag || drag.pointerId !== event.pointerId) return;
-                      setDocsPreviewPan({
-                        x: drag.panX + event.clientX - drag.startX,
-                        y: drag.panY + event.clientY - drag.startY,
-                      });
-                    }}
-                    onPointerUp={(event) => {
-                      if (docsPreviewDrag.current?.pointerId === event.pointerId) {
-                        docsPreviewDrag.current = null;
-                        event.currentTarget.releasePointerCapture(event.pointerId);
-                      }
-                    }}
-                    onPointerCancel={() => {
-                      docsPreviewDrag.current = null;
-                    }}
-                    onWheel={(event) => {
-                      if (!docsPreviewReady) return;
-                      event.preventDefault();
-                      changeDocsInspectZoom(event.deltaY < 0 ? 0.2 : -0.2);
-                    }}
-                  >
-                    <div
-                      className={`docs-preview-image-shell ${docsPreviewReady ? "" : "is-empty"}`}
-                      style={{
-                        transform: `translate(${docsPreviewPan.x}px, ${docsPreviewPan.y}px) scale(${docsInspectZoom})`,
-                      }}
-                    >
+                  <div className="docs-preview-stage">
+                    <div className={`docs-preview-image-shell ${docsPreviewReady ? "" : "is-empty"}`}>
                       <canvas
                         ref={docsPreviewCanvasRef}
                         role="img"
@@ -3721,51 +3664,6 @@ function FlowWorkspace() {
                   </label>
                   <label className="docs-range-control">
                     <span>
-                      <strong>Title text size</strong>
-                      <output>{Math.round(docsTitleScale * 100)}%</output>
-                    </span>
-                    <input
-                      type="range"
-                      min="0.75"
-                      max="1.5"
-                      step="0.05"
-                      value={docsTitleScale}
-                      onChange={(event) => setDocsTitleScale(Number(event.target.value))}
-                    />
-                    <small>Adjusts component titles and decision names.</small>
-                  </label>
-                  <label className="docs-range-control">
-                    <span>
-                      <strong>Description text size</strong>
-                      <output>{Math.round(docsDescriptionScale * 100)}%</output>
-                    </span>
-                    <input
-                      type="range"
-                      min="0.65"
-                      max="1.5"
-                      step="0.05"
-                      value={docsDescriptionScale}
-                      onChange={(event) => setDocsDescriptionScale(Number(event.target.value))}
-                    />
-                    <small>Adjusts the subtext independently from titles.</small>
-                  </label>
-                  <label className="docs-range-control">
-                    <span>
-                      <strong>Connection label size</strong>
-                      <output>{Math.round(docsEdgeLabelScale * 100)}%</output>
-                    </span>
-                    <input
-                      type="range"
-                      min="0.75"
-                      max="1.75"
-                      step="0.05"
-                      value={docsEdgeLabelScale}
-                      onChange={(event) => setDocsEdgeLabelScale(Number(event.target.value))}
-                    />
-                    <small>Adjusts text attached to connection lines.</small>
-                  </label>
-                  <label className="docs-range-control">
-                    <span>
                       <strong>Export zoom</strong>
                       <output>{Math.round(docsExportZoom * 100)}%</output>
                     </span>
@@ -3779,27 +3677,7 @@ function FlowWorkspace() {
                     />
                     <small>Zoom above 100% may crop the outer edges.</small>
                   </label>
-                  <button
-                    type="button"
-                    className="reset-docs-settings"
-                    onClick={() => {
-                      setDocsShowDescriptions(true);
-                      setDocsTitleScale(1);
-                      setDocsDescriptionScale(1);
-                      setDocsEdgeLabelScale(1);
-                      setDocsExportZoom(1);
-                    }}
-                  >
-                    <RefreshCcw size={14} /> Reset appearance
-                  </button>
                 </section>
-              </div>
-              <div className="smart-crop-note">
-                <span><LayoutDashboard size={17} /></span>
-                <div>
-                  <strong>Smart page fitting</strong>
-                  <p>Automatically crops empty space, selects portrait or landscape, and maximizes the diagram on one page.</p>
-                </div>
               </div>
               <button
                 className="create-node-submit"
