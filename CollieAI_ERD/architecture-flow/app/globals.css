@@ -324,6 +324,35 @@ button { cursor: pointer; }
   -webkit-line-clamp:unset !important;
 }
 .docs-hide-descriptions .node-copy span { display:none !important; }
+.docs-hide-descriptions .legend-area-label strong,
+.docs-hide-descriptions .legend-key-head strong,
+.docs-hide-descriptions .legend-key-entry strong {
+  overflow:visible !important;
+  max-width:none !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+}
+/* The document snapshot must never replace legend labels with an ellipsis. */
+.docs-export-snapshot .legend-area-label strong,
+.docs-export-snapshot .legend-key-head strong,
+.docs-export-snapshot .legend-key-entry strong {
+  overflow:visible !important;
+  max-width:none !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+}
+.docs-export-snapshot .legend-key-list {
+  overflow:visible !important;
+  padding:clamp(6px,2.45cqh,24px);
+}
+.docs-export-snapshot .legend-key-entry {
+  gap:clamp(6px,3cqh,28px);
+  padding:clamp(4px,1.7cqh,16px) clamp(4px,2cqh,18px);
+}
+.docs-export-snapshot .legend-key-entry strong {
+  font-size:clamp(8px,3.75cqh,36px);
+  letter-spacing:-.02em;
+}
 
 /* Keep export typography inside its shape while the sliders change size. */
 .docs-custom-export .architecture-node {

@@ -1761,17 +1761,10 @@ function FlowWorkspace() {
   };
 
   const setDocsViewportStyles = (viewport: HTMLElement, mode: DocsExportMode) => {
-    const hasTypographyOverride =
-      mode === "readable" || docsTitleScale !== 1 || docsDescriptionScale !== 1;
-
-    // Visibility is independent from typography: hiding a title or
-    // description must leave every remaining label at its original size.
-    if (hasTypographyOverride) {
-      viewport.classList.add("docs-custom-export");
-      if (mode === "readable") viewport.classList.add("document-export-mode");
-      viewport.style.setProperty("--docs-title-scale", String(docsTitleScale));
-      viewport.style.setProperty("--docs-description-scale", String(docsDescriptionScale));
-    }
+    // The simplified document export has no typography mode. Keep the live
+    // canvas typography and connector labels untouched; only visibility
+    // classes are applied when the user explicitly hides text.
+    viewport.classList.add("docs-export-snapshot");
     if (!docsShowTitles) viewport.classList.add("docs-hide-titles");
     if (!docsShowDescriptions) viewport.classList.add("docs-hide-descriptions");
   };
@@ -1790,6 +1783,7 @@ function FlowWorkspace() {
     viewport.classList.remove(
       "document-export-mode",
       "docs-custom-export",
+      "docs-export-snapshot",
       "docs-hide-titles",
       "docs-hide-descriptions",
     );
@@ -1914,7 +1908,6 @@ function FlowWorkspace() {
       );
 
       prepareExportSafeSvgPaint(viewport);
-      prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
       const { page, renderScale, translateX, translateY } = getDocsLayout(mode);
 
       const blob = await toBlob(viewport, {
@@ -1998,7 +1991,6 @@ function FlowWorkspace() {
             0.32,
           );
           prepareExportSafeSvgPaint(viewport);
-          prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
           const renderedCanvas = await toCanvas(viewport, {
             backgroundColor: docsExportMode === "readable" ? "#ffffff" : "#f6f8fb",
             cacheBust: false,
