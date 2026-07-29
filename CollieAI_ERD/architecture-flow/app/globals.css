@@ -56,6 +56,10 @@ button { cursor: pointer; }
 .canvas-wrap { position: relative; min-height: 0; background: #f6f8fb; }
 .react-flow__viewport { cursor: grab; }
 .react-flow__node { cursor: pointer; }
+.react-flow__node-architecture { width:270px; height:78px; }
+.react-flow__node-architecture:has(.shape-decision) { width:230px; height:126px; }
+.react-flow__node-architecture:has(.shape-cloud) { width:290px; height:118px; }
+.react-flow__node-architecture:has(.shape-terminal) { width:250px; height:62px; }
 .react-flow__edge-path { transition: stroke .15s ease; }
 .react-flow__edge:hover .react-flow__edge-path { stroke: #0ea5c6 !important; stroke-width: 2.5 !important; }
 .react-flow__edge.selected .react-flow__edge-path { stroke: #0b9cba !important; stroke-width: 3 !important; }
@@ -87,7 +91,7 @@ button { cursor: pointer; }
 
 .architecture-node {
   --node: #0ea5c6; --node-soft: #e6f8fc; --node-line: #75d2e4;
-  width: 270px; min-height: 78px; position: relative; display: grid; align-items: center;
+  width:100%; height:100%; min-height:0; position:relative; display:grid; align-items:center;
   border: 0; border-radius: 14px; background: white;
   box-shadow: 0 8px 22px rgba(30,41,59,.09), 0 2px 5px rgba(30,41,59,.05);
   transition: box-shadow .16s ease, transform .16s ease;
@@ -109,7 +113,7 @@ button { cursor: pointer; }
 .tone-slate { --node:#52657a; --node-soft:#eef2f6; --node-line:#a8b5c2; }
 .tone-rose { --node:#dc5675; --node-soft:#fff0f3; --node-line:#ed9daf; }
 .shape-decision {
-  width:230px; height:126px; min-height:126px; border:0; border-radius:0;
+  width:100%; height:100%; min-height:0; border:0; border-radius:0;
   background:transparent; box-shadow:none;
 }
 .shape-decision:hover, .shape-decision.is-selected { box-shadow:none; }
@@ -131,7 +135,7 @@ button { cursor: pointer; }
 }
 .shape-decision .node-icon { display: none; }
 .shape-database {
-  width: 270px; min-height: 78px; border: 0; border-radius: 0; background: transparent;
+  width:100%; height:100%; min-height:0; border:0; border-radius:0; background:transparent;
   box-shadow: none; filter: drop-shadow(0 8px 14px rgba(30,41,59,.12));
 }
 .shape-database:hover, .shape-database.is-selected { box-shadow: none; }
@@ -152,7 +156,7 @@ button { cursor: pointer; }
 .shape-database.is-selected .database-art .db-top { stroke:var(--node); stroke-width:2.8; }
 .shape-database .node-inner { position:relative; z-index:3; padding:28px 24px 17px; }
 .shape-cloud {
-  width: 290px; min-height: 118px; border: 0; border-radius: 0; background: transparent;
+  width:100%; height:100%; min-height:0; border:0; border-radius:0; background:transparent;
   box-shadow: none; filter: drop-shadow(0 8px 14px rgba(30,41,59,.12));
 }
 .shape-cloud:hover, .shape-cloud.is-selected { box-shadow: none; }
@@ -166,7 +170,7 @@ button { cursor: pointer; }
 .shape-cloud .cloud-art path { stroke:var(--node); stroke-width:2.2; }
 .shape-cloud.is-selected .cloud-art path { stroke:var(--node); stroke-width:3.2; }
 .shape-cloud .node-inner { position:relative; z-index:3; justify-content:center; padding:42px 34px 17px; }
-.shape-terminal { width: 250px; min-height: 62px; border-radius: 999px; }
+.shape-terminal { width:100%; height:100%; min-height:0; border-radius:999px; }
 .shape-terminal .node-inner { justify-content: center; }
 .shape-service.is-selected,
 .shape-terminal.is-selected { border:2px solid var(--node); box-sizing:border-box; }
