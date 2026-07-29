@@ -179,9 +179,8 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
   check: Check,
 };
 
-function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode>) {
+function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
-  const resizeFrame = useRef<number | null>(null);
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
     const opacity = data.legendOpacity ?? 0.12;
@@ -222,16 +221,6 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
           autoScale={false}
           color="#0ea5c6"
           handleStyle={{ width: 10, height: 10, borderRadius: 3 }}
-          onResize={(_, params) => {
-            const scale = Math.max(0.45, params.height / 240);
-            if (resizeFrame.current !== null) window.cancelAnimationFrame(resizeFrame.current);
-            resizeFrame.current = window.requestAnimationFrame(() => {
-              document
-                .querySelector<HTMLElement>(`[data-id="${id}"] .shape-legend-key`)
-                ?.style.setProperty("--legend-scale", String(scale));
-              resizeFrame.current = null;
-            });
-          }}
         />
         <div className="legend-key-head">
           <span>
@@ -262,7 +251,53 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
         selected ? "is-selected" : ""
       } ${animState ? `anim-${animState}` : ""}`}
     >
-      <Handle type="source" position={Position.Top} id="top" />
+      {data.shape !== "legend-key" && data.shape !== "legend" && (
+        <NodeResizer
+          minWidth={80}
+          minHeight={40}
+          isVisible={selected}
+          color="#0ea5c6"
+          handleStyle={{ width: 10, height: 10, borderRadius: 3 }}
+        />
+      )}
+            {data.shape === "decision"
+        ? (() => {
+            // Diamond corners in % (matches SVG viewBox 230×126)
+            const corners = [
+              [0.87, 50],   // left point
+              [50, 1.59],   // top point
+              [99.13, 50],  // right point
+              [50, 98.41],  // bottom point
+            ];
+            // 4 edges: left→top, top→right, right→bottom, bottom→left
+            const edgePos: Position[] = [Position.Top, Position.Right, Position.Bottom, Position.Left];
+            const hs: { id: string; left: number; top: number; pos: Position }[] = [];
+            for (let e = 0; e < 4; e++) {
+              const [x1, y1] = corners[e];
+              const [x2, y2] = corners[(e + 1) % 4];
+              for (let i = 0; i < 2; i++) {
+                const t = (i + 1) / 3;
+                hs.push({
+                  id: `diamond-side-${e}-${i}`,
+                  left: x1 + t * (x2 - x1),
+                  top: y1 + t * (y2 - y1),
+                  pos: edgePos[e],
+                });
+              }
+            }
+            return [
+              ...hs.map((h) => (
+                <Handle key={h.id} className="side-handle" type="source" position={h.pos} id={h.id} style={{ left: `${h.left}%`, top: `${h.top}%`, transform: "none" }} />
+              )),
+              <Handle key="diamond-top" className="side-handle diamond-tip-handle" type="source" position={Position.Top} id="top" style={{ left: "50%" }} />,
+              <Handle key="diamond-right" className="side-handle diamond-tip-handle" type="source" position={Position.Right} id="right" style={{ top: "50%" }} />,
+              <Handle key="diamond-bottom" className="side-handle diamond-tip-handle" type="source" position={Position.Bottom} id="bottom" style={{ left: "50%" }} />,
+              <Handle key="diamond-left" className="side-handle diamond-tip-handle" type="source" position={Position.Left} id="left" style={{ top: "50%" }} />,
+            ];
+          })()
+        : [10, 30, 50, 70, 90].map((pct, i) => (
+            <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
+          ))}
       {data.shape === "cloud" ? (
         <svg className="cloud-art" viewBox="0 0 290 116" aria-hidden="true">
           <defs>
@@ -296,9 +331,15 @@ function ArchitectureNodeCard({ id, data, selected }: NodeProps<ArchitectureNode
           {data.description ? <span>{data.description}</span> : null}
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} id="bottom" />
-      <Handle className="side-handle" type="source" position={Position.Right} id="right" />
-      <Handle className="side-handle" type="source" position={Position.Left} id="left" />
+            {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+        <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
+      ))}
+      {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+        <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
+      ))}
+      {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+        <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
+      ))}
     </div>
   );
 }
@@ -482,8 +523,8 @@ const edge = (
   source,
   target,
   label,
-  sourceHandle: sourceHandle ?? "bottom",
-  targetHandle: targetHandle ?? "top",
+  sourceHandle: sourceHandle ?? "bottom-0",
+  targetHandle: targetHandle ?? "top-0",
   type: "smoothstep",
   animated: dashed,
   markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
@@ -498,39 +539,39 @@ const initialEdges: Edge[] = [
   edge("e1", "start", "app"),
   edge("e2", "app", "input"),
   edge("e3", "input", "media"),
-  edge("e4", "media", "storage", "Yes", false, "right", "left"),
-  edge("e5", "media", "api", "No"),
-  edge("e6", "storage", "api", "File reference", false, undefined, "left"),
+  edge("e4", "media", "storage", "Yes", false, "de1-2", "left-0"),
+  edge("e5", "media", "api", "No", false, "de2-2"),
+  edge("e6", "storage", "api", "File reference", false, undefined, "left-0"),
   edge("e7", "api", "session"),
   edge("e8", "session", "classifier"),
-  edge("e9", "classifier", "response"),
-  edge("e10", "response", "answer-check", "Submitted answer", false, undefined, "left"),
-  edge("e11", "response", "help-check", "Help or other input", false, "right", "left"),
-  edge("e12", "answer-check", "correct", "Yes", false, undefined, "left"),
-  edge("e13", "answer-check", "wrong", "No"),
-  edge("e14", "help-check", "help", "Yes", false, undefined, "left"),
-  edge("e15", "help-check", "redirect", "Off-topic", false, "right", "left"),
+  edge("e9", "classifier", "response", undefined, false, undefined, "de0-2"),
+  edge("e10", "response", "answer-check", "Submitted answer", false, "de3-2", "de3-2"),
+  edge("e11", "response", "help-check", "Help or other input", false, "de1-2", "de3-2"),
+  edge("e12", "answer-check", "correct", "Yes", false, "de3-2", "left-0"),
+  edge("e13", "answer-check", "wrong", "No", false, "de2-2"),
+  edge("e14", "help-check", "help", "Yes", false, "de3-2", "left-0"),
+  edge("e15", "help-check", "redirect", "Off-topic", false, "de1-2", "left-0"),
   edge("e16", "correct", "router"),
   edge("e17", "wrong", "router"),
   edge("e18", "help", "router"),
   edge("e19", "redirect", "router"),
   edge("e20", "router", "events-db"),
-  edge("e21", "events-db", "n8n", "Analytics path", false, undefined, "left"),
+  edge("e21", "events-db", "n8n", "Analytics path", false, undefined, "left-0"),
   edge("e22", "n8n", "feature"),
   edge("e23", "feature", "ml"),
-  edge("e24", "ml", "intervention"),
-  edge("e25", "intervention", "plan", "Yes", false, undefined, "left"),
+  edge("e24", "ml", "intervention", undefined, false, undefined, "de0-2"),
+  edge("e25", "intervention", "plan", "Yes", false, "de3-2", "left-0"),
   edge("e26", "plan", "alert"),
-  edge("e27", "intervention", "prediction-db", "No", false, "right", "left"),
+  edge("e27", "intervention", "prediction-db", "No", false, "de1-2", "left-0"),
   edge("e28", "prediction-db", "dashboard"),
-  edge("e29", "events-db", "engine", "Tutoring path", false, "right", "left"),
+  edge("e29", "events-db", "engine", "Tutoring path", false, "right-0", "left-0"),
   edge("e30", "engine", "adaptive-feature"),
   edge("e31", "adaptive-feature", "tutor"),
-  edge("e32", "tutor", "memory", "Retrieve context", false, undefined, "right"),
+  edge("e32", "tutor", "memory", "Retrieve context", false, undefined, "right-0"),
   edge("e33", "tutor", "adaptive-ui"),
-  edge("e34", "adaptive-ui", "continue"),
-  edge("e35", "continue", "end", "No"),
-  edge("e36", "continue", "input", "Yes · next turn", true, "right", "right"),
+  edge("e34", "adaptive-ui", "continue", undefined, false, undefined, "de0-2"),
+  edge("e35", "continue", "end", "No", false, "de2-2"),
+  edge("e36", "continue", "input", "Yes · next turn", true, "de0-2", "right-0"),
 ];
 
 const shapeOptions: { value: NodeShape; label: string }[] = [
@@ -613,6 +654,7 @@ function FlowWorkspace() {
   const [legendCreatorOpen, setLegendCreatorOpen] = useState(false);
   const [docsExportOpen, setDocsExportOpen] = useState(false);
   const [docsExportMode, setDocsExportMode] = useState<DocsExportMode>("readable");
+  const [docsShowTitles, setDocsShowTitles] = useState(true);
   const [docsShowDescriptions, setDocsShowDescriptions] = useState(true);
   const [docsTitleScale, setDocsTitleScale] = useState(1);
   const [docsDescriptionScale, setDocsDescriptionScale] = useState(1);
@@ -620,11 +662,12 @@ function FlowWorkspace() {
   const [docsExportZoom, setDocsExportZoom] = useState(1);
   const [docsPreviewReady, setDocsPreviewReady] = useState(false);
   const [docsPreviewing, setDocsPreviewing] = useState(false);
+  const [docsPreviewRefreshTick, setDocsPreviewRefreshTick] = useState(0);
   const [docsInspectZoom, setDocsInspectZoom] = useState(1.6);
   const [docsPreviewPan, setDocsPreviewPan] = useState({ x: 0, y: 0 });
   const docsPreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const docsPreviewRenderIdRef = useRef(0);
-  const docsPreviewQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const docsPreviewInFlightRef = useRef(false);
   const docsPreviewDrag = useRef<{
     pointerId: number;
     startX: number;
@@ -663,6 +706,53 @@ function FlowWorkspace() {
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
+
+  useEffect(() => {
+    // React Flow's internal ResizeObserver can occasionally finish a resize
+    // after the browser's delivery pass. It is non-fatal, but Vite displays it
+    // as a full-screen error. Suppress that browser-only notification only.
+    const resizeObserverMessage =
+      "ResizeObserver loop completed with undelivered notifications";
+    const isResizeObserverNotification = (value: unknown) =>
+      String(value instanceof Error ? value.message : value).includes(resizeObserverMessage);
+
+    const suppressResizeObserverNotification = (event: ErrorEvent) => {
+      if (!isResizeObserverNotification(event.error ?? event.message)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    const suppressResizeObserverRejection = (event: PromiseRejectionEvent) => {
+      if (!isResizeObserverNotification(event.reason)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
+
+    // Vinext installs its listener before the application hydrates. Guard its
+    // overlay root as a fallback and leave it visible for every genuine error.
+    const updateVinextOverlayVisibility = () => {
+      const overlayRoot = document.getElementById("__vinext_dev_error_overlay_root");
+      if (!overlayRoot) return;
+      overlayRoot.style.display = overlayRoot.textContent?.includes(resizeObserverMessage)
+        ? "none"
+        : "";
+    };
+    const overlayObserver = new MutationObserver(updateVinextOverlayVisibility);
+    overlayObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+    updateVinextOverlayVisibility();
+
+    window.addEventListener("error", suppressResizeObserverNotification, true);
+    window.addEventListener("unhandledrejection", suppressResizeObserverRejection, true);
+    return () => {
+      overlayObserver.disconnect();
+      window.removeEventListener("error", suppressResizeObserverNotification, true);
+      window.removeEventListener("unhandledrejection", suppressResizeObserverRejection, true);
+    };
+  }, []);
 
   useEffect(() => {
     try {
@@ -763,6 +853,16 @@ function FlowWorkspace() {
         ),
       ),
     [setEdges],
+  );
+
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      if (!connection.source || !connection.sourceHandle) return true;
+      return !edges.some(
+        (e) => e.source === connection.source && e.sourceHandle === connection.sourceHandle,
+      );
+    },
+    [edges],
   );
 
   const updateSelectedEdge = useCallback(
@@ -1543,7 +1643,8 @@ function FlowWorkspace() {
   const setDocsViewportStyles = (viewport: HTMLElement, mode: DocsExportMode) => {
     viewport.classList.add("docs-custom-export");
     if (mode === "readable") viewport.classList.add("document-export-mode");
-    if (!docsShowDescriptions) viewport.classList.add("docs-primary-only");
+    if (!docsShowTitles) viewport.classList.add("docs-hide-titles");
+    if (!docsShowDescriptions) viewport.classList.add("docs-hide-descriptions");
     viewport.style.setProperty("--docs-title-scale", String(docsTitleScale));
     viewport.style.setProperty("--docs-description-scale", String(docsDescriptionScale));
   };
@@ -1562,7 +1663,8 @@ function FlowWorkspace() {
     viewport.classList.remove(
       "document-export-mode",
       "docs-custom-export",
-      "docs-primary-only",
+      "docs-hide-titles",
+      "docs-hide-descriptions",
     );
     viewport.style.removeProperty("--docs-title-scale");
     viewport.style.removeProperty("--docs-description-scale");
@@ -1741,11 +1843,21 @@ function FlowWorkspace() {
 
     let cancelled = false;
     const timer = window.setTimeout(() => {
+      // Canvas rendering cannot be interrupted safely. Coalesce rapid slider
+      // changes instead of queueing an expensive render for every value.
+      if (docsPreviewInFlightRef.current) return;
+      docsPreviewInFlightRef.current = true;
       const renderPreview = async () => {
-        if (cancelled || renderId !== docsPreviewRenderIdRef.current) return;
+        if (cancelled || renderId !== docsPreviewRenderIdRef.current) {
+          docsPreviewInFlightRef.current = false;
+          return;
+        }
 
         const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
-        if (!viewport) return;
+        if (!viewport) {
+          docsPreviewInFlightRef.current = false;
+          return;
+        }
 
         setDocsPreviewing(true);
         setDocsViewportStyles(viewport, docsExportMode);
@@ -1756,7 +1868,7 @@ function FlowWorkspace() {
 
           const { page, renderScale, translateX, translateY } = getDocsLayout(
             docsExportMode,
-            0.4,
+            0.32,
           );
           prepareExportSafeSvgPaint(viewport);
           prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
@@ -1798,17 +1910,17 @@ function FlowWorkspace() {
           }
         } finally {
           clearDocsViewportStyles(viewport);
+          docsPreviewInFlightRef.current = false;
           if (!cancelled && renderId === docsPreviewRenderIdRef.current) {
             setDocsPreviewing(false);
           }
+          if (renderId !== docsPreviewRenderIdRef.current) {
+            setDocsPreviewRefreshTick((current) => current + 1);
+          }
         }
       };
-
-      const queuedRender = docsPreviewQueueRef.current
-        .catch(() => undefined)
-        .then(renderPreview);
-      docsPreviewQueueRef.current = queuedRender;
-    }, 24);
+      void renderPreview();
+    }, 75);
 
     return () => {
       cancelled = true;
@@ -1818,10 +1930,12 @@ function FlowWorkspace() {
     docsExportMode,
     docsExportOpen,
     docsExportZoom,
+    docsShowTitles,
     docsShowDescriptions,
     docsTitleScale,
     docsDescriptionScale,
     docsEdgeLabelScale,
+    docsPreviewRefreshTick,
     edges,
     nodes,
   ]);
@@ -1834,6 +1948,88 @@ function FlowWorkspace() {
     setSelectedId(null);
     setSelectedEdgeId(null);
     window.setTimeout(() => fitView({ padding: 0.08, duration: 500 }), 30);
+  };
+
+  const applySmartLandscapeLayout = () => {
+    const components = nodes.filter(
+      (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key",
+    );
+    if (!components.length) return;
+
+    const componentIds = new Set(components.map((node) => node.id));
+    const incoming = new Map(components.map((node) => [node.id, 0]));
+    const outgoing = new Map(components.map((node) => [node.id, [] as string[]]));
+    edges.forEach((edgeItem) => {
+      if (!componentIds.has(edgeItem.source) || !componentIds.has(edgeItem.target)) return;
+      outgoing.get(edgeItem.source)?.push(edgeItem.target);
+      incoming.set(edgeItem.target, (incoming.get(edgeItem.target) ?? 0) + 1);
+    });
+
+    const byId = new Map(components.map((node) => [node.id, node]));
+    const layer = new Map<string, number>();
+    const queue = components
+      .filter((node) => (incoming.get(node.id) ?? 0) === 0)
+      .sort((a, b) => a.position.y - b.position.y);
+    queue.forEach((node) => layer.set(node.id, 0));
+
+    for (let cursor = 0; cursor < queue.length; cursor += 1) {
+      const current = queue[cursor];
+      const currentLayer = layer.get(current.id) ?? 0;
+      (outgoing.get(current.id) ?? []).forEach((targetId) => {
+        layer.set(targetId, Math.max(layer.get(targetId) ?? 0, currentLayer + 1));
+        const remaining = (incoming.get(targetId) ?? 1) - 1;
+        incoming.set(targetId, remaining);
+        if (remaining === 0 && byId.has(targetId)) queue.push(byId.get(targetId)!);
+      });
+    }
+
+    // Cycles such as a “continue” route receive a final column instead of
+    // preventing the rest of the diagram from being laid out.
+    const lastLayer = Math.max(0, ...layer.values());
+    components.forEach((node) => {
+      if (!layer.has(node.id)) layer.set(node.id, lastLayer + 1);
+    });
+
+    const columns = new Map<number, ArchitectureNode[]>();
+    components.forEach((node) => {
+      const index = layer.get(node.id) ?? 0;
+      columns.set(index, [...(columns.get(index) ?? []), node]);
+    });
+    const largestColumn = Math.max(...[...columns.values()].map((column) => column.length));
+    const positioned = nodes.map((node) => {
+      if (!componentIds.has(node.id)) return node;
+      const columnIndex = layer.get(node.id) ?? 0;
+      const column = (columns.get(columnIndex) ?? []).sort((a, b) => a.position.y - b.position.y);
+      const rowIndex = column.findIndex((item) => item.id === node.id);
+      return {
+        ...node,
+        position: {
+          x: 80 + columnIndex * 370,
+          y: 90 + (largestColumn - column.length) * 95 + rowIndex * 190,
+        },
+      };
+    });
+    const withLegendFrames = positioned.map((node) => {
+      if (node.data.shape !== "legend") return node;
+      const frame = getLegendFrame(positioned, node.data.legendNodeIds ?? []);
+      return frame
+        ? { ...node, position: frame.position, style: { ...node.style, width: frame.width, height: frame.height, zIndex: 0 } }
+        : node;
+    });
+
+    setNodes(synchronizeLegendKey(withLegendFrames));
+    setEdges((current) =>
+      current.map((edgeItem) =>
+        componentIds.has(edgeItem.source) && componentIds.has(edgeItem.target)
+          ? { ...edgeItem, sourceHandle: "right", targetHandle: "left" }
+          : edgeItem,
+      ),
+    );
+    setSelectedId(null);
+    setSelectedEdgeId(null);
+    setExportNotice("Smart landscape layout applied.");
+    window.setTimeout(() => setExportNotice(null), 2600);
+    window.setTimeout(() => fitView({ padding: 0.1, duration: 550 }), 30);
   };
 
   const addNode = () => {
@@ -2001,6 +2197,13 @@ function FlowWorkspace() {
             title="Create a colored legend area around selected components"
           >
             <LayoutDashboard size={15} /> <span className="button-label">Add legend</span>
+          </button>
+          <button
+            className="button secondary"
+            onClick={applySmartLandscapeLayout}
+            title="Arrange components in a landscape-friendly left-to-right flow"
+          >
+            <Maximize2 size={15} /> <span className="button-label">Smart landscape</span>
           </button>
           <button className="button secondary" onClick={resetDiagram} title="Restore original diagram">
             <RefreshCcw size={15} /> <span className="button-label">Reset</span>
@@ -2236,6 +2439,7 @@ function FlowWorkspace() {
           onEdgesChange={animationMode === "presentation" ? () => {} : onEdgesChange}
           onConnect={animationMode === "presentation" ? () => {} : onConnect}
           connectionMode={ConnectionMode.Loose}
+          isValidConnection={isValidConnection}
           nodesDraggable={animationMode !== "presentation"}
           nodesFocusable={animationMode !== "presentation"}
           elementsSelectable={animationMode !== "presentation"}
@@ -3290,11 +3494,23 @@ function FlowWorkspace() {
                   </div>
                   <label className="description-toggle">
                     <span>
-                      <strong>Show subtext</strong>
+                      <strong>Show titles</strong>
                       <small>
-                        {docsShowDescriptions
-                          ? "Primary names and descriptions"
-                          : "Primary names only"}
+                        {docsShowTitles ? "Component and decision names" : "Titles are hidden"}
+                      </small>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={docsShowTitles}
+                      onChange={(event) => setDocsShowTitles(event.target.checked)}
+                    />
+                    <i aria-hidden="true" />
+                  </label>
+                  <label className="description-toggle">
+                    <span>
+                      <strong>Show descriptions</strong>
+                      <small>
+                        {docsShowDescriptions ? "Secondary component text" : "Descriptions are hidden"}
                       </small>
                     </span>
                     <input
