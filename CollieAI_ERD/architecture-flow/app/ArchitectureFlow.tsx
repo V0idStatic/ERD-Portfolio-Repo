@@ -183,7 +183,7 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
   check: Check,
 };
 
-function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
+function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
@@ -216,8 +216,17 @@ function ArchitectureNodeCard({ data, selected }: NodeProps<ArchitectureNode>) {
   }
 
   if (data.shape === "legend-key") {
+    // React Flow supplies the live resized dimensions.  Scale the legend from
+    // its area, so growing either dimension gives the labels room to grow too.
+    const legendScale = Math.min(
+      3.5,
+      Math.max(0.8, Math.sqrt(((width ?? 250) * (height ?? 240)) / (250 * 240))),
+    );
     return (
-      <div className={`architecture-node shape-legend-key ${selected ? "is-selected" : ""}`}>
+      <div
+        className={`architecture-node shape-legend-key ${selected ? "is-selected" : ""}`}
+        style={{ "--legend-scale": legendScale } as CSSProperties}
+      >
         <NodeResizer
           minWidth={190}
           minHeight={110}
