@@ -1891,6 +1891,12 @@ function FlowWorkspace() {
 
   const prepareExportEdgeLabelStyles = (viewport: HTMLElement, scale: number) => {
     viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
+      // React Flow owns this inline size. Preserve it before pinning the
+      // export value; removing it afterwards makes labels fall back to the
+      // browser's smaller SVG default until React happens to rerender them.
+      if (!("exportOriginalFontSize" in label.dataset)) {
+        label.dataset.exportOriginalFontSize = label.style.fontSize;
+      }
       const existingSize = Number.parseFloat(getComputedStyle(label).fontSize);
       const baseSize = Number.isFinite(existingSize) ? existingSize : 12;
       label.dataset.exportBaseFontSize ??= String(baseSize);
@@ -1910,7 +1916,10 @@ function FlowWorkspace() {
     viewport.style.removeProperty("--docs-title-scale");
     viewport.style.removeProperty("--docs-description-scale");
     viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
-      label.style.removeProperty("font-size");
+      if ("exportOriginalFontSize" in label.dataset) {
+        label.style.fontSize = label.dataset.exportOriginalFontSize ?? "";
+        delete label.dataset.exportOriginalFontSize;
+      }
       delete label.dataset.exportBaseFontSize;
     });
   };
@@ -2020,6 +2029,10 @@ function FlowWorkspace() {
     setNodes((current) => current.map((node) => ({ ...node, selected: false })));
     setEdges((current) => current.map((edgeItem) => ({ ...edgeItem, selected: false })));
     setDocsViewportStyles(viewport, mode);
+    // Edge labels are SVG text and do not participate in the node text layout.
+    // Pin their computed size before the snapshot so text visibility toggles
+    // cannot make connector labels inherit a smaller export scale.
+    prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
 
     try {
       await document.fonts.ready;
@@ -2101,6 +2114,7 @@ function FlowWorkspace() {
 
         setDocsPreviewing(true);
         setDocsViewportStyles(viewport, docsExportMode);
+        prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
         try {
           await document.fonts.ready;
           await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
