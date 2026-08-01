@@ -315,28 +315,14 @@ button { cursor: pointer; }
 .document-export-mode .shape-decision .node-copy span {
   font-size:calc(10.5px * var(--docs-description-scale, 1));
 }
-.docs-hide-titles .node-copy strong { display:none !important; }
-/* Description-only export must not affect the title element at all. */
-.docs-hide-descriptions .node-copy strong {
+/* Keep the text slots in place during a Docs snapshot.  Removing an element
+   with display:none makes the export renderer recalculate every card, which
+   is why toggling either option used to make the whole diagram look smaller. */
+.docs-export-snapshot.docs-hide-titles .node-copy strong,
+.docs-export-snapshot.docs-hide-descriptions .node-copy span {
   display:block !important;
-  visibility:visible !important;
-  opacity:1 !important;
+  visibility:hidden !important;
 }
-.docs-hide-descriptions .node-copy {
-  flex:1 1 auto !important;
-  width:auto !important;
-  max-width:none !important;
-  overflow:visible !important;
-}
-.docs-hide-descriptions .node-copy strong {
-  width:100% !important;
-  max-width:100% !important;
-  overflow:visible !important;
-  text-overflow:clip !important;
-  white-space:normal !important;
-  -webkit-line-clamp:unset !important;
-}
-.docs-hide-descriptions .node-copy span { display:none !important; }
 .docs-hide-descriptions .legend-area-label strong,
 .docs-hide-descriptions .legend-key-head strong,
 .docs-hide-descriptions .legend-key-entry strong {
@@ -1143,16 +1129,35 @@ button { cursor: pointer; }
 .presentation-bar .button:hover { background:rgba(255,255,255,.25); }
 .presentation-bar-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:60vw; }
 
-/* Animation state classes for nodes */
+/* Animation state classes for nodes.  The bright band makes one complete lap
+   around the destination before the pulse is handed to its next connector. */
 .architecture-node.anim-active {
-  animation: anim-node-pulse 1.2s ease-in-out infinite;
+  isolation:isolate;
+  animation:anim-node-pulse .38s ease-out 1;
+}
+.architecture-node.anim-active::after {
+  content:""; position:absolute; z-index:8; inset:-6px; border-radius:inherit; padding:3px;
+  pointer-events:none;
+  background:conic-gradient(from -90deg, transparent 0deg, transparent 235deg, #dfffff 282deg, #2be0f6 318deg, transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  filter:drop-shadow(0 0 3px rgba(43,224,246,.98)) drop-shadow(0 0 8px rgba(43,224,246,.68));
+  animation:water-circle-node .38s linear 1;
 }
 .architecture-node.anim-completed {
   opacity:0.65;
 }
 @keyframes anim-node-pulse {
-  0%, 100% { box-shadow:0 0 0 4px color-mix(in srgb, var(--node) 22%, transparent), 0 8px 22px rgba(30,41,59,.09); }
-  50% { box-shadow:0 0 0 8px color-mix(in srgb, var(--node) 35%, transparent), 0 12px 28px rgba(30,41,59,.13); }
+  0%, 100% { box-shadow:0 0 0 3px color-mix(in srgb, #2be0f6 25%, transparent), 0 8px 22px rgba(30,41,59,.09); }
+  50% { box-shadow:0 0 0 7px color-mix(in srgb, #2be0f6 42%, transparent), 0 12px 28px rgba(30,41,59,.13); }
+}
+@keyframes water-circle-node { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+.shape-decision.anim-active::after { transform:rotate(45deg); border-radius:0; }
+.shape-decision.anim-active .decision-art path,
+.shape-cloud.anim-active .cloud-art path,
+.shape-database.anim-active .database-art path,
+.shape-database.anim-active .database-art ellipse {
+  stroke:#2be0f6; stroke-width:3.5; filter:drop-shadow(0 0 4px rgba(43,224,246,.95));
 }
 
 /* A single, soft pulse traces the connector from source to destination. */

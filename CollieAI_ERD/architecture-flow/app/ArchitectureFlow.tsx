@@ -388,6 +388,7 @@ function FlowingConnectorEdge({
     bend?: EdgeBend;
     joints?: EdgeBend[];
     onJointsChange?: (joints: EdgeBend[]) => void;
+    _flowDuration?: number;
   };
   // Keep one editable elbow control, like a classic orthogonal diagram line.
   const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
@@ -456,6 +457,15 @@ function FlowingConnectorEdge({
       labelBgBorderRadius={labelBgBorderRadius}
         interactionWidth={24}
       />
+      {edgeData._flowDuration ? (
+        <path
+          d={d}
+          className="connector-water-pulse"
+          pathLength={1}
+          style={{ animationDuration: `${edgeData._flowDuration}ms` }}
+          aria-hidden="true"
+        />
+      ) : null}
       {selected ? (
         <circle
           className="edge-bend-control"
@@ -798,6 +808,10 @@ function FlowWorkspace() {
   const [animCompletedIds, setAnimCompletedIds] = useState<Set<string>>(new Set());
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  // In custom-flow mode, consecutive node clicks are treated as a route.  This
+  // keeps the authoring interaction focused on the boxes while playback uses
+  // the real connector between them.
+  const customFlowStartNodeRef = useRef<string | null>(null);
   const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
@@ -1289,6 +1303,7 @@ function FlowWorkspace() {
     setAnimActiveIds(new Set());
     setAnimCompletedIds(new Set());
     setCurrentStepIndex(-1);
+    customFlowStartNodeRef.current = null;
   }, []);
 
   const createSequence = () => {
@@ -1318,12 +1333,7 @@ function FlowWorkspace() {
     );
     if (!start) return;
 
-    const steps: AnimationStep[] = [{
-      id: `step-${Date.now()}-start`,
-      elementIds: [start.id],
-      duration: 900,
-      delayAfter: 180,
-    }];
+    const steps: AnimationStep[] = [];
     const visited = new Set([start.id]);
     let currentId = start.id;
     for (let index = 0; index < 80; index += 1) {
@@ -1336,7 +1346,7 @@ function FlowWorkspace() {
         id: `step-${Date.now()}-${index}`,
         elementIds: [nextEdge.id, nextEdge.target],
         duration: 900,
-        delayAfter: 180,
+        delayAfter: 0,
       });
       visited.add(nextEdge.target);
       currentId = nextEdge.target;
@@ -1478,9 +1488,15 @@ function FlowWorkspace() {
     const effectiveDuration = step.duration / speed;
 
     setCurrentStepIndex(stepIndex);
+    setAnimationPlaying(true);
     const edgeIds = step.elementIds.filter((id) => edges.some((e) => e.id === id));
-    // Playback is intentionally connector-only: nodes remain still and the
-    // travelling light can never extend beyond the actual SVG edge path.
+    // The pulse reaches the destination before it circles that component.
+    // This makes each connection feel like one route instead of independently
+    // reloading at every line.
+    const destinationNodeIds = Array.from(new Set([
+      ...step.elementIds.filter((id) => nodes.some((node) => node.id === id)),
+      ...edges.filter((edge) => edgeIds.includes(edge.id)).map((edge) => edge.target),
+    ]));
     setAnimActiveIds(new Set(edgeIds));
     if (edgeIds.length > 0) {
       setEdges((prev) =>
@@ -1504,7 +1520,46 @@ function FlowWorkspace() {
       );
     }
 
-    animationTimerRef.current = setTimeout(() => {
+    const advance = () => {
+      const nextStep = activeSequence.steps[stepIndex + 1];
+      const nextStepHasConnector = nextStep?.elementIds.some((id) => edges.some((edge) => edge.id === id));
+      const delay = edgeIds.length > 0 && nextStepHasConnector
+        ? 0
+        : (step.delayAfter || 0) / speed;
+      animationTimerRef.current = setTimeout(() => {
+        const nextIndex = stepIndex + 1;
+        if (nextIndex < activeSequence.steps.length) {
+          playStep(nextIndex);
+        } else if (activeSequence.loop) {
+          setAnimCompletedIds(new Set());
+          setCurrentStepIndex(-1);
+          playStep(0);
+        } else {
+          clearAnimationEffects();
+        }
+      }, delay);
+    };
+
+    const circleDestination = () => {
+      if (!destinationNodeIds.length) {
+        setAnimActiveIds(new Set());
+        advance();
+        return;
+      }
+      setAnimActiveIds(new Set(destinationNodeIds));
+      const circleDuration = Math.min(450, Math.max(260, effectiveDuration * 0.32));
+      animationTimerRef.current = setTimeout(() => {
+        setAnimCompletedIds((prev) => {
+          const next = new Set(prev);
+          destinationNodeIds.forEach((id) => next.add(id));
+          return next;
+        });
+        setAnimActiveIds(new Set());
+        advance();
+      }, circleDuration);
+    };
+
+    const finishConnector = () => {
       setAnimCompletedIds((prev) => {
         const next = new Set(prev);
         edgeIds.forEach((id) => next.add(id));
@@ -1529,22 +1584,11 @@ function FlowWorkspace() {
           ),
         );
       }
+      circleDestination();
+    };
 
-      const delay = (step.delayAfter || 300) / speed;
-      animationTimerRef.current = setTimeout(() => {
-        const nextIndex = stepIndex + 1;
-        if (nextIndex < activeSequence.steps.length) {
-          playStep(nextIndex);
-        } else if (activeSequence.loop) {
-          setAnimCompletedIds(new Set());
-          setCurrentStepIndex(-1);
-          playStep(0);
-        } else {
-          clearAnimationEffects();
-        }
-      }, delay);
-    }, effectiveDuration);
-  }, [activeSequence, edges, setEdges, clearAnimationEffects]);
+    animationTimerRef.current = setTimeout(finishConnector, edgeIds.length ? effectiveDuration : 0);
+  }, [activeSequence, edges, nodes, setEdges, clearAnimationEffects]);
 
   const startPlayback = useCallback(() => {
     if (!activeSequence || activeSequence.steps.length === 0) return;
@@ -1552,6 +1596,7 @@ function FlowWorkspace() {
     setCurrentStepIndex(-1);
     setAnimActiveIds(new Set());
     setAnimCompletedIds(new Set());
+    setAnimationPlaying(true);
     playStep(0);
   }, [activeSequence, playStep]);
 
@@ -1564,34 +1609,10 @@ function FlowWorkspace() {
   const resumePlayback = useCallback(() => {
     if (!animationPaused || currentStepIndex < 0) return;
     setAnimationPaused(false);
-    const speed = activeSequence?.playbackSpeed || 1;
-    const step = activeSequence?.steps[currentStepIndex];
-    if (!step) return;
-    const remaining = step.duration / speed;
-    animationTimerRef.current = setTimeout(() => {
-      setAnimCompletedIds((prev) => {
-        const next = new Set(prev);
-        step.elementIds
-          .filter((id) => edges.some((edge) => edge.id === id))
-          .forEach((id) => next.add(id));
-        return next;
-      });
-      setAnimActiveIds(new Set());
-      const delay = (step.delayAfter || 300) / speed;
-      animationTimerRef.current = setTimeout(() => {
-        const nextIndex = currentStepIndex + 1;
-        if (nextIndex < (activeSequence?.steps.length || 0)) {
-          playStep(nextIndex);
-        } else if (activeSequence?.loop) {
-          setAnimCompletedIds(new Set());
-          setCurrentStepIndex(-1);
-          playStep(0);
-        } else {
-          clearAnimationEffects();
-        }
-      }, delay);
-    }, remaining);
-  }, [animationPaused, currentStepIndex, activeSequence, playStep, clearAnimationEffects, edges]);
+    // Restart the current route segment so a paused SVG/CSS animation cannot
+    // resume out of sync with its destination-circling effect.
+    playStep(currentStepIndex);
+  }, [animationPaused, currentStepIndex, playStep]);
 
   const goToStep = (stepIndex: number) => {
     if (!activeSequence || stepIndex < 0 || stepIndex >= activeSequence.steps.length) return;
@@ -1667,6 +1688,23 @@ function FlowWorkspace() {
       addStep([elementId]);
     }
   }, [activeSequence, animationMode]);
+
+  const addCustomFlowNode = useCallback((nodeId: string) => {
+    if (!activeSequence || animationMode !== "editing") return;
+    const previousNodeId = customFlowStartNodeRef.current;
+    if (!previousNodeId) {
+      customFlowStartNodeRef.current = nodeId;
+      setSelectedId(nodeId);
+      setSelectedEdgeId(null);
+      return;
+    }
+
+    const connector = edges.find(
+      (edge) => edge.source === previousNodeId && edge.target === nodeId,
+    );
+    customFlowStartNodeRef.current = nodeId;
+    if (connector) addStep([connector.id]);
+  }, [activeSequence, animationMode, edges]);
 
   const saveDiagram = () => {
     persistCurrentPage();
@@ -2684,7 +2722,7 @@ function FlowWorkspace() {
           onNodeClick={(_, node) => {
             if (animationMode === "presentation") return;
             if (animationOpen && activeSequence) {
-              tryAddElementToSequence(node.id);
+              addCustomFlowNode(node.id);
               return;
             }
             setSelectedId(node.id);
