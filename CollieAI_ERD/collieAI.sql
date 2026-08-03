@@ -45,6 +45,7 @@ CREATE TABLE class_sections
 CREATE TABLE student_profiles
 (
  student_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ user_id INT NOT NULL UNIQUE,
  section_id INT, --fk
  avatar_id INT, -- fk
  total_star_points DOUBLE PRECISION,
@@ -57,7 +58,7 @@ CREATE TABLE student_profiles
 CREATE TABLE parent_profiles
 (
  parent_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
- role_id INT, --fk
+ user_id INT, --fk
  contact_number SMALLINT,
  preferred_notification_channel TEXT,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -511,6 +512,11 @@ CREATE TABLE notifications (
  ADD CONSTRAINT fk_users_role_id_roles_roles_id
  FOREIGN KEY (role_id)
  REFERENCES roles(role_id);
+
+ ALTER TABLE student_profiles
+ ADD CONSTRAINT fk_student_profiles_user_id_users_user_id
+ FOREIGN KEY (user_id)
+ REFERENCES users(user_id);
  
  ALTER TABLE student_profiles
  ADD CONSTRAINT fk_student_profiles_section_id_class_section_section_id
@@ -518,9 +524,9 @@ CREATE TABLE notifications (
  REFERENCES class_sections(section_id);
 
  ALTER TABLE parent_profiles
- ADD CONSTRAINT fk_parent_profiles_role_id_role_role_id
- FOREIGN KEY (role_id)
- REFERENCES roles(role_id);
+ ADD CONSTRAINT fk_parent_profiles_user_id_users_user_id
+ FOREIGN KEY (user_id)
+ REFERENCES users(user_id);
 
 ALTER TABLE student_parent_links
 ADD CONSTRAINT fk_student_parent_links_student_id_student_profiles_student_id

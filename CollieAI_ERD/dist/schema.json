@@ -313,6 +313,14 @@
           "notNull": true,
           "comment": null
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "section_id": {
           "name": "section_id",
           "type": "int4",
@@ -380,6 +388,26 @@
             "student_id"
           ]
         },
+        "student_profiles_user_id_key": {
+          "type": "UNIQUE",
+          "name": "student_profiles_user_id_key",
+          "columnNames": [
+            "user_id"
+          ]
+        },
+        "fk_student_profiles_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_profiles_user_id_users_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
         "fk_student_profiles_section_id_class_section_section_id": {
           "type": "FOREIGN KEY",
           "name": "fk_student_profiles_section_id_class_section_section_id",
@@ -419,8 +447,8 @@
           "notNull": true,
           "comment": null
         },
-        "role_id": {
-          "name": "role_id",
+        "user_id": {
+          "name": "user_id",
           "type": "int4",
           "default": null,
           "check": null,
@@ -470,15 +498,15 @@
             "parent_id"
           ]
         },
-        "fk_parent_profiles_role_id_role_role_id": {
+        "fk_parent_profiles_user_id_users_user_id": {
           "type": "FOREIGN KEY",
-          "name": "fk_parent_profiles_role_id_role_role_id",
+          "name": "fk_parent_profiles_user_id_users_user_id",
           "columnNames": [
-            "role_id"
+            "user_id"
           ],
-          "targetTableName": "roles",
+          "targetTableName": "users",
           "targetColumnNames": [
-            "role_id"
+            "user_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
