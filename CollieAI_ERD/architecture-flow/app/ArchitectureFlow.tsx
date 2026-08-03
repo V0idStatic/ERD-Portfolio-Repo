@@ -218,14 +218,26 @@ function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<Archi
   if (data.shape === "legend-key") {
     // React Flow supplies the live resized dimensions.  Scale the legend from
     // its area, so growing either dimension gives the labels room to grow too.
+    const keyWidth = width ?? 250;
+    const keyHeight = height ?? 240;
+    const entryCount = data.legendEntries?.length ?? 0;
+    const isWideLegend = keyWidth / keyHeight > 1.45;
+    // Wide legend keys are a single horizontal row: each item receives an
+    // equal share of the free width rather than wrapping into columns.
+    const legendColumns = isWideLegend ? Math.max(1, entryCount) : 1;
     const legendScale = Math.min(
       3.5,
-      Math.max(0.8, Math.sqrt(((width ?? 250) * (height ?? 240)) / (250 * 240))),
+      Math.max(
+        0.8,
+        isWideLegend
+          ? keyWidth / (entryCount <= 2 ? 280 : entryCount <= 4 ? 400 : 520)
+          : Math.sqrt((keyWidth * keyHeight) / (250 * 240)),
+      ),
     );
     return (
       <div
-        className={`architecture-node shape-legend-key ${selected ? "is-selected" : ""}`}
-        style={{ "--legend-scale": legendScale } as CSSProperties}
+        className={`architecture-node shape-legend-key ${isWideLegend ? "is-wide" : ""} ${selected ? "is-selected" : ""}`}
+        style={{ "--legend-scale": legendScale, "--legend-columns": legendColumns } as CSSProperties}
       >
         <NodeResizer
           minWidth={190}

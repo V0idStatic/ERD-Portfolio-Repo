@@ -1,5 +1,5 @@
-
--- 1.) User and Access
+-- Write section
+-- 1.) User and Access 
 CREATE TABLE user_auth
 (
  auth_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
@@ -20,6 +20,16 @@ CREATE TABLE users
  role_id INT, --fk
  email TEXT NOT NULL,
  is_active BOOLEAN NOT NULL
+);
+
+CREATE TABLE teacher_profiles
+(
+ teacher_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ user_id INT NOT NULL, -- fk
+ employee_number VARCHAR(50) UNIQUE,
+ specialization TEXT,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE class_sections
@@ -63,6 +73,18 @@ CREATE TABLE parent_profiles
  is_primary_guardian BOOLEAN,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()   
  );
+
+ CREATE TABLE student_teacher_links
+(
+ student_teacher_link_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ student_id INT NOT NULL, -- fk
+ teacher_id INT NOT NULL, -- fk
+ section_id INT, -- fk; optional, identifies the class assignment
+ assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+ UNIQUE (student_id, teacher_id, section_id)
+);
 
  -- 2.) Learning Content
 
@@ -508,6 +530,29 @@ REFERENCES student_profiles(student_id),
 ADD CONSTRAINT fk_student_parent_links_parent_id_parent_profiles_parent_id
 FOREIGN KEY(parent_id)
 REFERENCES parent_profiles(parent_id);
+
+ALTER TABLE teacher_profiles
+ADD CONSTRAINT fk_teacher_profiles_user_id_users_user_id
+FOREIGN KEY (user_id)
+REFERENCES users(user_id);
+
+ALTER TABLE class_sections
+ADD CONSTRAINT fk_class_sections_teacher_id_teacher_profiles_teacher_id
+FOREIGN KEY (teacher_id)
+REFERENCES teacher_profiles(teacher_id);
+
+ALTER TABLE student_teacher_links
+ADD CONSTRAINT fk_student_teacher_links_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_teacher_links_teacher_id_teacher_profiles_teacher_id
+FOREIGN KEY (teacher_id)
+REFERENCES teacher_profiles(teacher_id),
+
+ADD CONSTRAINT fk_student_teacher_links_section_id_class_sections_section_id
+FOREIGN KEY (section_id)
+REFERENCES class_sections(section_id);
 
 
  -- 2.) Curriculum -> Tutoring session -> multimodal capture

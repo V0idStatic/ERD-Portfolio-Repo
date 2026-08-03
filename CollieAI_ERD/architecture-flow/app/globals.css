@@ -264,6 +264,20 @@ button { cursor: pointer; }
   text-overflow:clip; white-space:normal; overflow-wrap:anywhere;
 }
 .legend-key-entry small { color:#8290a1; font-size:clamp(7px,calc(8px * var(--legend-scale)),24px); line-height:1; }
+/* A wide, short legend has horizontal room but very little vertical room.
+   Use a grid instead of forcing a long, scrollable column of entries. */
+.shape-legend-key.is-wide .legend-key-list {
+  overflow:hidden;
+  display:grid;
+  grid-template-columns:repeat(var(--legend-columns, 2), minmax(0, 1fr));
+  grid-auto-rows:minmax(0, 1fr);
+  align-items:stretch;
+}
+.shape-legend-key.is-wide .legend-key-entry {
+  min-height:0;
+  height:100%;
+}
+.shape-legend-key.is-wide .legend-key-entry > span { min-width:0; }
 .react-flow__handle {
   width: 8px !important; height: 8px !important; border: 2px solid white !important; background: var(--node) !important;
 }

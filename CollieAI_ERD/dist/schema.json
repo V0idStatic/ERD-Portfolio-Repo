@@ -141,6 +141,90 @@
         }
       }
     },
+    "teacher_profiles": {
+      "name": "teacher_profiles",
+      "columns": {
+        "teacher_id": {
+          "name": "teacher_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_number": {
+          "name": "employee_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "specialization": {
+          "name": "specialization",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "teacher_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "teacher_profiles_pkey",
+          "columnNames": [
+            "teacher_id"
+          ]
+        },
+        "teacher_profiles_employee_number_key": {
+          "type": "UNIQUE",
+          "name": "teacher_profiles_employee_number_key",
+          "columnNames": [
+            "employee_number"
+          ]
+        },
+        "fk_teacher_profiles_user_id_users_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_teacher_profiles_user_id_users_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
     "class_sections": {
       "name": "class_sections",
       "columns": {
@@ -202,6 +286,19 @@
           "columnNames": [
             "section_id"
           ]
+        },
+        "fk_class_sections_teacher_id_teacher_profiles_teacher_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_class_sections_teacher_id_teacher_profiles_teacher_id",
+          "columnNames": [
+            "teacher_id"
+          ],
+          "targetTableName": "teacher_profiles",
+          "targetColumnNames": [
+            "teacher_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -472,6 +569,118 @@
           "targetTableName": "parent_profiles",
           "targetColumnNames": [
             "parent_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "student_teacher_links": {
+      "name": "student_teacher_links",
+      "columns": {
+        "student_teacher_link_id": {
+          "name": "student_teacher_link_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "teacher_id": {
+          "name": "teacher_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "section_id": {
+          "name": "section_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "assigned_at": {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_teacher_links_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_teacher_links_pkey",
+          "columnNames": [
+            "student_teacher_link_id"
+          ]
+        },
+        "student_teacher_links_student_id_teacher_id_section_id_key": {
+          "type": "UNIQUE",
+          "name": "student_teacher_links_student_id_teacher_id_section_id_key",
+          "columnNames": [
+            "student_id",
+            "teacher_id",
+            "section_id"
+          ]
+        },
+        "fk_student_teacher_links_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_teacher_links_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_teacher_links_teacher_id_teacher_profiles_teacher_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_teacher_links_teacher_id_teacher_profiles_teacher_id",
+          "columnNames": [
+            "teacher_id"
+          ],
+          "targetTableName": "teacher_profiles",
+          "targetColumnNames": [
+            "teacher_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_teacher_links_section_id_class_sections_section_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_teacher_links_section_id_class_sections_section_id",
+          "columnNames": [
+            "section_id"
+          ],
+          "targetTableName": "class_sections",
+          "targetColumnNames": [
+            "section_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
@@ -1615,6 +1824,14 @@
         },
         "problem_id": {
           "name": "problem_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
           "type": "int4",
           "default": null,
           "check": null,
