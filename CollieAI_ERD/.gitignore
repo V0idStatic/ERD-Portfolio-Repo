@@ -3,6 +3,7 @@ securityRLS.sql
 LemmaAI_views.sql
 dbt_collieai/target/
 dbt_collieai/dbt_packages/
+dbt_collieai/logs/
+dbt_collieai/.user.yml
 local.cmd
 run-dbt.ps1
-
