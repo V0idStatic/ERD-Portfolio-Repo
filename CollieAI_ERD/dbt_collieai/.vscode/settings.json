@@ -1,0 +1,7 @@
+{
+  "dbt.dbtPythonPathOverride": "C:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\.venv\\Scripts\\python.exe",
+  "dbt.enableNewLineagePanel": true,
+  "dbt.lineage.showSelectEdges": true,
+  "dbt.lineage.showNonSelectEdges": true,
+  "dbt.lineage.defaultExpansion": 4
+}

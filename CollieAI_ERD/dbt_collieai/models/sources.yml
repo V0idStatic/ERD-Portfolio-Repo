@@ -1,0 +1,48 @@
+version: 2
+
+sources:
+  - name: lemma
+    description: "Application write tables defined in collieAI.sql. dbt reads these; it does not create or modify them."
+    schema: public
+    tables:
+      - name: user_auth
+      - name: roles
+      - name: users
+      - name: teacher_profiles
+      - name: class_sections
+      - name: student_profiles
+      - name: parent_profiles
+      - name: student_parent_links
+      - name: student_teacher_links
+      - name: math_topics
+      - name: math_skills
+      - name: difficulty_levels
+      - name: math_problems
+      - name: student_inputs
+      - name: file_assets
+      - name: ocr_logs
+      - name: speech_to_text_logs
+      - name: text_to_speech_logs
+      - name: ai_sessions
+      - name: ai_messages
+      - name: session_states
+      - name: student_attempts
+      - name: attempt_steps
+      - name: dda_events
+      - name: show_me_breakdowns
+      - name: student_help_events
+      - name: guardrail_checks
+      - name: system_prompts
+      - name: prompt_usage_logs
+      - name: student_skill_features
+      - name: student_skill_predictions
+      - name: ml_models
+      - name: learning_recommendations
+      - name: avatars
+      - name: reward_transactions
+      - name: avatar_items
+      - name: student_avatar_items
+      - name: vector_records
+      - name: n8n_workflow_logs
+      - name: api_request_logs
+      - name: notifications

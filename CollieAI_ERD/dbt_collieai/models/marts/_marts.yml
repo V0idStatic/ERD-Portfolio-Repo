@@ -1,0 +1,188 @@
+version: 2
+
+models:
+  - name: mv_daily_student_performance
+    description: "Final materialized view endpoint with explicit columns for lineage."
+    columns:
+      - name: performance_date
+      - name: student_id
+      - name: section_name
+      - name: grade_level
+      - name: sessions_started
+      - name: sessions_completed
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: avg_score
+      - name: avg_time_spent_seconds
+      - name: hinted_attempt_count
+      - name: help_request_count
+      - name: dda_trigger_count
+      - name: show_me_count
+      - name: accuracy_rate
+  - name: mv_topic_failure_patterns
+    description: "Final materialized view endpoint with explicit columns for lineage."
+    columns:
+      - name: topic_name
+      - name: grade_level
+      - name: skill_id
+      - name: skill_name
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: failure_rate
+      - name: avg_time_spent_seconds
+      - name: affected_student_count
+      - name: latest_failure_at
+      - name: wrong_step_count
+      - name: hinted_step_count
+      - name: help_request_count
+      - name: dda_trigger_count
+      - name: show_me_count
+  - name: mv_weekly_skill_mastery
+    description: "Final materialized view endpoint with explicit columns for lineage."
+    columns:
+      - name: week_start_date
+      - name: student_id
+      - name: skill_id
+      - name: skill_name
+      - name: topic_name
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: avg_score
+      - name: avg_time_spent_seconds
+      - name: hinted_attempt_count
+      - name: hint_usage_rate
+      - name: help_request_count
+      - name: help_request_rate
+      - name: dda_trigger_count
+      - name: show_me_count
+      - name: accuracy_rate
+      - name: latest_predicted_mastery_score
+      - name: latest_risk_level
+      - name: recommended_action
+      - name: latest_prediction_at
+  - name: vw_dda_effectiveness
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: dda_event_id
+      - name: student_id
+      - name: grade_level
+      - name: skill_name
+      - name: topic_name
+      - name: trigger_reason
+      - name: previous_difficulty_name
+      - name: previous_difficulty_value
+      - name: new_difficulty_name
+      - name: new_difficulty_value
+      - name: visual_analogy_used
+      - name: event_created_at
+      - name: related_help_event_count
+      - name: related_show_me_count
+      - name: show_me_triggered
+      - name: latest_accuracy_rate
+      - name: latest_risk_level
+  - name: vw_gamification_summary
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: student_id
+      - name: avatar_name
+      - name: total_star_points
+      - name: current_streak
+      - name: total_points_earned
+      - name: reward_transaction_count
+      - name: latest_reward_reason
+      - name: latest_reward_at
+      - name: unlocked_item_count
+      - name: equipped_item_count
+      - name: item_details
+  - name: vw_guardrail_summary
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: guardrail_id
+      - name: student_id
+      - name: sender
+      - name: message_type
+      - name: message_text
+      - name: is_math_related
+      - name: prompt_injection_detected
+      - name: violation_type
+      - name: action_taken
+      - name: confidence_score
+      - name: checked_at
+  - name: vw_parent_child_progress
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: parent_id
+      - name: student_id
+      - name: relationship_type
+      - name: is_primary_guardian
+      - name: section_name
+      - name: grade_level
+      - name: learning_status
+      - name: current_streak
+      - name: total_star_points
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: overall_accuracy_rate
+      - name: help_request_count
+      - name: last_activity_at
+      - name: at_risk_skill_count
+      - name: needs_practice_skill_count
+      - name: active_recommendation_count
+      - name: highest_priority_recommendation
+  - name: vw_student_learning_summary
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: student_id
+      - name: section_name
+      - name: grade_level
+      - name: learning_status
+      - name: current_streak
+      - name: total_star_points
+      - name: total_sessions
+      - name: completed_sessions
+      - name: last_session_at
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: last_attempt_at
+      - name: overall_accuracy_rate
+      - name: help_request_count
+      - name: last_help_at
+      - name: help_request_rate
+      - name: latest_risk_level
+      - name: latest_mastery_score
+      - name: latest_prediction_at
+      - name: active_recommendation_count
+      - name: latest_recommendation_text
+      - name: last_activity_at
+  - name: vw_student_skill_mastery
+    description: "Final view endpoint with explicit columns for lineage."
+    columns:
+      - name: student_id
+      - name: grade_level
+      - name: skill_id
+      - name: skill_name
+      - name: topic_name
+      - name: total_answer_attempts
+      - name: correct_attempts
+      - name: wrong_attempts
+      - name: accuracy_rate
+      - name: avg_time_spent
+      - name: hint_usage_rate
+      - name: help_request_count
+      - name: help_request_rate
+      - name: failed_loop_count
+      - name: dda_trigger_count
+      - name: show_me_count
+      - name: recent_score_avg
+      - name: last_attempt_at
+      - name: predicted_mastery_score
+      - name: risk_level
+      - name: recommended_difficulty_name
+      - name: recommended_difficulty_value
+      - name: recommended_action
+      - name: predicted_at

@@ -1,3 +1,8 @@
 .env
 securityRLS.sql
 LemmaAI_views.sql
+dbt_collieai/target/
+dbt_collieai/dbt_packages/
+local.cmd
+run-dbt.ps1
+

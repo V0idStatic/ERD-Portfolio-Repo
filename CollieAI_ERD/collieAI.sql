@@ -797,17 +797,3 @@ REFERENCES users(user_id),
 ADD CONSTRAINT fk_notifications_student_id_student_profiles_student_id
 FOREIGN KEY (student_id)
 REFERENCES student_profiles(student_id);
-
-
-
-
-
-
-
-
-
-
-
-
-
- 
