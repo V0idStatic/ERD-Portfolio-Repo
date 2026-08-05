@@ -73,6 +73,7 @@ import {
 import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import DashboardHome from "./DashboardHome";
 
 type NodeShape =
   | "service"
@@ -766,7 +767,7 @@ const removeAnimationEdgeClasses = (className?: string) =>
     .filter((name) => name && name !== "anim-edge-active" && name !== "anim-edge-completed")
     .join(" ");
 
-function FlowWorkspace() {
+function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -2426,7 +2427,7 @@ function FlowWorkspace() {
     <main className="architecture-shell">
       <header className="topbar">
         <div className="brand">
-          <span className="brand-mark"><Network size={19} /></span>
+          <button className="brand-mark" onClick={onGoHome} title="Back to home" aria-label="Back to home"><Network size={19} /></button>
           <div>
             <strong>LemmaAI</strong>
             <span>System architecture</span>
@@ -3862,9 +3863,15 @@ function FlowWorkspace() {
 }
 
 export default function ArchitectureFlow() {
+  const [screen, setScreen] = useState<"home" | "workspace">("home");
+
+  if (screen === "home") {
+    return <DashboardHome onOpenWorkspace={() => setScreen("workspace")} />;
+  }
+
   return (
     <ReactFlowProvider>
-      <FlowWorkspace />
+      <FlowWorkspace onGoHome={() => setScreen("home")} />
     </ReactFlowProvider>
   );
 }
