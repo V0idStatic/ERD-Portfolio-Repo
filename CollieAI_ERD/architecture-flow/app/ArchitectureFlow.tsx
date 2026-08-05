@@ -697,6 +697,33 @@ const initialEdges: Edge[] = [
   edge("e36", "continue", "input", "Yes · next turn", true, "de0-2", "right-0"),
 ];
 
+const userFlowNodes: ArchitectureNode[] = [
+  n("uf-start", 80, 110, "Start", "Learner opens LemmaAI", "terminal", "play", "emerald"),
+  n("uf-login", 80, 250, "Sign up / Log in", "Identity and learner profile", "service", "user", "cyan"),
+  n("uf-practice", 80, 390, "Choose practice or scan problem", "Select a learning activity", "service", "input", "cyan"),
+  n("uf-prompt", 590, 390, "Show Problem + Lemma prompt", "Adaptive learning prompt", "service", "bot", "violet"),
+  n("uf-submit", 590, 540, "System checks submitted answer", "Evaluate learner response", "service", "brain", "cyan"),
+  n("uf-response", 220, 650, "Student Response", "Correct, confused, or asks for help", "decision", "decision", "amber"),
+  n("uf-hint", 350, 800, "Show Visual Hint", "Guide the learner with a hint", "service", "sparkles", "violet"),
+  n("uf-outcome", 700, 890, "Answer outcome", "Correct or wrong", "decision", "decision", "amber"),
+  n("uf-correct", 260, 1040, "Correct: reward + progress update", "Celebrate and record progress", "service", "check", "emerald"),
+  n("uf-wrong", 820, 1040, "Wrong: hint/support + retry", "Explain and offer another try", "service", "input", "rose"),
+  n("uf-continue", 590, 1210, "Continue next problem or finish practice", "Keep learning or end the session", "service", "route", "cyan"),
+  n("uf-dashboard", 1190, 500, "Dashboard", "Parent tracking and learner progress", "service", "dashboard", "violet"),
+  n("uf-review", 1190, 1030, "Review progress, weak skill, and engagement", "Parent / teacher insight", "service", "dashboard", "violet"),
+  n("uf-end", 590, 1370, "End", "Practice session complete", "terminal", "check", "emerald"),
+];
+
+const userFlowEdges: Edge[] = [
+  edge("uf-1", "uf-start", "uf-login"), edge("uf-2", "uf-login", "uf-practice"), edge("uf-3", "uf-practice", "uf-prompt"),
+  edge("uf-4", "uf-prompt", "uf-submit"), edge("uf-5", "uf-submit", "uf-response"), edge("uf-6", "uf-response", "uf-hint", "Confused / help"),
+  edge("uf-7", "uf-response", "uf-outcome", "Submitted answer"), edge("uf-8", "uf-hint", "uf-prompt", "Try again", true),
+  edge("uf-9", "uf-outcome", "uf-correct", "Correct"), edge("uf-10", "uf-outcome", "uf-wrong", "Wrong"),
+  edge("uf-11", "uf-correct", "uf-continue"), edge("uf-12", "uf-wrong", "uf-continue", "Retry"),
+  edge("uf-13", "uf-continue", "uf-prompt", "Next problem", true), edge("uf-14", "uf-continue", "uf-end", "Finish"),
+  edge("uf-15", "uf-prompt", "uf-dashboard", "Progress data"), edge("uf-16", "uf-dashboard", "uf-review"),
+];
+
 const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "service", label: "Service" },
   { value: "decision", label: "Diamond" },
@@ -1247,8 +1274,8 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       window.localStorage.getItem(pageStorageKey(pageId)) ??
       (pageId === "main" ? window.localStorage.getItem(LEGACY_STORAGE_KEY) : null);
     if (!stored) {
-      setNodes(pageId === "main" ? initialNodes : []);
-      setEdges(pageId === "main" ? initialEdges : []);
+      setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+      setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
       return;
     }
     try {
@@ -1256,8 +1283,8 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       setNodes(synchronizeLegendKey(parsed.nodes ?? []));
       setEdges(parsed.edges ?? []);
     } catch {
-      setNodes(pageId === "main" ? initialNodes : []);
-      setEdges(pageId === "main" ? initialEdges : []);
+      setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+      setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
     }
   };
 
