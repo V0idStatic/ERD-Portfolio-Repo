@@ -118,6 +118,9 @@ type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose";
 type ArchitectureNodeData = {
   label: string;
   description?: string;
+  /** dbt relation metadata. When present the node renders as an ERD-style table. */
+  relationType?: "source" | "materialized_view" | "view";
+  columns?: string[];
   titleSize?: number;
   descriptionSize?: number;
   shape: NodeShape;
@@ -270,6 +273,7 @@ function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<Archi
   }
 
   const animState = data._animState;
+  const isRelation = Boolean(data.relationType && data.columns?.length);
   return (
     <div
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
@@ -353,7 +357,7 @@ function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<Archi
           <path d="M115 2 L228 63 L115 124 L2 63 Z" />
         </svg>
       ) : null}
-      <div className="node-inner">
+      <div className={`node-inner ${isRelation ? "relation-node-inner" : ""}`}>
         {data.shape !== "database" && data.shape !== "decision" ? (
           <span className="node-icon" aria-hidden="true">
             <Icon size={17} strokeWidth={2.2} />
@@ -364,6 +368,19 @@ function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<Archi
           {data.description ? <span>{data.description}</span> : null}
         </div>
       </div>
+      {isRelation ? (
+        <div className="relation-schema" aria-label={`${data.label} columns`}>
+          <div className="relation-schema-head">
+            <span>{data.relationType === "source" ? "SOURCE TABLE" : data.relationType === "materialized_view" ? "MATERIALIZED VIEW" : "VIEW"}</span>
+            <b>{data.columns!.length} columns</b>
+          </div>
+          <ul>
+            {data.columns!.map((column) => (
+              <li key={column}><i aria-hidden="true" />{column}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
             {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
         <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
       ))}
@@ -522,6 +539,22 @@ const n = (
   data: { label, description, shape, icon, tone },
 });
 
+const relationNode = (
+  id: string,
+  x: number,
+  y: number,
+  label: string,
+  relationType: "source" | "materialized_view" | "view",
+  columns: string[],
+  description: string,
+): ArchitectureNode => ({
+  id,
+  type: "architecture",
+  position: { x, y },
+  data: { label, description, relationType, columns, shape: "database", icon: "database", tone: relationType === "materialized_view" ? "violet" : "cyan" },
+  style: { width: 300, height: Math.max(215, Math.min(470, 110 + columns.length * 22)) },
+});
+
 const getLegendFrame = (allNodes: ArchitectureNode[], nodeIds: string[]) => {
   const members = allNodes.filter(
     (node) =>
@@ -597,7 +630,7 @@ const synchronizeLegendKey = (allNodes: ArchitectureNode[]) => {
   ];
 };
 
-const initialNodes: ArchitectureNode[] = [
+const legacyInitialNodes: ArchitectureNode[] = [
   n("start", 910, 10, "Start", "Student opens CollieAI", "terminal", "play", "emerald"),
   n("app", 875, 135, "Parent / Teacher App", "React · Expo · Next.js candidate", "service", "app", "cyan"),
   n("input", 850, 285, "Multimodal Input", "Text · selected object · voice · image", "service", "input", "violet"),
@@ -657,7 +690,7 @@ const edge = (
   labelBgBorderRadius: 5,
 });
 
-const initialEdges: Edge[] = [
+const legacyInitialEdges: Edge[] = [
   edge("e1", "start", "app"),
   edge("e2", "app", "input"),
   edge("e3", "input", "media"),
@@ -696,6 +729,25 @@ const initialEdges: Edge[] = [
   edge("e36", "continue", "input", "Yes · next turn", true, "de0-2", "right-0"),
 ];
 
+const initialNodes: ArchitectureNode[] = [
+  relationNode("attempts", 40, 100, "lemma.student_attempts", "source", ["attempt_id", "student_id", "problem_id", "is_correct", "score", "time_spent_seconds", "created_at"], "Raw learner answer events"),
+  relationNode("steps", 40, 500, "lemma.attempt_steps", "source", ["attempt_id", "hint_used", "created_at"], "Hint use for each attempt"),
+  relationNode("sessions", 40, 770, "lemma.ai_sessions", "source", ["session_id", "student_id", "session_status", "created_at"], "Learning sessions"),
+  relationNode("help", 400, 100, "lemma.student_help_events", "source", ["event_id", "student_id", "skill_id", "created_at"], "Student help requests"),
+  relationNode("dda", 400, 390, "lemma.dda_events", "source", ["event_id", "student_id", "skill_id", "created_at"], "Dynamic difficulty adjustments"),
+  relationNode("show-me", 400, 680, "lemma.show_me_breakdowns", "source", ["breakdown_id", "session_id", "skill_id", "created_at"], "Show-me explanations"),
+  relationNode("dimensions", 400, 970, "lemma.dimensions", "source", ["student_profiles.student_id", "student_profiles.section_id", "class_sections.section_name", "class_sections.grade_level", "math_problems.problem_id", "math_problems.skill_id", "math_skills.skill_name", "math_topics.topic_name"], "Profile and curriculum lookup fields"),
+  relationNode("daily", 850, 70, "mv_daily_student_performance", "materialized_view", ["performance_date", "student_id", "section_name", "grade_level", "sessions_started", "sessions_completed", "total_answer_attempts", "correct_attempts", "wrong_attempts", "avg_score", "avg_time_spent_seconds", "hinted_attempt_count", "help_request_count", "dda_trigger_count", "show_me_count", "accuracy_rate"], "Daily learner performance mart"),
+  relationNode("weekly", 1210, 70, "mv_weekly_skill_mastery", "materialized_view", ["week_start_date", "student_id", "skill_id", "skill_name", "topic_name", "total_answer_attempts", "correct_attempts", "wrong_attempts", "avg_score", "avg_time_spent_seconds", "hinted_attempt_count", "hint_usage_rate", "help_request_count", "help_request_rate", "dda_trigger_count", "show_me_count", "accuracy_rate", "latest_predicted_mastery_score", "latest_risk_level", "recommended_action", "latest_prediction_at"], "Weekly skill-level mastery mart"),
+  relationNode("topic-failures", 1570, 70, "mv_topic_failure_patterns", "materialized_view", ["topic_name", "grade_level", "skill_id", "skill_name", "total_answer_attempts", "correct_attempts", "wrong_attempts", "failure_rate", "avg_time_spent_seconds", "affected_student_count", "latest_failure_at", "wrong_step_count", "hinted_step_count", "help_request_count", "dda_trigger_count", "show_me_count"], "Topic failure-pattern mart"),
+];
+
+const initialEdges: Edge[] = [
+  edge("attempts-daily", "attempts", "daily", "student_id, score, timestamps → daily attempt metrics"), edge("steps-daily", "steps", "daily", "attempt_id, hint_used → hinted_attempt_count"), edge("sessions-daily", "sessions", "daily", "student_id, status, created_at → session metrics"), edge("help-daily", "help", "daily", "student_id, created_at → help_request_count"), edge("dda-daily", "dda", "daily", "student_id, created_at → dda_trigger_count"), edge("show-daily", "show-me", "daily", "session_id, created_at → show_me_count"), edge("dimensions-daily", "dimensions", "daily", "profile + section fields → section_name, grade_level"),
+  edge("attempts-weekly", "attempts", "weekly", "student_id, problem_id, score → weekly attempt metrics"), edge("steps-weekly", "steps", "weekly", "attempt_id, hint_used → hinted_attempt_count"), edge("help-weekly", "help", "weekly", "student_id, skill_id → help_request_count"), edge("dda-weekly", "dda", "weekly", "student_id, skill_id → dda_trigger_count"), edge("show-weekly", "show-me", "weekly", "session_id, skill_id → show_me_count"), edge("dimensions-weekly", "dimensions", "weekly", "problem, skill, topic lookups → skill_name, topic_name"),
+  edge("attempts-topic", "attempts", "topic-failures", "problem_id, is_correct → failure metrics"), edge("steps-topic", "steps", "topic-failures", "attempt_id, hint_used → hinted_step_count"), edge("help-topic", "help", "topic-failures", "skill_id → help_request_count"), edge("dda-topic", "dda", "topic-failures", "skill_id → dda_trigger_count"), edge("show-topic", "show-me", "topic-failures", "skill_id → show_me_count"), edge("dimensions-topic", "dimensions", "topic-failures", "skill + topic lookups → topic_name, skill_name"),
+];
+
 const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "service", label: "Service" },
   { value: "decision", label: "Diamond" },
@@ -732,11 +784,11 @@ const createLegendDraft = (): LegendDraft => ({
   nodeIds: [],
 });
 
-const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
-const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
-const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
-const pageStorageKey = (pageId: string) => `collieai-architecture-page-${pageId}`;
-const historyStorageKey = (pageId: string) => `collieai-architecture-history-${pageId}`;
+const PAGE_INDEX_KEY = "collieai-dbt-lineage-pages-v1";
+const LEGACY_STORAGE_KEY = "collieai-dbt-lineage-v1";
+const defaultPages: DiagramPage[] = [{ id: "main", name: "dbt lineage" }];
+const pageStorageKey = (pageId: string) => `collieai-dbt-lineage-page-${pageId}`;
+const historyStorageKey = (pageId: string) => `collieai-dbt-lineage-history-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
@@ -2428,13 +2480,13 @@ function FlowWorkspace() {
         <div className="brand">
           <span className="brand-mark"><Network size={19} /></span>
           <div>
-            <strong>LemmaAI</strong>
-            <span>System architecture</span>
+            <strong>CollieAI dbt</strong>
+            <span>Column-level lineage</span>
           </div>
         </div>
         <div className="topbar-center">
           <span className="status-dot" />
-          Interactive system map
+          Materialized-view lineage
         </div>
         <div className="topbar-actions">
           <button
@@ -2476,7 +2528,7 @@ function FlowWorkspace() {
       <nav className="tool-navbar" aria-label="Diagram tools">
         <div className="tool-navbar-label">
           <span>DIAGRAM TOOLS</span>
-          <strong>Build and organize your architecture</strong>
+          <strong>Follow columns from source tables into each materialized view</strong>
         </div>
         <div className="tool-navbar-actions">
           <button className="button secondary" onClick={() => setCreatorOpen(true)}>

@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LemmaAI System Architecture",
+  title: "CollieAI dbt Column Lineage",
   description:
-    "An interactive architecture map for CollieAI's adaptive learning platform.",
+    "An interactive dbt lineage map that shows source and materialized-view columns.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
