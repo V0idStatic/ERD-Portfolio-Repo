@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 type HomeView = "recent" | "favorites";
 type StoredNode = { id: string; position?: { x: number; y: number }; data?: { label?: string } };
 type WorkspaceMeta = { name: string; favorite: boolean };
-type ExtraWorkspace = { id: string; name: string };
+type ExtraWorkspace = { id: string; name: string; favorite: boolean };
 
 const WORKSPACE_KEY = "collieai-workspace-home-v1";
 const PAGE_KEY = "collieai-architecture-page-main";
@@ -78,8 +78,9 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const [query, setQuery] = useState("");
   const [display, setDisplay] = useState<"grid" | "list">("grid");
   const [workspace, setWorkspace] = useState<WorkspaceMeta>(defaultWorkspace);
+  const [collieMeta, setCollieMeta] = useState<WorkspaceMeta>(defaultWorkspace);
   const [draftName, setDraftName] = useState(defaultWorkspace.name);
-  const [renaming, setRenaming] = useState(false);
+  const [renamingId, setRenamingId] = useState<string | null>(null);
   const [nodes, setNodes] = useState<StoredNode[]>([]);
   const [diagramName, setDiagramName] = useState("Main architecture");
   const [navigation, setNavigation] = useState<"home" | "recent" | "favorites">("home");
@@ -120,6 +121,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
       // accidentally copy a newly-created workspace name into this record.
       const nextWorkspace = { ...(cloudData?.workspace?.name ? cloudData.workspace : localWorkspace), name: "Collie" };
       setWorkspace(nextWorkspace);
+      setCollieMeta(nextWorkspace);
       setDraftName(nextWorkspace.name);
       setNodes(Array.isArray(cloudMain?.nodes) ? cloudMain.nodes : localNodes);
       setDiagramName(cloudMainPage?.name || localDiagramName);
@@ -128,17 +130,24 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
     void loadWorkspace();
     try {
       const savedExtras = JSON.parse(window.localStorage.getItem("collieai-extra-workspaces-v1") ?? "[]") as Array<ExtraWorkspace | string>;
-      const normalized = savedExtras.map((item, index) =>
-        typeof item === "string" ? { id: `legacy-workspace-${index}`, name: item } : item,
-      ).filter((item) => item.id && item.name);
+      const normalized = savedExtras.map((item, index) => {
+        const base = typeof item === "string" ? { id: `legacy-workspace-${index}`, name: item } : item;
+        return { ...base, favorite: Boolean((base as ExtraWorkspace).favorite) };
+      }).filter((item) => item.id && item.name);
       setExtraWorkspaces(normalized);
       window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(normalized));
     } catch { /* no extra workspaces yet */ }
   }, []);
 
   useEffect(() => {
-    if (selectedWorkspaceId === "collie") window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
+    window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(collieMeta));
     if (workspaceReady) {
+      void fetch(`/api/workspace?id=collie`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: collieMeta }) });
+    }
+  }, [collieMeta, workspaceReady]);
+
+  useEffect(() => {
+    if (workspaceReady && selectedWorkspaceId !== "collie") {
       void fetch(`/api/workspace?id=${selectedWorkspaceId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace }) });
     }
   }, [workspace, workspaceReady, selectedWorkspaceId]);
@@ -146,7 +155,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const createWorkspace = async () => {
     const name = window.prompt("Name your new workspace");
     if (!name?.trim()) return;
-    const workspace = { id: `workspace-${Date.now()}`, name: name.trim() };
+    const workspace = { id: `workspace-${Date.now()}`, name: name.trim(), favorite: false };
     setExtraWorkspaces((current) => {
       const next = [...current, workspace];
       window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
@@ -157,18 +166,30 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
     onOpenWorkspace();
   };
 
-  const selectWorkspace = async (id: string, fallbackName: string) => {
+  const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorite = false) => {
     window.localStorage.setItem("collieai-active-workspace-v1", id);
     setSelectedWorkspaceId(id);
-    setWorkspace({ name: fallbackName, favorite: false });
-    setDraftName(fallbackName);
+    setRenamingId(null);
+    if (id === "collie") {
+      setWorkspace({ name: "Collie", favorite: collieMeta.favorite });
+      setDraftName(collieMeta.name);
+    } else {
+      setWorkspace({ name: fallbackName, favorite: fallbackFavorite });
+    }
     setNodes([]);
     setDiagramName("Main architecture");
     try {
       const response = await fetch(`/api/workspace?id=${id}`);
       const cloud = (await response.json()).data as { workspace?: WorkspaceMeta; diagrams?: Record<string, { nodes?: StoredNode[] }>; pages?: { id?: string; name?: string }[] } | null;
       const main = cloud?.diagrams?.main;
-      setWorkspace(id === "collie" ? { ...(cloud?.workspace ?? { favorite: false }), name: "Collie" } : (cloud?.workspace?.name ? cloud.workspace : { name: fallbackName, favorite: false }));
+      if (id === "collie") {
+        const next = { ...(cloud?.workspace ?? { favorite: false }), name: "Collie" };
+        setCollieMeta(next);
+        setWorkspace(next);
+        setDraftName(next.name);
+      } else {
+        setWorkspace({ name: fallbackName, favorite: fallbackFavorite });
+      }
       setNodes(Array.isArray(main?.nodes) ? main.nodes : []);
       setDiagramName(cloud?.pages?.find((page) => page.id === "main")?.name || "Main architecture");
     } catch { /* The empty workspace remains usable offline. */ }
@@ -178,11 +199,48 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const matchesSearch = !query.trim() || diagramName.toLowerCase().includes(query.trim().toLowerCase());
   const showDiagram = showsWorkspace && matchesSearch;
 
+  const startRenaming = (id: string, name: string) => {
+    setRenamingId(id);
+    setDraftName(name);
+  };
+
   const saveWorkspaceName = () => {
     const nextName = draftName.trim() || defaultWorkspace.name;
-    setWorkspace((current) => ({ ...current, name: nextName }));
+    const id = renamingId ?? "collie";
+    if (id === "collie") {
+      setCollieMeta((current) => ({ ...current, name: nextName }));
+      if (selectedWorkspaceId === "collie") setWorkspace((current) => ({ ...current, name: nextName }));
+    } else {
+      const existing = extraWorkspaces.find((item) => item.id === id);
+      setExtraWorkspaces((current) => {
+        const next = current.map((item) => (item.id === id ? { ...item, name: nextName } : item));
+        window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
+        return next;
+      });
+      if (selectedWorkspaceId === id) setWorkspace((current) => ({ ...current, name: nextName }));
+      void fetch(`/api/workspace?id=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: nextName, favorite: existing?.favorite ?? false } }) });
+    }
     setDraftName(nextName);
-    setRenaming(false);
+    setRenamingId(null);
+  };
+
+  const toggleFavorite = (id: string) => {
+    if (id === "collie") {
+      const favorite = !collieMeta.favorite;
+      setCollieMeta((current) => ({ ...current, favorite }));
+      if (selectedWorkspaceId === "collie") setWorkspace((current) => ({ ...current, favorite }));
+    } else {
+      const current = extraWorkspaces.find((item) => item.id === id);
+      if (!current) return;
+      const favorite = !current.favorite;
+      setExtraWorkspaces((items) => {
+        const next = items.map((item) => (item.id === id ? { ...item, favorite } : item));
+        window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
+        return next;
+      });
+      if (selectedWorkspaceId === id) setWorkspace((cur) => ({ ...cur, favorite }));
+      void fetch(`/api/workspace?id=${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: current.name, favorite } }) });
+    }
   };
 
   return (
@@ -196,18 +254,23 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
           <button className={navigation === "favorites" ? "active" : ""} onClick={() => { setNavigation("favorites"); setView("favorites"); }}><Star size={17} /> Favorites</button>
         </nav>
         <div className="workspace-heading"><span>WORKSPACES</span><button onClick={createWorkspace} aria-label="Create workspace"><Plus size={14} /></button></div>
-        <div className={`workspace-single ${selectedWorkspaceId === "collie" ? "is-active" : ""}`} onClick={() => void selectWorkspace("collie", "Collie")}>
-          <span className="workspace-icon"><Layers3 size={15} /></span>
-          <span className="workspace-name">
-            {renaming ? (
-              <input value={draftName} onChange={(event) => setDraftName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") saveWorkspaceName(); if (event.key === "Escape") { setDraftName(workspace.name); setRenaming(false); } }} autoFocus aria-label="Workspace name" />
-            ) : <strong>{workspace.name}</strong>}
-            <small>1 workspace · {nodes.length} components</small>
-          </span>
-          {renaming ? <><button onClick={saveWorkspaceName} aria-label="Save workspace name"><Check size={14} /></button><button onClick={() => { setDraftName(workspace.name); setRenaming(false); }} aria-label="Cancel renaming"><X size={14} /></button></> : <button onClick={() => setRenaming(true)} aria-label="Rename workspace"><Pencil size={14} /></button>}
-          <button className={`workspace-star ${workspace.favorite ? "is-favorite" : ""}`} onClick={() => setWorkspace((current) => ({ ...current, favorite: !current.favorite }))} aria-label={workspace.favorite ? "Remove workspace from favorites" : "Add workspace to favorites"}><Star size={15} fill={workspace.favorite ? "currentColor" : "none"} /></button>
-        </div>
-        {extraWorkspaces.map((item) => <button className={`extra-workspace ${selectedWorkspaceId === item.id ? "is-active" : ""}`} key={item.id} onClick={() => void selectWorkspace(item.id, item.name)}><span className="workspace-icon"><Layers3 size={15} /></span><span><strong>{item.name}</strong><small>New workspace</small></span></button>)}
+        {[{ id: "collie", name: collieMeta.name, favorite: collieMeta.favorite, rowClass: "workspace-single", isMain: true }, ...extraWorkspaces.map((item) => ({ id: item.id, name: item.name, favorite: item.favorite, rowClass: "extra-workspace", isMain: false }))].map((row) => {
+          const isActive = selectedWorkspaceId === row.id;
+          const isRenaming = renamingId === row.id;
+          return (
+            <div key={row.id} className={`${row.rowClass} ${isActive ? "is-active" : ""}`} onClick={() => void selectWorkspace(row.id, row.name, row.favorite)}>
+              <span className="workspace-icon"><Layers3 size={15} /></span>
+              <span className="workspace-name">
+                {isRenaming ? (
+                  <input value={draftName} onChange={(event) => setDraftName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") saveWorkspaceName(); if (event.key === "Escape") setRenamingId(null); }} autoFocus aria-label="Workspace name" />
+                ) : <strong>{row.name}</strong>}
+                <small>{row.isMain ? `1 workspace · ${nodes.length} components` : "New workspace"}</small>
+              </span>
+              {isRenaming ? <><button onClick={(event) => { event.stopPropagation(); saveWorkspaceName(); }} aria-label="Save workspace name"><Check size={14} /></button><button onClick={(event) => { event.stopPropagation(); setRenamingId(null); }} aria-label="Cancel renaming"><X size={14} /></button></> : <button onClick={(event) => { event.stopPropagation(); startRenaming(row.id, row.name); }} aria-label={`Rename ${row.name} workspace`}><Pencil size={14} /></button>}
+              <button className={`workspace-star ${row.favorite ? "is-favorite" : ""}`} onClick={(event) => { event.stopPropagation(); toggleFavorite(row.id); }} aria-label={row.favorite ? "Remove workspace from favorites" : "Add workspace to favorites"}><Star size={15} fill={row.favorite ? "currentColor" : "none"} /></button>
+            </div>
+          );
+        })}
         <button className="create-workspace-link" onClick={createWorkspace}><Plus size={15} /> Create workspace</button>
         <div className="home-profile"><span className="profile-avatar">YY</span><span><strong>Yen Yen</strong><small>Personal workspace</small></span><Settings2 size={16} /></div>
       </aside>
@@ -217,7 +280,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
         <section className="workspace-hero"><div><span className="eyebrow"><Network size={14} /> {workspace.name.toUpperCase()} WORKSPACE</span><h2>Your architecture,<br />all in one place.</h2><p>This workspace contains your live CollieAI diagram. Its preview below follows the components currently saved in the canvas.</p><button onClick={onOpenWorkspace}>Open {workspace.name} <ArrowRight size={16} /></button></div><div className="hero-map" aria-hidden="true"><span className="hero-orbit orbit-one" /><span className="hero-orbit orbit-two" /><span className="hero-core"><Network size={31} /></span><span className="hero-dot dot-one" /><span className="hero-dot dot-two" /><span className="hero-dot dot-three" /></div></section>
         <section className="project-library solo-library">
           <div className="library-toolbar"><div className="library-tabs" role="tablist"><button className={view === "recent" ? "active" : ""} onClick={() => setView("recent")}>Recently viewed</button><button className={view === "favorites" ? "active" : ""} onClick={() => setView("favorites")}>Favorites</button></div><div className="display-toggle"><button className={display === "grid" ? "active" : ""} onClick={() => setDisplay("grid")} aria-label="Grid view"><Grid2X2 size={15} /></button><button className={display === "list" ? "active" : ""} onClick={() => setDisplay("list")} aria-label="List view"><List size={16} /></button></div></div>
-          {showDiagram && (selectedWorkspaceId === "collie" || nodes.length) ? <div className={`project-grid single-project ${display === "list" ? "is-list" : ""}`}><article className="project-card"><button className="project-open" onClick={onOpenWorkspace} aria-label={`Open ${diagramName}`}><ActualDiagramPreview nodes={nodes} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> LIVE DIAGRAM</span><div className="project-title-row"><button onClick={onOpenWorkspace}>{diagramName}</button><button className={`favorite-button ${workspace.favorite ? "is-favorite" : ""}`} onClick={() => setWorkspace((current) => ({ ...current, favorite: !current.favorite }))} aria-label={workspace.favorite ? "Remove workspace from favorites" : "Add workspace to favorites"}><Star size={16} fill={workspace.favorite ? "currentColor" : "none"} /></button></div><p>Preview generated from the components in this workspace.</p><footer><span>{workspace.name} workspace</span><span>{nodes.length} components</span></footer></div></article></div> : <div className="empty-library"><Layers3 size={22} /><strong>{query ? "No matching diagrams" : "This workspace is empty"}</strong><p>{query ? "Try a different search." : "Open this workspace to create its first diagram."}</p></div>}
+          {showDiagram && (selectedWorkspaceId === "collie" || nodes.length) ? <div className={`project-grid single-project ${display === "list" ? "is-list" : ""}`}><article className="project-card"><button className="project-open" onClick={onOpenWorkspace} aria-label={`Open ${diagramName}`}><ActualDiagramPreview nodes={nodes} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> LIVE DIAGRAM</span><div className="project-title-row"><button onClick={onOpenWorkspace}>{diagramName}</button><button className={`favorite-button ${workspace.favorite ? "is-favorite" : ""}`} onClick={() => toggleFavorite(selectedWorkspaceId)} aria-label={workspace.favorite ? "Remove workspace from favorites" : "Add workspace to favorites"}><Star size={16} fill={workspace.favorite ? "currentColor" : "none"} /></button></div><p>Preview generated from the components in this workspace.</p><footer><span>{workspace.name} workspace</span><span>{nodes.length} components</span></footer></div></article></div> : <div className="empty-library"><Layers3 size={22} /><strong>{query ? "No matching diagrams" : "This workspace is empty"}</strong><p>{query ? "Try a different search." : "Open this workspace to create its first diagram."}</p></div>}
         </section>
       </section>
     </main>

@@ -736,6 +736,7 @@ const createLegendDraft = (): LegendDraft => ({
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
 const WORKSPACE_META_KEY = "collieai-workspace-home-v1";
+const EXTRA_WORKSPACES_KEY = "collieai-extra-workspaces-v1";
 const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
 const pageStorageKey = (pageId: string) => `collieai-architecture-page-${pageId}`;
 const historyStorageKey = (pageId: string) => `collieai-architecture-history-${pageId}`;
@@ -1202,8 +1203,17 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         return [page.id, stored ? JSON.parse(stored) : { nodes: [], edges: [] }];
       }),
     );
+    const activeId = window.localStorage.getItem("collieai-active-workspace-v1");
     let workspace = { name: "Collie", favorite: false };
-    try { workspace = JSON.parse(window.localStorage.getItem(WORKSPACE_META_KEY) ?? JSON.stringify(workspace)); } catch { /* defaults are safe */ }
+    try {
+      if (activeId && activeId !== "collie") {
+        const extras = JSON.parse(window.localStorage.getItem(EXTRA_WORKSPACES_KEY) ?? "[]") as { id?: string; name?: string; favorite?: boolean }[];
+        const match = extras.find((item) => item.id === activeId);
+        if (match?.name) workspace = { name: match.name, favorite: Boolean(match.favorite) };
+      } else {
+        workspace = JSON.parse(window.localStorage.getItem(WORKSPACE_META_KEY) ?? JSON.stringify(workspace));
+      }
+    } catch { /* defaults are safe */ }
     void fetch(workspaceApiUrl(), {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
