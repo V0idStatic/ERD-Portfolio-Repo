@@ -1,6 +1,21 @@
 version: 2
 
 models:
+  - name: vw_column_lineage
+    description: "Queryable column-level lineage for the three materialized views. Each row explains an MV output column's source field and transformation."
+    columns:
+      - name: mv_name
+        description: "Materialized view containing the output column."
+      - name: mv_column
+        description: "Output column in the materialized view."
+      - name: source_table
+        description: "Source-of-truth table contributing to the output."
+      - name: source_column
+        description: "Column read from the source table."
+      - name: transformation
+        description: "SQL aggregation, calculation, or lookup applied to the source column."
+      - name: lineage_type
+        description: "Whether the value is passed through directly or derived."
   - name: mv_daily_student_performance
     description: "Final materialized view endpoint with explicit columns for lineage."
     columns:

@@ -26,3 +26,18 @@ $env:DBT_SCHEMA = 'analytics'
 ```
 
 Open the local address shown by `docs serve`, then choose **Lineage Graph**. The first graph shows the six write tables feeding `vw_student_learning_summary`.
+
+## View source-column to MV-column mappings
+
+Run the model, then query the lineage table whenever the graph only shows table-level connections:
+
+```powershell
+.\.venv\Scripts\dbt.exe run --select vw_column_lineage --project-dir dbt_collieai --profiles-dir dbt_collieai
+```
+
+```sql
+SELECT mv_name, mv_column, source_table, source_column, transformation, lineage_type
+FROM analytics.vw_column_lineage
+WHERE mv_name = 'mv_weekly_skill_mastery'
+ORDER BY mv_column, source_table, source_column;
+```

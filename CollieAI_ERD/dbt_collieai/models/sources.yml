@@ -6,43 +6,722 @@ sources:
     schema: public
     tables:
       - name: user_auth
+        columns:
+          - name: auth_id
+            data_type: INT
       - name: roles
+        columns:
+          - name: role_id
+            data_type: INT
+          - name: role_name
+            data_type: VARCHAR(255)
+          - name: description
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: users
+        columns:
+          - name: user_id
+            data_type: INT
+          - name: auth_id
+            data_type: UUID
+          - name: role_id
+            data_type: INT
+          - name: email
+            data_type: TEXT
+          - name: is_active
+            data_type: BOOLEAN
       - name: teacher_profiles
+        columns:
+          - name: teacher_id
+            data_type: INT
+          - name: user_id
+            data_type: INT
+          - name: employee_number
+            data_type: VARCHAR(50)
+          - name: specialization
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: class_sections
+        columns:
+          - name: section_id
+            data_type: INT
+          - name: section_name
+            data_type: VARCHAR(55)
+          - name: grade_level
+            data_type: SMALLINT
+          - name: school_year
+            data_type: INT
+          - name: teacher_id
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: student_profiles
+        columns:
+          - name: student_id
+            data_type: INT
+          - name: user_id
+            data_type: INT
+          - name: section_id
+            data_type: INT
+          - name: avatar_id
+            data_type: INT
+          - name: total_star_points
+            data_type: DOUBLE PRECISION
+          - name: current_streak
+            data_type: INT
+          - name: learning_status
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: parent_profiles
+        columns:
+          - name: parent_id
+            data_type: INT
+          - name: user_id
+            data_type: INT
+          - name: contact_number
+            data_type: SMALLINT
+          - name: preferred_notification_channel
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: student_parent_links
+        columns:
+          - name: student_parent_link_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: parent_id
+            data_type: INT
+          - name: relationship_type
+            data_type: TEXT
+          - name: is_primary_guardian
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: student_teacher_links
+        columns:
+          - name: student_teacher_link_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: teacher_id
+            data_type: INT
+          - name: section_id
+            data_type: INT
+          - name: assigned_at
+            data_type: TIMESTAMPTZ
+          - name: is_active
+            data_type: BOOLEAN
       - name: math_topics
+        columns:
+          - name: topic_id
+            data_type: INT
+          - name: topic_name
+            data_type: VARCHAR(255)
+          - name: description
+            data_type: TEXT
+          - name: grade_level
+            data_type: SMALLINT
+          - name: display_order
+            data_type: INT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: math_skills
+        columns:
+          - name: skill_id
+            data_type: INT
+          - name: topic_id
+            data_type: INT
+          - name: skill_name
+            data_type: VARCHAR(255)
+          - name: skill_description
+            data_type: TEXT
+          - name: grade_level
+            data_type: SMALLINT
+          - name: display_order
+            data_type: INT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: difficulty_levels
+        columns:
+          - name: difficulty_id
+            data_type: INT
+          - name: difficulty_name
+            data_type: VARCHAR(255)
+          - name: numerical_value
+            data_type: NUMERIC(5,2)
+          - name: description
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: math_problems
+        columns:
+          - name: problem_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: difficulty_id
+            data_type: INT
+          - name: problem_text
+            data_type: TEXT
+          - name: correct_answer
+            data_type: DOUBLE PRECISION
+          - name: solution_pattern
+            data_type: TEXT
       - name: student_inputs
+        columns:
+          - name: input_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: input_type
+            data_type: TEXT
+          - name: raw_file_id
+            data_type: INT
+          - name: raw_text
+            data_type: TEXT
+          - name: extracted_text
+            data_type: TEXT
+          - name: processing_status
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: file_assets
+        columns:
+          - name: file_id
+            data_type: INT
+          - name: owner_user_id
+            data_type: INT
+          - name: file_type
+            data_type: TEXT
+          - name: file_url
+            data_type: TEXT
+          - name: mime_type
+            data_type: TEXT
+          - name: file_size_bytes
+            data_type: BIGINT
+          - name: storage_provider
+            data_type: TEXT
+          - name: checksum
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: ocr_logs
+        columns:
+          - name: ocr_id
+            data_type: INT
+          - name: input_id
+            data_type: INT
+          - name: extracted_text
+            data_type: TEXT
+          - name: confidence_score
+            data_type: NUMERIC(5,2)
+          - name: model_used
+            data_type: TEXT
+          - name: processing_status
+            data_type: VARCHAR(255)
+          - name: error_message
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: speech_to_text_logs
+        columns:
+          - name: stt_id
+            data_type: INT
+          - name: input_id
+            data_type: INT
+          - name: transcript_text
+            data_type: TEXT
+          - name: confidence_score
+            data_type: SMALLINT
+          - name: model_used
+            data_type: TEXT
+          - name: processing_status
+            data_type: VARCHAR(255)
+          - name: error_message
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: text_to_speech_logs
+        columns:
+          - name: tts_id
+            data_type: INT
+          - name: message_id
+            data_type: INT
+          - name: generated_audio_file_id
+            data_type: INT
+          - name: voice_model
+            data_type: TEXT
+          - name: text_used
+            data_type: TEXT
+          - name: processing_status
+            data_type: VARCHAR(255)
+          - name: error_message
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: ai_sessions
+        columns:
+          - name: session_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: problem_id
+            data_type: INT
+          - name: session_status
+            data_type: VARCHAR(255)
+          - name: started_at
+            data_type: TIMESTAMPTZ
+          - name: ended_at
+            data_type: TIMESTAMPTZ
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: ai_messages
+        columns:
+          - name: message_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: sender
+            data_type: INT
+          - name: message_text
+            data_type: VARCHAR(255)
+          - name: message_type
+            data_type: VARCHAR(255)
+          - name: token_count
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: session_states
+        columns:
+          - name: state_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: current_problem_step
+            data_type: TEXT
+          - name: expected_next_action
+            data_type: TEXT
+          - name: failed_attempt_count
+            data_type: INT
+          - name: help_request_count
+            data_type: INT
+          - name: last_response_outcome
+            data_type: INT
+          - name: hint_level
+            data_type: INT
+          - name: dda_triggered
+            data_type: INT
+          - name: show_me_triggered
+            data_type: INT
+          - name: state_json
+            data_type: JSON
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: student_attempts
+        columns:
+          - name: attempt_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: problem_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: submitted_answer
+            data_type: TEXT
+          - name: is_correct
+            data_type: BOOLEAN
+          - name: score
+            data_type: NUMERIC (5,2)
+          - name: time_spent_seconds
+            data_type: INT
+          - name: attempt_number
+            data_type: SMALLINT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: attempt_steps
+        columns:
+          - name: step_id
+            data_type: INT
+          - name: attempt_id
+            data_type: INT
+          - name: step_number
+            data_type: SMALLINT
+          - name: student_step_answer
+            data_type: TEXT
+          - name: ai_feedback
+            data_type: TEXT
+          - name: is_step_correct
+            data_type: BOOLEAN
+          - name: hint_used
+            data_type: SMALLINT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: dda_events
+        columns:
+          - name: dda_event_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: trigger_reason
+            data_type: TEXT
+          - name: previous_difficulty_id
+            data_type: INT
+          - name: new_difficulty_id
+            data_type: INT
+          - name: visual_analogy_used
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: show_me_breakdowns
+        columns:
+          - name: breakdown_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: example_problem_text
+            data_type: TEXT
+          - name: animation_file_id
+            data_type: INT
+          - name: explanation_steps
+            data_type: JSONB
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: student_help_events
+        columns:
+          - name: help_event_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: message_id
+            data_type: INT
+          - name: problem_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: help_type
+            data_type: TEXT
+          - name: triggered_strategy
+            data_type: TEXT
+          - name: wrong_attempt_count_at_event
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: guardrail_checks
+        columns:
+          - name: guardrail_id
+            data_type: INT
+          - name: message_id
+            data_type: INT
+          - name: is_math_related
+            data_type: BOOLEAN
+          - name: prompt_injection_detected
+            data_type: BOOLEAN
+          - name: violation_type
+            data_type: TEXT
+          - name: action_taken
+            data_type: TEXT
+          - name: confidence_score
+            data_type: NUMERIC(5,4)
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: system_prompts
+        columns:
+          - name: prompt_id
+            data_type: INT
+          - name: prompt_name
+            data_type: TEXT
+          - name: prompt_version
+            data_type: TEXT
+          - name: prompt_text
+            data_type: TEXT
+          - name: prompt_type
+            data_type: TEXT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_by_user_id
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: prompt_usage_logs
+        columns:
+          - name: usage_id
+            data_type: BIGINT
+          - name: session_id
+            data_type: INT
+          - name: prompt_id
+            data_type: INT
+          - name: model_used
+            data_type: TEXT
+          - name: temperature
+            data_type: NUMERIC(3,2)
+          - name: input_token_count
+            data_type: INT
+          - name: output_token_count
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: student_skill_features
+        columns:
+          - name: feature_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: total_attempts
+            data_type: INT
+          - name: correct_attempts
+            data_type: INT
+          - name: accuracy_rate
+            data_type: NUMERIC(5,4)
+          - name: avg_time_spent
+            data_type: NUMERIC(10,2)
+          - name: hint_usage_rate
+            data_type: NUMERIC(5,4)
+          - name: help_request_count
+            data_type: INT
+          - name: help_request_rate
+            data_type: NUMERIC(5,4)
+          - name: failed_loop_count
+            data_type: INT
+          - name: dda_trigger_count
+            data_type: INT
+          - name: show_me_count
+            data_type: INT
+          - name: recent_score_avg
+            data_type: NUMERIC(5,2)
+          - name: last_attempt_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: student_skill_predictions
+        columns:
+          - name: prediction_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: predicted_mastery_score
+            data_type: NUMERIC(5,4)
+          - name: risk_level
+            data_type: TEXT
+          - name: recommended_difficulty_id
+            data_type: INT
+          - name: recommended_action
+            data_type: TEXT
+          - name: model_version_id
+            data_type: INT
+          - name: predicted_at
+            data_type: TIMESTAMPTZ
       - name: ml_models
+        columns:
+          - name: model_version_id
+            data_type: INT
+          - name: model_name
+            data_type: TEXT
+          - name: algorithm
+            data_type: TEXT
+          - name: training_date
+            data_type: DATE
+          - name: accuracy_score
+            data_type: NUMERIC(5,4)
+          - name: precision_score
+            data_type: NUMERIC(5,4)
+          - name: recall_score
+            data_type: NUMERIC(5,4)
+          - name: f1_score
+            data_type: NUMERIC(5,4)
+          - name: notes
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: learning_recommendations
+        columns:
+          - name: recommendation_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: skill_id
+            data_type: INT
+          - name: prediction_id
+            data_type: INT
+          - name: recommendation_type
+            data_type: TEXT
+          - name: recommendation_text
+            data_type: TEXT
+          - name: target_user_type
+            data_type: TEXT
+          - name: priority_level
+            data_type: SMALLINT
+          - name: is_completed
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: completed_at
+            data_type: TIMESTAMPTZ
       - name: avatars
+        columns:
+          - name: avatar_id
+            data_type: INT
+          - name: avatar_name
+            data_type: TEXT
+          - name: avatar_type
+            data_type: TEXT
+          - name: default_asset_file_id
+            data_type: INT
+          - name: is_default
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: reward_transactions
+        columns:
+          - name: reward_id
+            data_type: BIGINT
+          - name: student_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: points_earned
+            data_type: INT
+          - name: reward_reason
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: avatar_items
+        columns:
+          - name: item_id
+            data_type: INT
+          - name: item_name
+            data_type: TEXT
+          - name: item_type
+            data_type: TEXT
+          - name: cost_points
+            data_type: INT
+          - name: asset_file_id
+            data_type: INT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: student_avatar_items
+        columns:
+          - name: student_id
+            data_type: INT
+          - name: item_id
+            data_type: INT
+          - name: unlocked_at
+            data_type: TIMESTAMPTZ
+          - name: equipped
+            data_type: BOOLEAN
       - name: vector_records
+        columns:
+          - name: vector_record_id
+            data_type: BIGINT
+          - name: namespace
+            data_type: TEXT
+          - name: source_type
+            data_type: TEXT
+          - name: source_id
+            data_type: INT
+          - name: embedding_id
+            data_type: TEXT
+          - name: metadata_json
+            data_type: JSONB
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: n8n_workflow_logs
+        columns:
+          - name: workflow_log_id
+            data_type: BIGINT
+          - name: session_id
+            data_type: INT
+          - name: workflow_name
+            data_type: TEXT
+          - name: execution_id
+            data_type: TEXT
+          - name: status
+            data_type: TEXT
+          - name: input_payload_json
+            data_type: JSONB
+          - name: output_payload_json
+            data_type: JSONB
+          - name: error_message
+            data_type: TEXT
+          - name: started_at
+            data_type: TIMESTAMPTZ
+          - name: ended_at
+            data_type: TIMESTAMPTZ
       - name: api_request_logs
+        columns:
+          - name: api_log_id
+            data_type: BIGINT
+          - name: user_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: service_name
+            data_type: TEXT
+          - name: endpoint
+            data_type: TEXT
+          - name: request_method
+            data_type: TEXT
+          - name: status_code
+            data_type: INT
+          - name: latency_ms
+            data_type: INT
+          - name: error_message
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: notifications
+        columns:
+          - name: notification_id
+            data_type: BIGINT
+          - name: recipient_user_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: notification_type
+            data_type: TEXT
+          - name: title
+            data_type: TEXT
+          - name: message
+            data_type: TEXT
+          - name: is_read
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: read_at
+            data_type: TIMESTAMPTZ

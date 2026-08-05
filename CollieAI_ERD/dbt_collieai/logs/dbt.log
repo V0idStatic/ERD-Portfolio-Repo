@@ -5603,3 +5603,1129 @@ select distinct
 [0m16:59:50.703692 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000010EA7B5D590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000010EABC1C050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000010EAB7D9850>]}
 [0m16:59:50.704171 [debug] [MainThread]: Flushing usage events
 [0m16:59:52.143874 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m17:57:41.569784 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADC851D400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCAC7FED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCAC7FC50>]}
+
+
+============================== 17:57:41.575158 | c61e20a7-5246-4727-86dd-5c517253f5d0 ==============================
+[0m17:57:41.575158 [info ] [MainThread]: Running with dbt=1.12.0
+[0m17:57:41.575617 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'target_path': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'invocation_command': 'dbt parse --project-dir . --profiles-dir .', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'logs'}
+[0m17:57:41.741247 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'c61e20a7-5246-4727-86dd-5c517253f5d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADC8C31810>]}
+[0m17:57:41.797165 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': 'c61e20a7-5246-4727-86dd-5c517253f5d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCAD43460>]}
+[0m17:57:41.798970 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m17:57:42.229732 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m17:57:42.399742 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m17:57:42.400067 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m17:57:42.400251 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m17:57:42.409498 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': 'c61e20a7-5246-4727-86dd-5c517253f5d0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCB02CB50>]}
+[0m17:57:42.413340 [info ] [MainThread]: Performance info: .\target\perf_info.json
+[0m17:57:42.522779 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m17:57:42.557623 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m17:57:42.610929 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m17:57:42.611883 [debug] [MainThread]: Command `dbt parse` succeeded at 17:57:42.611681 after 1.22 seconds
+[0m17:57:42.612336 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCAC82300>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCB427110>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001ADCAB47E70>]}
+[0m17:57:42.612713 [debug] [MainThread]: Flushing usage events
+[0m17:57:43.813345 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:01:22.270627 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B4914FD400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B493C5FED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B493C5FC50>]}
+
+
+============================== 18:01:22.273960 | fcb6f8e0-9c70-4b79-876d-21804c6e0c26 ==============================
+[0m18:01:22.273960 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:01:22.274413 [debug] [MainThread]: running dbt with arguments {'maximum_seed_size_mib': '1', 'no_print': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'invocation_command': 'dbt debug --project-dir . --profiles-dir .', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'logs'}
+[0m18:01:22.302786 [info ] [MainThread]: dbt version: 1.12.0
+[0m18:01:22.303299 [info ] [MainThread]: python version: 3.13.7
+[0m18:01:22.303614 [info ] [MainThread]: python path: C:\Users\YEN YEN\Desktop\ERD\ERD-Portfolio-Repo\CollieAI_ERD\.venv\Scripts\python.exe
+[0m18:01:22.303947 [info ] [MainThread]: os info: Windows-11-10.0.26200-SP0
+[0m18:01:22.353041 [info ] [MainThread]: Using profiles dir at .
+[0m18:01:22.353574 [info ] [MainThread]: Using profiles.yml file at .\profiles.yml
+[0m18:01:22.353892 [info ] [MainThread]: Using dbt_project.yml file at .\dbt_project.yml
+[0m18:01:22.354877 [info ] [MainThread]: adapter type: postgres
+[0m18:01:22.355401 [info ] [MainThread]: adapter version: 1.11.0
+[0m18:01:22.443933 [info ] [MainThread]: Configuration:
+[0m18:01:22.444313 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m18:01:22.444549 [info ] [MainThread]:   dbt_project.yml file [[32mOK found and valid[0m]
+[0m18:01:22.445283 [info ] [MainThread]: Required dependencies:
+[0m18:01:22.446107 [debug] [MainThread]: Executing "git --help"
+[0m18:01:22.485845 [debug] [MainThread]: STDOUT: "b"usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]\n           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]\n           [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone      Clone a repository into a new directory\n   init       Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add        Add file contents to the index\n   mv         Move or rename a file, a directory, or a symlink\n   restore    Restore working tree files\n   rm         Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect     Use binary search to find the commit that introduced a bug\n   diff       Show changes between commits, commit and working tree, etc\n   grep       Print lines matching a pattern\n   log        Show commit logs\n   show       Show various types of objects\n   status     Show the working tree status\n\ngrow, mark and tweak your common history\n   backfill   Download missing objects in a partial clone\n   branch     List, create, or delete branches\n   commit     Record changes to the repository\n   history    EXPERIMENTAL: Rewrite history\n   merge      Join two or more development histories together\n   rebase     Reapply commits on top of another base tip\n   reset      Set `HEAD` or the index to a known state\n   switch     Switch branches\n   tag        Create, list, delete or verify tags\n\ncollaborate (see also: git help workflows)\n   fetch      Download objects and refs from another repository\n   pull       Fetch from and integrate with another repository or a local branch\n   push       Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m18:01:22.486270 [debug] [MainThread]: STDERR: "b''"
+[0m18:01:22.486623 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m18:01:22.487178 [info ] [MainThread]: Connection:
+[0m18:01:22.487836 [info ] [MainThread]:   host: aws-0-ap-northeast-1.pooler.supabase.com
+[0m18:01:22.488389 [info ] [MainThread]:   port: 5432
+[0m18:01:22.488832 [info ] [MainThread]:   user: postgres.pspkqczafkvlypcheoey
+[0m18:01:22.489107 [info ] [MainThread]:   database: postgres
+[0m18:01:22.489353 [info ] [MainThread]:   schema: analytics
+[0m18:01:22.489560 [info ] [MainThread]:   connect_timeout: 10
+[0m18:01:22.489769 [info ] [MainThread]:   role: None
+[0m18:01:22.489971 [info ] [MainThread]:   search_path: None
+[0m18:01:22.490163 [info ] [MainThread]:   keepalives_idle: 0
+[0m18:01:22.490382 [info ] [MainThread]:   sslmode: require
+[0m18:01:22.490563 [info ] [MainThread]:   sslcert: None
+[0m18:01:22.490737 [info ] [MainThread]:   sslkey: None
+[0m18:01:22.490910 [info ] [MainThread]:   sslrootcert: None
+[0m18:01:22.491072 [info ] [MainThread]:   application_name: dbt
+[0m18:01:22.491305 [info ] [MainThread]:   autocommit: False
+[0m18:01:22.491527 [info ] [MainThread]:   retries: 1
+[0m18:01:22.491882 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:01:22.669262 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m18:01:29.880329 [debug] [MainThread]: Using postgres connection "debug"
+[0m18:01:29.881220 [debug] [MainThread]: On debug: select 1 as id
+[0m18:01:29.881557 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:01:30.239865 [debug] [MainThread]: Postgres adapter: Got a retryable error when attempting to open a postgres connection.
+1 attempts remaining. Retrying in 0 seconds.
+Error:
+connection to server at "aws-0-ap-northeast-1.pooler.supabase.com" (54.64.190.72), port 5432 failed: fe_sendauth: no password supplied
+
+[0m18:01:30.536146 [debug] [MainThread]: Postgres adapter: Error running SQL: select 1 as id
+[0m18:01:30.537844 [debug] [MainThread]: Postgres adapter: Rolling back transaction.
+[0m18:01:30.538834 [debug] [MainThread]: On debug: No close available on handle
+[0m18:01:30.539779 [info ] [MainThread]:   Connection test: [[31mERROR[0m]
+
+[0m18:01:30.540796 [info ] [MainThread]: [31m1 check failed:[0m
+[0m18:01:30.541787 [info ] [MainThread]: dbt was unable to connect to the specified database.
+The database returned the following error:
+
+  >Database Error
+  connection to server at "aws-0-ap-northeast-1.pooler.supabase.com" (54.64.190.72), port 5432 failed: fe_sendauth: no password supplied
+  
+
+Check your database credentials and try again. For more information, visit:
+https://docs.getdbt.com/docs/configure-your-profile
+
+
+[0m18:01:30.544155 [debug] [MainThread]: Command `dbt debug` failed at 18:01:30.543691 after 8.45 seconds
+[0m18:01:30.545765 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m18:01:30.548218 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B4942DCFC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B494088DD0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B493F47130>]}
+[0m18:01:30.550692 [debug] [MainThread]: Flushing usage events
+[0m18:01:31.657477 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:04:23.096310 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A527D400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A79CFED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A79CFC50>]}
+
+
+============================== 18:04:23.100140 | aef36699-b123-422b-a55f-138c9c3bc03a ==============================
+[0m18:04:23.100140 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:04:23.100668 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': '.', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'indirect_selection': 'eager', 'hints_enabled': 'True', 'invocation_command': 'dbt debug --project-dir . --profiles-dir .', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'logs'}
+[0m18:04:23.112819 [info ] [MainThread]: dbt version: 1.12.0
+[0m18:04:23.113154 [info ] [MainThread]: python version: 3.13.7
+[0m18:04:23.113364 [info ] [MainThread]: python path: C:\Users\YEN YEN\Desktop\ERD\ERD-Portfolio-Repo\CollieAI_ERD\.venv\Scripts\python.exe
+[0m18:04:23.113571 [info ] [MainThread]: os info: Windows-11-10.0.26200-SP0
+[0m18:04:23.162151 [info ] [MainThread]: Using profiles dir at .
+[0m18:04:23.162651 [info ] [MainThread]: Using profiles.yml file at .\profiles.yml
+[0m18:04:23.163059 [info ] [MainThread]: Using dbt_project.yml file at .\dbt_project.yml
+[0m18:04:23.164007 [info ] [MainThread]: adapter type: postgres
+[0m18:04:23.164292 [info ] [MainThread]: adapter version: 1.11.0
+[0m18:04:23.266905 [info ] [MainThread]: Configuration:
+[0m18:04:23.267342 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m18:04:23.267710 [info ] [MainThread]:   dbt_project.yml file [[32mOK found and valid[0m]
+[0m18:04:23.268116 [info ] [MainThread]: Required dependencies:
+[0m18:04:23.268599 [debug] [MainThread]: Executing "git --help"
+[0m18:04:23.310321 [debug] [MainThread]: STDOUT: "b"usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]\n           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]\n           [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone      Clone a repository into a new directory\n   init       Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add        Add file contents to the index\n   mv         Move or rename a file, a directory, or a symlink\n   restore    Restore working tree files\n   rm         Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect     Use binary search to find the commit that introduced a bug\n   diff       Show changes between commits, commit and working tree, etc\n   grep       Print lines matching a pattern\n   log        Show commit logs\n   show       Show various types of objects\n   status     Show the working tree status\n\ngrow, mark and tweak your common history\n   backfill   Download missing objects in a partial clone\n   branch     List, create, or delete branches\n   commit     Record changes to the repository\n   history    EXPERIMENTAL: Rewrite history\n   merge      Join two or more development histories together\n   rebase     Reapply commits on top of another base tip\n   reset      Set `HEAD` or the index to a known state\n   switch     Switch branches\n   tag        Create, list, delete or verify tags\n\ncollaborate (see also: git help workflows)\n   fetch      Download objects and refs from another repository\n   pull       Fetch from and integrate with another repository or a local branch\n   push       Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m18:04:23.310773 [debug] [MainThread]: STDERR: "b''"
+[0m18:04:23.311176 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m18:04:23.311473 [info ] [MainThread]: Connection:
+[0m18:04:23.311736 [info ] [MainThread]:   host: aws-0-ap-northeast-1.pooler.supabase.com
+[0m18:04:23.311974 [info ] [MainThread]:   port: 5432
+[0m18:04:23.312214 [info ] [MainThread]:   user: postgres.pspkqczafkvlypcheoey
+[0m18:04:23.312420 [info ] [MainThread]:   database: postgres
+[0m18:04:23.312712 [info ] [MainThread]:   schema: analytics
+[0m18:04:23.313672 [info ] [MainThread]:   connect_timeout: 10
+[0m18:04:23.314085 [info ] [MainThread]:   role: None
+[0m18:04:23.314433 [info ] [MainThread]:   search_path: None
+[0m18:04:23.314781 [info ] [MainThread]:   keepalives_idle: 0
+[0m18:04:23.315036 [info ] [MainThread]:   sslmode: require
+[0m18:04:23.315322 [info ] [MainThread]:   sslcert: None
+[0m18:04:23.315612 [info ] [MainThread]:   sslkey: None
+[0m18:04:23.315834 [info ] [MainThread]:   sslrootcert: None
+[0m18:04:23.316031 [info ] [MainThread]:   application_name: dbt
+[0m18:04:23.316230 [info ] [MainThread]:   autocommit: False
+[0m18:04:23.316469 [info ] [MainThread]:   retries: 1
+[0m18:04:23.316997 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:04:23.474153 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m18:04:23.508656 [debug] [MainThread]: Using postgres connection "debug"
+[0m18:04:23.508976 [debug] [MainThread]: On debug: select 1 as id
+[0m18:04:23.509172 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:04:23.818592 [debug] [MainThread]: Postgres adapter: Got a retryable error when attempting to open a postgres connection.
+1 attempts remaining. Retrying in 0 seconds.
+Error:
+connection to server at "aws-0-ap-northeast-1.pooler.supabase.com" (54.64.190.72), port 5432 failed: fe_sendauth: no password supplied
+
+[0m18:04:24.047356 [debug] [MainThread]: Postgres adapter: Error running SQL: select 1 as id
+[0m18:04:24.047755 [debug] [MainThread]: Postgres adapter: Rolling back transaction.
+[0m18:04:24.048009 [debug] [MainThread]: On debug: No close available on handle
+[0m18:04:24.048275 [info ] [MainThread]:   Connection test: [[31mERROR[0m]
+
+[0m18:04:24.048528 [info ] [MainThread]: [31m1 check failed:[0m
+[0m18:04:24.048824 [info ] [MainThread]: dbt was unable to connect to the specified database.
+The database returned the following error:
+
+  >Database Error
+  connection to server at "aws-0-ap-northeast-1.pooler.supabase.com" (54.64.190.72), port 5432 failed: fe_sendauth: no password supplied
+  
+
+Check your database credentials and try again. For more information, visit:
+https://docs.getdbt.com/docs/configure-your-profile
+
+
+[0m18:04:24.049384 [debug] [MainThread]: Command `dbt debug` failed at 18:04:24.049285 after 1.11 seconds
+[0m18:04:24.049628 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m18:04:24.049913 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A7FECFC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A7D94DD0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F8A7C17130>]}
+[0m18:04:24.050198 [debug] [MainThread]: Flushing usage events
+[0m18:04:25.154787 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:06:34.271397 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE397D400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE60CFED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE60CFC50>]}
+
+
+============================== 18:06:34.274780 | 56d603e9-9053-49c6-8b2c-5cf9f2c9e4ef ==============================
+[0m18:06:34.274780 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:06:34.275670 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'use_colors': 'True', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'invocation_command': 'dbt debug --project-dir . --profiles-dir .', 'log_path': 'logs'}
+[0m18:06:34.287478 [info ] [MainThread]: dbt version: 1.12.0
+[0m18:06:34.287859 [info ] [MainThread]: python version: 3.13.7
+[0m18:06:34.288133 [info ] [MainThread]: python path: C:\Users\YEN YEN\Desktop\ERD\ERD-Portfolio-Repo\CollieAI_ERD\.venv\Scripts\python.exe
+[0m18:06:34.288345 [info ] [MainThread]: os info: Windows-11-10.0.26200-SP0
+[0m18:06:34.333404 [info ] [MainThread]: Using profiles dir at .
+[0m18:06:34.333819 [info ] [MainThread]: Using profiles.yml file at .\profiles.yml
+[0m18:06:34.334092 [info ] [MainThread]: Using dbt_project.yml file at .\dbt_project.yml
+[0m18:06:34.334774 [info ] [MainThread]: adapter type: postgres
+[0m18:06:34.335085 [info ] [MainThread]: adapter version: 1.11.0
+[0m18:06:34.426001 [info ] [MainThread]: Configuration:
+[0m18:06:34.426399 [info ] [MainThread]:   profiles.yml file [[32mOK found and valid[0m]
+[0m18:06:34.426915 [info ] [MainThread]:   dbt_project.yml file [[32mOK found and valid[0m]
+[0m18:06:34.427475 [info ] [MainThread]: Required dependencies:
+[0m18:06:34.427926 [debug] [MainThread]: Executing "git --help"
+[0m18:06:34.470291 [debug] [MainThread]: STDOUT: "b"usage: git [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]\n           [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]\n           [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]\n           [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]\n           [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]\n           <command> [<args>]\n\nThese are common Git commands used in various situations:\n\nstart a working area (see also: git help tutorial)\n   clone      Clone a repository into a new directory\n   init       Create an empty Git repository or reinitialize an existing one\n\nwork on the current change (see also: git help everyday)\n   add        Add file contents to the index\n   mv         Move or rename a file, a directory, or a symlink\n   restore    Restore working tree files\n   rm         Remove files from the working tree and from the index\n\nexamine the history and state (see also: git help revisions)\n   bisect     Use binary search to find the commit that introduced a bug\n   diff       Show changes between commits, commit and working tree, etc\n   grep       Print lines matching a pattern\n   log        Show commit logs\n   show       Show various types of objects\n   status     Show the working tree status\n\ngrow, mark and tweak your common history\n   backfill   Download missing objects in a partial clone\n   branch     List, create, or delete branches\n   commit     Record changes to the repository\n   history    EXPERIMENTAL: Rewrite history\n   merge      Join two or more development histories together\n   rebase     Reapply commits on top of another base tip\n   reset      Set `HEAD` or the index to a known state\n   switch     Switch branches\n   tag        Create, list, delete or verify tags\n\ncollaborate (see also: git help workflows)\n   fetch      Download objects and refs from another repository\n   pull       Fetch from and integrate with another repository or a local branch\n   push       Update remote refs along with associated objects\n\n'git help -a' and 'git help -g' list available subcommands and some\nconcept guides. See 'git help <command>' or 'git help <concept>'\nto read about a specific subcommand or concept.\nSee 'git help git' for an overview of the system.\n""
+[0m18:06:34.470864 [debug] [MainThread]: STDERR: "b''"
+[0m18:06:34.471307 [info ] [MainThread]:  - git [[32mOK found[0m]
+
+[0m18:06:34.471601 [info ] [MainThread]: Connection:
+[0m18:06:34.471841 [info ] [MainThread]:   host: aws-0-ap-northeast-1.pooler.supabase.com
+[0m18:06:34.472068 [info ] [MainThread]:   port: 5432
+[0m18:06:34.472255 [info ] [MainThread]:   user: postgres.pspkqczafkvlypcheoey
+[0m18:06:34.472646 [info ] [MainThread]:   database: postgres
+[0m18:06:34.472953 [info ] [MainThread]:   schema: analytics
+[0m18:06:34.473207 [info ] [MainThread]:   connect_timeout: 10
+[0m18:06:34.473429 [info ] [MainThread]:   role: None
+[0m18:06:34.473656 [info ] [MainThread]:   search_path: None
+[0m18:06:34.473888 [info ] [MainThread]:   keepalives_idle: 0
+[0m18:06:34.474128 [info ] [MainThread]:   sslmode: require
+[0m18:06:34.474398 [info ] [MainThread]:   sslcert: None
+[0m18:06:34.474639 [info ] [MainThread]:   sslkey: None
+[0m18:06:34.475009 [info ] [MainThread]:   sslrootcert: None
+[0m18:06:34.475524 [info ] [MainThread]:   application_name: dbt
+[0m18:06:34.476038 [info ] [MainThread]:   autocommit: False
+[0m18:06:34.476346 [info ] [MainThread]:   retries: 1
+[0m18:06:34.476826 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:06:34.620060 [debug] [MainThread]: Acquiring new postgres connection 'debug'
+[0m18:06:34.656888 [debug] [MainThread]: Using postgres connection "debug"
+[0m18:06:34.657203 [debug] [MainThread]: On debug: select 1 as id
+[0m18:06:34.657401 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:06:35.194398 [debug] [MainThread]: SQL status: SELECT 1 in 0.537 seconds
+[0m18:06:35.195215 [debug] [MainThread]: On debug: Close
+[0m18:06:35.195774 [info ] [MainThread]:   Connection test: [[32mOK connection ok[0m]
+
+[0m18:06:35.196119 [info ] [MainThread]: [32mAll checks passed![0m
+[0m18:06:35.197414 [debug] [MainThread]: Command `dbt debug` succeeded at 18:06:35.197219 after 1.10 seconds
+[0m18:06:35.197782 [debug] [MainThread]: Connection 'debug' was properly closed.
+[0m18:06:35.198064 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE66ECFC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE64955B0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000017FE6357790>]}
+[0m18:06:35.198391 [debug] [MainThread]: Flushing usage events
+[0m18:06:36.338372 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:06:38.572983 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C72FCD400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C75767D90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C75767890>]}
+
+
+============================== 18:06:38.576626 | 63e9f4a1-8da7-482a-9cc9-6f2e04330e0c ==============================
+[0m18:06:38.576626 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:06:38.577072 [debug] [MainThread]: running dbt with arguments {'maximum_seed_size_mib': '1', 'no_print': 'None', 'version_check': 'True', 'target_path': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'False', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'use_colors': 'True', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'invocation_command': 'dbt run --select vw_column_lineage --project-dir . --profiles-dir .', 'log_path': 'logs'}
+[0m18:06:38.739083 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C736D1810>]}
+[0m18:06:38.811438 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C71525BF0>]}
+[0m18:06:38.812495 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:06:38.993788 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m18:06:39.186097 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m18:06:39.186500 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m18:06:39.186710 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m18:06:39.194786 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C75F3E550>]}
+[0m18:06:39.312578 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:06:39.315794 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:06:39.350503 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:06:39.378847 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C760A08C0>]}
+[0m18:06:39.379779 [info ] [MainThread]: Found 10 models, 41 sources, 477 macros
+[0m18:06:39.380987 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C76097770>]}
+[0m18:06:39.384641 [info ] [MainThread]: 
+[0m18:06:39.385519 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m18:06:39.386008 [info ] [MainThread]: 
+[0m18:06:39.386758 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m18:06:39.388232 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres'
+[0m18:06:39.446988 [debug] [ThreadPool]: Using postgres connection "list_postgres"
+[0m18:06:39.447372 [debug] [ThreadPool]: On list_postgres: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "list_postgres"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m18:06:39.447590 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m18:06:40.055852 [debug] [ThreadPool]: SQL status: SELECT 121 in 0.608 seconds
+[0m18:06:40.059882 [debug] [ThreadPool]: On list_postgres: Close
+[0m18:06:40.068030 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres_analytics'
+[0m18:06:40.074745 [debug] [ThreadPool]: Using postgres connection "list_postgres_analytics"
+[0m18:06:40.075491 [debug] [ThreadPool]: On list_postgres_analytics: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "list_postgres_analytics"} */
+select
+      'postgres' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'analytics'
+    union all
+    select distinct
+     'postgres' as database,
+     proname as name,
+     ns.nspname as schema,
+     'function' as type
+    from pg_proc
+     join pg_namespace as ns on pronamespace = ns.oid
+    where ns.nspname ilike 'analytics'
+  
+[0m18:06:40.076168 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m18:06:40.590093 [debug] [ThreadPool]: SQL status: SELECT 9 in 0.514 seconds
+[0m18:06:40.592116 [debug] [ThreadPool]: On list_postgres_analytics: ROLLBACK
+[0m18:06:40.649683 [debug] [ThreadPool]: On list_postgres_analytics: Close
+[0m18:06:40.654697 [debug] [MainThread]: Using postgres connection "master"
+[0m18:06:40.655049 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "master"} */
+select distinct
+        dependent_namespace.nspname as dependent_schema,
+        dependent_class.relname as dependent_name,
+        referenced_namespace.nspname as referenced_schema,
+        referenced_class.relname as referenced_name
+
+    -- Query for views: views are entries in pg_class with an entry in pg_rewrite, but we avoid
+    -- a seq scan on pg_rewrite by leveraging the fact there is an "internal" row in pg_depend for
+    -- the view...
+    from pg_class as dependent_class
+    join pg_namespace as dependent_namespace on dependent_namespace.oid = dependent_class.relnamespace
+    join pg_depend as dependent_depend on dependent_depend.refobjid = dependent_class.oid
+        and dependent_depend.classid = 'pg_rewrite'::regclass
+        and dependent_depend.refclassid = 'pg_class'::regclass
+        and dependent_depend.deptype = 'i'
+
+    -- ... and via pg_depend (that has a row per column, hence the need for "distinct" above, and
+    -- making sure to exclude the internal row to avoid a view appearing to depend on itself)...
+    join pg_depend as joining_depend on joining_depend.objid = dependent_depend.objid
+        and joining_depend.classid = 'pg_rewrite'::regclass
+        and joining_depend.refclassid = 'pg_class'::regclass
+        and joining_depend.refobjid != dependent_depend.refobjid
+
+    -- ... we can find the tables they query from in pg_class, but excluding system tables. Note we
+    -- don't need need to exclude _dependent_ system tables, because they only query from other
+    -- system tables, and so are automatically excluded by excluding _referenced_ system tables
+    join pg_class as referenced_class on referenced_class.oid = joining_depend.refobjid
+    join pg_namespace as referenced_namespace on referenced_namespace.oid = referenced_class.relnamespace
+        and referenced_namespace.nspname != 'information_schema'
+        and referenced_namespace.nspname not like 'pg\_%'
+
+    order by
+        dependent_schema, dependent_name, referenced_schema, referenced_name;
+[0m18:06:40.655388 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:06:41.156913 [debug] [MainThread]: SQL status: SELECT 131 in 0.501 seconds
+[0m18:06:41.161488 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C761DF5F0>]}
+[0m18:06:41.162031 [debug] [MainThread]: On master: ROLLBACK
+[0m18:06:41.218444 [debug] [MainThread]: On master: COMMIT
+[0m18:06:41.218916 [debug] [MainThread]: Using postgres connection "master"
+[0m18:06:41.219225 [debug] [MainThread]: On master: COMMIT
+[0m18:06:41.333037 [debug] [MainThread]: SQL status: COMMIT in 0.113 seconds
+[0m18:06:41.333529 [debug] [MainThread]: On master: Close
+[0m18:06:41.341460 [debug] [Thread-1 (]: Began running node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:41.343003 [info ] [Thread-1 (]: 1 of 1 START sql view model analytics.vw_column_lineage ........................ [RUN]
+[0m18:06:41.343521 [debug] [Thread-1 (]: Acquiring new postgres connection 'model.lemmaai_analytics.vw_column_lineage'
+[0m18:06:41.343785 [debug] [Thread-1 (]: Began compiling node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:41.351975 [debug] [Thread-1 (]: Writing injected SQL for node "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:41.355172 [debug] [Thread-1 (]: Began executing node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:41.388920 [debug] [Thread-1 (]: Writing runtime sql for node "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:41.392100 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:41.392833 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+
+  create view "postgres"."analytics"."vw_column_lineage__dbt_tmp"
+    
+    
+  as (
+    
+
+-- This model is intentionally a documentation table.  It makes column-level
+-- lineage queryable in tools whose graph only renders table-to-table edges.
+-- depends_on: "postgres"."public"."ai_sessions"
+-- depends_on: "postgres"."public"."attempt_steps"
+-- depends_on: "postgres"."public"."class_sections"
+-- depends_on: "postgres"."public"."dda_events"
+-- depends_on: "postgres"."public"."math_problems"
+-- depends_on: "postgres"."public"."math_skills"
+-- depends_on: "postgres"."public"."math_topics"
+-- depends_on: "postgres"."public"."show_me_breakdowns"
+-- depends_on: "postgres"."public"."student_attempts"
+-- depends_on: "postgres"."public"."student_help_events"
+-- depends_on: "postgres"."public"."student_profiles"
+-- depends_on: "postgres"."public"."student_skill_predictions"
+
+WITH column_lineage AS (
+    SELECT * FROM (
+        VALUES
+            -- mv_daily_student_performance
+            ('mv_daily_student_performance', 'performance_date', 'student_attempts', 'created_at', 'CAST(created_at AS date)', 'derived'),
+            ('mv_daily_student_performance', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_daily_student_performance', 'section_name', 'class_sections', 'section_name', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'grade_level', 'class_sections', 'grade_level', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'sessions_started', 'ai_sessions', 'session_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'sessions_completed', 'ai_sessions', 'session_status', 'COUNT(*) FILTER (session_status = completed)', 'derived'),
+            ('mv_daily_student_performance', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_daily_student_performance', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_daily_student_performance', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_daily_student_performance', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_daily_student_performance', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+
+            -- mv_weekly_skill_mastery
+            ('mv_weekly_skill_mastery', 'week_start_date', 'student_attempts', 'created_at', 'DATE_TRUNC(week, created_at)', 'derived'),
+            ('mv_weekly_skill_mastery', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_id', 'math_problems', 'skill_id', 'lookup from student_attempts.problem_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hint_usage_rate', 'attempt_steps', 'hint_used', 'hinted_attempt_count / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_rate', 'student_help_events', 'event_id', 'help_request_count / (attempts + help requests)', 'derived'),
+            ('mv_weekly_skill_mastery', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_weekly_skill_mastery', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_predicted_mastery_score', 'student_skill_predictions', 'predicted_mastery_score', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_risk_level', 'student_skill_predictions', 'risk_level', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'recommended_action', 'student_skill_predictions', 'recommended_action', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_prediction_at', 'student_skill_predictions', 'predicted_at', 'latest prediction timestamp in the week', 'derived'),
+
+            -- mv_topic_failure_patterns
+            ('mv_topic_failure_patterns', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'grade_level', 'math_topics', 'grade_level', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_id', 'math_skills', 'skill_id', 'activity key', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_topic_failure_patterns', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'failure_rate', 'student_attempts', 'is_correct', 'wrong_attempts / total_answer_attempts', 'derived'),
+            ('mv_topic_failure_patterns', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_topic_failure_patterns', 'affected_student_count', 'student_attempts', 'student_id', 'COUNT(DISTINCT student_id)', 'derived'),
+            ('mv_topic_failure_patterns', 'latest_failure_at', 'student_attempts', 'created_at', 'MAX(created_at) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_step_count', 'attempt_steps', 'is_step_correct', 'COUNT(*) FILTER (not is_step_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'hinted_step_count', 'attempt_steps', 'hint_used', 'COUNT(*) FILTER (hint_used > 0)', 'derived'),
+            ('mv_topic_failure_patterns', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) by skill', 'derived')
+    ) AS mapping (mv_name, mv_column, source_table, source_column, transformation, lineage_type)
+)
+
+SELECT
+    mv_name,
+    mv_column,
+    source_table,
+    source_column,
+    transformation,
+    lineage_type
+FROM column_lineage
+ORDER BY mv_name, mv_column, source_table, source_column
+  );
+[0m18:06:41.393619 [debug] [Thread-1 (]: Opening a new connection, currently in state init
+[0m18:06:42.038597 [debug] [Thread-1 (]: SQL status: CREATE VIEW in 0.645 seconds
+[0m18:06:42.043203 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:42.043587 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+alter table "postgres"."analytics"."vw_column_lineage__dbt_tmp" rename to "vw_column_lineage"
+[0m18:06:42.114568 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.071 seconds
+[0m18:06:42.130911 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: COMMIT
+[0m18:06:42.131271 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:42.131504 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: COMMIT
+[0m18:06:42.205254 [debug] [Thread-1 (]: SQL status: COMMIT in 0.073 seconds
+[0m18:06:42.210050 [debug] [Thread-1 (]: Applying DROP to: "postgres"."analytics"."vw_column_lineage__dbt_backup"
+[0m18:06:42.214171 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:42.214748 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+drop view if exists "postgres"."analytics"."vw_column_lineage__dbt_backup" cascade
+[0m18:06:42.285269 [debug] [Thread-1 (]: SQL status: DROP VIEW in 0.070 seconds
+[0m18:06:42.288657 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: Close
+[0m18:06:42.293623 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '63e9f4a1-8da7-482a-9cc9-6f2e04330e0c', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C760B7050>]}
+[0m18:06:42.294675 [info ] [Thread-1 (]: 1 of 1 OK created sql view model analytics.vw_column_lineage ................... [[32mCREATE VIEW[0m in 0.95s]
+[0m18:06:42.295314 [debug] [Thread-1 (]: Finished running node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:42.296511 [debug] [MainThread]: On master: COMMIT
+[0m18:06:42.296767 [debug] [MainThread]: Using postgres connection "master"
+[0m18:06:42.297000 [debug] [MainThread]: On master: COMMIT
+[0m18:06:42.297216 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m18:06:42.795293 [debug] [MainThread]: SQL status: COMMIT in 0.498 seconds
+[0m18:06:42.795896 [debug] [MainThread]: On master: Close
+[0m18:06:42.796844 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m18:06:42.797153 [debug] [MainThread]: Connection 'list_postgres' was properly closed.
+[0m18:06:42.797413 [debug] [MainThread]: Connection 'list_postgres_analytics' was properly closed.
+[0m18:06:42.797605 [debug] [MainThread]: Connection 'model.lemmaai_analytics.vw_column_lineage' was properly closed.
+[0m18:06:42.797869 [info ] [MainThread]: 
+[0m18:06:42.798165 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 3.41 seconds (3.41s).
+[0m18:06:42.798857 [debug] [MainThread]: Command end result
+[0m18:06:42.832848 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:06:42.835773 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:06:42.838812 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:06:42.844974 [debug] [MainThread]: Wrote artifact RunExecutionResult to .\target\run_results.json
+[0m18:06:42.845510 [info ] [MainThread]: 
+[0m18:06:42.846092 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m18:06:42.846596 [info ] [MainThread]: 
+[0m18:06:42.846949 [info ] [MainThread]: Done. PASS=1 WARN=0 ERROR=0 SKIP=0 NO-OP=0 REUSED=0 TOTAL=1
+[0m18:06:42.848050 [debug] [MainThread]: Command `dbt run` succeeded at 18:06:42.847864 after 4.42 seconds
+[0m18:06:42.848417 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C76388E10>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C76412DF0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000023C764139D0>]}
+[0m18:06:42.848794 [debug] [MainThread]: Flushing usage events
+[0m18:06:43.967732 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:06:46.028130 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABB82D400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABDFC3D90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABDFC3890>]}
+
+
+============================== 18:06:46.031656 | fc1fd9da-98f4-4461-831b-ea5fe401b376 ==============================
+[0m18:06:46.031656 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:06:46.032123 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'maximum_seed_size_mib': '1', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'indirect_selection': 'eager', 'hints_enabled': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'invocation_command': 'dbt show --select vw_column_lineage --limit 100 --project-dir . --profiles-dir .', 'log_path': 'logs'}
+[0m18:06:46.180789 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABBF31810>]}
+[0m18:06:46.238913 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022AB9D85BF0>]}
+[0m18:06:46.252247 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:06:46.406288 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m18:06:46.580041 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m18:06:46.580362 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m18:06:46.580556 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m18:06:46.587974 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABE8B0850>]}
+[0m18:06:46.694009 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:06:46.698798 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:06:46.737732 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:06:46.744465 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABE80E7B0>]}
+[0m18:06:46.745018 [info ] [MainThread]: Found 10 models, 41 sources, 477 macros
+[0m18:06:46.745402 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABE8FFA10>]}
+[0m18:06:46.747786 [info ] [MainThread]: 
+[0m18:06:46.748382 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m18:06:46.748660 [info ] [MainThread]: 
+[0m18:06:46.749241 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m18:06:46.753304 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres_analytics'
+[0m18:06:46.802662 [debug] [ThreadPool]: Using postgres connection "list_postgres_analytics"
+[0m18:06:46.803087 [debug] [ThreadPool]: On list_postgres_analytics: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "list_postgres_analytics"} */
+select
+      'postgres' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'analytics'
+    union all
+    select distinct
+     'postgres' as database,
+     proname as name,
+     ns.nspname as schema,
+     'function' as type
+    from pg_proc
+     join pg_namespace as ns on pronamespace = ns.oid
+    where ns.nspname ilike 'analytics'
+  
+[0m18:06:46.803354 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m18:06:47.337935 [debug] [ThreadPool]: SQL status: SELECT 10 in 0.534 seconds
+[0m18:06:47.339565 [debug] [ThreadPool]: On list_postgres_analytics: ROLLBACK
+[0m18:06:47.401356 [debug] [ThreadPool]: On list_postgres_analytics: Close
+[0m18:06:47.410849 [debug] [MainThread]: Using postgres connection "master"
+[0m18:06:47.411321 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "master"} */
+select distinct
+        dependent_namespace.nspname as dependent_schema,
+        dependent_class.relname as dependent_name,
+        referenced_namespace.nspname as referenced_schema,
+        referenced_class.relname as referenced_name
+
+    -- Query for views: views are entries in pg_class with an entry in pg_rewrite, but we avoid
+    -- a seq scan on pg_rewrite by leveraging the fact there is an "internal" row in pg_depend for
+    -- the view...
+    from pg_class as dependent_class
+    join pg_namespace as dependent_namespace on dependent_namespace.oid = dependent_class.relnamespace
+    join pg_depend as dependent_depend on dependent_depend.refobjid = dependent_class.oid
+        and dependent_depend.classid = 'pg_rewrite'::regclass
+        and dependent_depend.refclassid = 'pg_class'::regclass
+        and dependent_depend.deptype = 'i'
+
+    -- ... and via pg_depend (that has a row per column, hence the need for "distinct" above, and
+    -- making sure to exclude the internal row to avoid a view appearing to depend on itself)...
+    join pg_depend as joining_depend on joining_depend.objid = dependent_depend.objid
+        and joining_depend.classid = 'pg_rewrite'::regclass
+        and joining_depend.refclassid = 'pg_class'::regclass
+        and joining_depend.refobjid != dependent_depend.refobjid
+
+    -- ... we can find the tables they query from in pg_class, but excluding system tables. Note we
+    -- don't need need to exclude _dependent_ system tables, because they only query from other
+    -- system tables, and so are automatically excluded by excluding _referenced_ system tables
+    join pg_class as referenced_class on referenced_class.oid = joining_depend.refobjid
+    join pg_namespace as referenced_namespace on referenced_namespace.oid = referenced_class.relnamespace
+        and referenced_namespace.nspname != 'information_schema'
+        and referenced_namespace.nspname not like 'pg\_%'
+
+    order by
+        dependent_schema, dependent_name, referenced_schema, referenced_name;
+[0m18:06:47.411676 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:06:47.914093 [debug] [MainThread]: SQL status: SELECT 131 in 0.502 seconds
+[0m18:06:47.917695 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'fc1fd9da-98f4-4461-831b-ea5fe401b376', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABEA332B0>]}
+[0m18:06:47.918129 [debug] [MainThread]: On master: ROLLBACK
+[0m18:06:47.976743 [debug] [MainThread]: On master: Close
+[0m18:06:47.981551 [debug] [Thread-1 (]: Began running node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:47.982218 [debug] [Thread-1 (]: Acquiring new postgres connection 'model.lemmaai_analytics.vw_column_lineage'
+[0m18:06:47.982590 [debug] [Thread-1 (]: Began compiling node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:47.991128 [debug] [Thread-1 (]: Writing injected SQL for node "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:47.992203 [debug] [Thread-1 (]: Began executing node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:47.998639 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:06:47.999237 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+
+  
+  
+
+-- This model is intentionally a documentation table.  It makes column-level
+-- lineage queryable in tools whose graph only renders table-to-table edges.
+-- depends_on: "postgres"."public"."ai_sessions"
+-- depends_on: "postgres"."public"."attempt_steps"
+-- depends_on: "postgres"."public"."class_sections"
+-- depends_on: "postgres"."public"."dda_events"
+-- depends_on: "postgres"."public"."math_problems"
+-- depends_on: "postgres"."public"."math_skills"
+-- depends_on: "postgres"."public"."math_topics"
+-- depends_on: "postgres"."public"."show_me_breakdowns"
+-- depends_on: "postgres"."public"."student_attempts"
+-- depends_on: "postgres"."public"."student_help_events"
+-- depends_on: "postgres"."public"."student_profiles"
+-- depends_on: "postgres"."public"."student_skill_predictions"
+
+WITH column_lineage AS (
+    SELECT * FROM (
+        VALUES
+            -- mv_daily_student_performance
+            ('mv_daily_student_performance', 'performance_date', 'student_attempts', 'created_at', 'CAST(created_at AS date)', 'derived'),
+            ('mv_daily_student_performance', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_daily_student_performance', 'section_name', 'class_sections', 'section_name', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'grade_level', 'class_sections', 'grade_level', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'sessions_started', 'ai_sessions', 'session_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'sessions_completed', 'ai_sessions', 'session_status', 'COUNT(*) FILTER (session_status = completed)', 'derived'),
+            ('mv_daily_student_performance', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_daily_student_performance', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_daily_student_performance', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_daily_student_performance', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_daily_student_performance', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+
+            -- mv_weekly_skill_mastery
+            ('mv_weekly_skill_mastery', 'week_start_date', 'student_attempts', 'created_at', 'DATE_TRUNC(week, created_at)', 'derived'),
+            ('mv_weekly_skill_mastery', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_id', 'math_problems', 'skill_id', 'lookup from student_attempts.problem_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hint_usage_rate', 'attempt_steps', 'hint_used', 'hinted_attempt_count / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_rate', 'student_help_events', 'event_id', 'help_request_count / (attempts + help requests)', 'derived'),
+            ('mv_weekly_skill_mastery', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_weekly_skill_mastery', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_predicted_mastery_score', 'student_skill_predictions', 'predicted_mastery_score', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_risk_level', 'student_skill_predictions', 'risk_level', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'recommended_action', 'student_skill_predictions', 'recommended_action', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_prediction_at', 'student_skill_predictions', 'predicted_at', 'latest prediction timestamp in the week', 'derived'),
+
+            -- mv_topic_failure_patterns
+            ('mv_topic_failure_patterns', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'grade_level', 'math_topics', 'grade_level', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_id', 'math_skills', 'skill_id', 'activity key', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_topic_failure_patterns', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'failure_rate', 'student_attempts', 'is_correct', 'wrong_attempts / total_answer_attempts', 'derived'),
+            ('mv_topic_failure_patterns', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_topic_failure_patterns', 'affected_student_count', 'student_attempts', 'student_id', 'COUNT(DISTINCT student_id)', 'derived'),
+            ('mv_topic_failure_patterns', 'latest_failure_at', 'student_attempts', 'created_at', 'MAX(created_at) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_step_count', 'attempt_steps', 'is_step_correct', 'COUNT(*) FILTER (not is_step_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'hinted_step_count', 'attempt_steps', 'hint_used', 'COUNT(*) FILTER (hint_used > 0)', 'derived'),
+            ('mv_topic_failure_patterns', 'help_request_count', 'student_help_events', 'event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'dda_trigger_count', 'dda_events', 'event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) by skill', 'derived')
+    ) AS mapping (mv_name, mv_column, source_table, source_column, transformation, lineage_type)
+)
+
+SELECT
+    mv_name,
+    mv_column,
+    source_table,
+    source_column,
+    transformation,
+    lineage_type
+FROM column_lineage
+ORDER BY mv_name, mv_column, source_table, source_column
+  
+  limit 100
+
+[0m18:06:47.999757 [debug] [Thread-1 (]: Opening a new connection, currently in state init
+[0m18:06:48.502216 [debug] [Thread-1 (]: SQL status: SELECT 53 in 0.502 seconds
+[0m18:06:48.506133 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: Close
+[0m18:06:48.507272 [debug] [Thread-1 (]: Finished running node model.lemmaai_analytics.vw_column_lineage
+[0m18:06:48.508513 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m18:06:48.508781 [debug] [MainThread]: Connection 'list_postgres_analytics' was properly closed.
+[0m18:06:48.509013 [debug] [MainThread]: Connection 'model.lemmaai_analytics.vw_column_lineage' was properly closed.
+[0m18:06:48.509518 [debug] [MainThread]: Command end result
+[0m18:06:48.550369 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:06:48.554298 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:06:48.557763 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:06:48.564541 [debug] [MainThread]: Wrote artifact RunExecutionResult to .\target\run_results.json
+[0m18:06:48.565787 [info ] [MainThread]: Previewing node 'vw_column_lineage':
+| mv_name              | mv_column            | source_table         | source_column        | transformation       | lineage_type |
+| -------------------- | -------------------- | -------------------- | -------------------- | -------------------- | ------------ |
+| mv_daily_student_... | accuracy_rate        | student_attempts     | is_correct           | correct_attempts ... | derived      |
+| mv_daily_student_... | avg_score            | student_attempts     | score                | AVG(score)           | derived      |
+| mv_daily_student_... | avg_time_spent_se... | student_attempts     | time_spent_seconds   | AVG(time_spent_se... | derived      |
+| mv_daily_student_... | correct_attempts     | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+| mv_daily_student_... | dda_trigger_count    | dda_events           | event_id             | COUNT(*) by stude... | derived      |
+| mv_daily_student_... | grade_level          | class_sections       | grade_level          | lookup through st... | direct       |
+| mv_daily_student_... | help_request_count   | student_help_events  | event_id             | COUNT(*) by stude... | derived      |
+| mv_daily_student_... | hinted_attempt_count | attempt_steps        | hint_used            | COUNT attempts wi... | derived      |
+| mv_daily_student_... | performance_date     | student_attempts     | created_at           | CAST(created_at A... | derived      |
+| mv_daily_student_... | section_name         | class_sections       | section_name         | lookup through st... | direct       |
+| mv_daily_student_... | sessions_completed   | ai_sessions          | session_status       | COUNT(*) FILTER (... | derived      |
+| mv_daily_student_... | sessions_started     | ai_sessions          | session_id           | COUNT(*) by stude... | derived      |
+| mv_daily_student_... | show_me_count        | show_me_breakdowns   | breakdown_id         | COUNT(*) joined t... | derived      |
+| mv_daily_student_... | student_id           | student_attempts     | student_id           | activity key         | direct       |
+| mv_daily_student_... | total_answer_atte... | student_attempts     | attempt_id           | COUNT(*) by stude... | derived      |
+| mv_daily_student_... | wrong_attempts       | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+| mv_topic_failure_... | affected_student_... | student_attempts     | student_id           | COUNT(DISTINCT st... | derived      |
+| mv_topic_failure_... | avg_time_spent_se... | student_attempts     | time_spent_seconds   | AVG(time_spent_se... | derived      |
+| mv_topic_failure_... | correct_attempts     | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+| mv_topic_failure_... | dda_trigger_count    | dda_events           | event_id             | COUNT(*) by skill    | derived      |
+| mv_topic_failure_... | failure_rate         | student_attempts     | is_correct           | wrong_attempts / ... | derived      |
+| mv_topic_failure_... | grade_level          | math_topics          | grade_level          | lookup through ma... | direct       |
+| mv_topic_failure_... | help_request_count   | student_help_events  | event_id             | COUNT(*) by skill    | derived      |
+| mv_topic_failure_... | hinted_step_count    | attempt_steps        | hint_used            | COUNT(*) FILTER (... | derived      |
+| mv_topic_failure_... | latest_failure_at    | student_attempts     | created_at           | MAX(created_at) F... | derived      |
+| mv_topic_failure_... | show_me_count        | show_me_breakdowns   | breakdown_id         | COUNT(*) by skill    | derived      |
+| mv_topic_failure_... | skill_id             | math_skills          | skill_id             | activity key         | direct       |
+| mv_topic_failure_... | skill_name           | math_skills          | skill_name           | lookup by skill_id   | direct       |
+| mv_topic_failure_... | topic_name           | math_topics          | topic_name           | lookup through ma... | direct       |
+| mv_topic_failure_... | total_answer_atte... | student_attempts     | attempt_id           | COUNT(*) by skill    | derived      |
+| mv_topic_failure_... | wrong_attempts       | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+| mv_topic_failure_... | wrong_step_count     | attempt_steps        | is_step_correct      | COUNT(*) FILTER (... | derived      |
+| mv_weekly_skill_m... | accuracy_rate        | student_attempts     | is_correct           | correct_attempts ... | derived      |
+| mv_weekly_skill_m... | avg_score            | student_attempts     | score                | AVG(score)           | derived      |
+| mv_weekly_skill_m... | avg_time_spent_se... | student_attempts     | time_spent_seconds   | AVG(time_spent_se... | derived      |
+| mv_weekly_skill_m... | correct_attempts     | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+| mv_weekly_skill_m... | dda_trigger_count    | dda_events           | event_id             | COUNT(*) by week,... | derived      |
+| mv_weekly_skill_m... | help_request_count   | student_help_events  | event_id             | COUNT(*) by week,... | derived      |
+| mv_weekly_skill_m... | help_request_rate    | student_help_events  | event_id             | help_request_coun... | derived      |
+| mv_weekly_skill_m... | hint_usage_rate      | attempt_steps        | hint_used            | hinted_attempt_co... | derived      |
+| mv_weekly_skill_m... | hinted_attempt_count | attempt_steps        | hint_used            | COUNT attempts wi... | derived      |
+| mv_weekly_skill_m... | latest_predicted_... | student_skill_pre... | predicted_mastery... | latest prediction... | derived      |
+| mv_weekly_skill_m... | latest_prediction_at | student_skill_pre... | predicted_at         | latest prediction... | derived      |
+| mv_weekly_skill_m... | latest_risk_level    | student_skill_pre... | risk_level           | latest prediction... | derived      |
+| mv_weekly_skill_m... | recommended_action   | student_skill_pre... | recommended_action   | latest prediction... | derived      |
+| mv_weekly_skill_m... | show_me_count        | show_me_breakdowns   | breakdown_id         | COUNT(*) joined t... | derived      |
+| mv_weekly_skill_m... | skill_id             | math_problems        | skill_id             | lookup from stude... | direct       |
+| mv_weekly_skill_m... | skill_name           | math_skills          | skill_name           | lookup by skill_id   | direct       |
+| mv_weekly_skill_m... | student_id           | student_attempts     | student_id           | activity key         | direct       |
+| mv_weekly_skill_m... | topic_name           | math_topics          | topic_name           | lookup through ma... | direct       |
+| mv_weekly_skill_m... | total_answer_atte... | student_attempts     | attempt_id           | COUNT(*) by week,... | derived      |
+| mv_weekly_skill_m... | week_start_date      | student_attempts     | created_at           | DATE_TRUNC(week, ... | derived      |
+| mv_weekly_skill_m... | wrong_attempts       | student_attempts     | is_correct           | COUNT(*) FILTER (... | derived      |
+
+[0m18:06:48.567344 [debug] [MainThread]: Command `dbt show` succeeded at 18:06:48.567196 after 2.68 seconds
+[0m18:06:48.567756 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABDF21550>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABEBE03C0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022ABEBE0940>]}
+[0m18:06:48.568094 [debug] [MainThread]: Flushing usage events
+[0m18:06:49.634123 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:17:06.734214 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D02186D400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D02401FD90>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D02401F890>]}
+
+
+============================== 18:17:06.738785 | 38287c43-f763-4d9d-9996-f8f0cfd1bf7e ==============================
+[0m18:17:06.738785 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:17:06.739243 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'maximum_seed_size_mib': '1', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'empty': 'False', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': '.', 'use_colors': 'True', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'invocation_command': 'dbt run --select vw_column_lineage --project-dir . --profiles-dir .', 'log_path': 'logs'}
+[0m18:17:06.913274 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D021F81810>]}
+[0m18:17:06.977573 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D01FDC5BF0>]}
+[0m18:17:06.978725 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m18:17:07.212504 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m18:17:07.448459 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m18:17:07.448814 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m18:17:07.449030 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m18:17:07.457952 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D02476AC50>]}
+[0m18:17:07.590347 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:17:07.593483 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:17:07.623602 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:17:07.641104 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D0248D88C0>]}
+[0m18:17:07.641552 [info ] [MainThread]: Found 10 models, 41 sources, 477 macros
+[0m18:17:07.641874 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D0248CF770>]}
+[0m18:17:07.643650 [info ] [MainThread]: 
+[0m18:17:07.644157 [info ] [MainThread]: Concurrency: 4 threads (target='dev')
+[0m18:17:07.644429 [info ] [MainThread]: 
+[0m18:17:07.644984 [debug] [MainThread]: Acquiring new postgres connection 'master'
+[0m18:17:07.646008 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres'
+[0m18:17:07.776203 [debug] [ThreadPool]: Using postgres connection "list_postgres"
+[0m18:17:07.776994 [debug] [ThreadPool]: On list_postgres: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "list_postgres"} */
+
+    select distinct nspname from pg_namespace
+  
+[0m18:17:07.777745 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m18:17:08.536613 [debug] [ThreadPool]: SQL status: SELECT 121 in 0.759 seconds
+[0m18:17:08.539438 [debug] [ThreadPool]: On list_postgres: Close
+[0m18:17:08.552010 [debug] [ThreadPool]: Acquiring new postgres connection 'list_postgres_analytics'
+[0m18:17:08.562456 [debug] [ThreadPool]: Using postgres connection "list_postgres_analytics"
+[0m18:17:08.563194 [debug] [ThreadPool]: On list_postgres_analytics: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "list_postgres_analytics"} */
+select
+      'postgres' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike 'analytics'
+    union all
+    select
+      'postgres' as database,
+      matviewname as name,
+      schemaname as schema,
+      'materialized_view' as type
+    from pg_matviews
+    where schemaname ilike 'analytics'
+    union all
+    select distinct
+     'postgres' as database,
+     proname as name,
+     ns.nspname as schema,
+     'function' as type
+    from pg_proc
+     join pg_namespace as ns on pronamespace = ns.oid
+    where ns.nspname ilike 'analytics'
+  
+[0m18:17:08.563818 [debug] [ThreadPool]: Opening a new connection, currently in state init
+[0m18:17:09.231444 [debug] [ThreadPool]: SQL status: SELECT 10 in 0.668 seconds
+[0m18:17:09.233166 [debug] [ThreadPool]: On list_postgres_analytics: ROLLBACK
+[0m18:17:09.347142 [debug] [ThreadPool]: On list_postgres_analytics: Close
+[0m18:17:09.352588 [debug] [MainThread]: Using postgres connection "master"
+[0m18:17:09.353146 [debug] [MainThread]: On master: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "connection_name": "master"} */
+select distinct
+        dependent_namespace.nspname as dependent_schema,
+        dependent_class.relname as dependent_name,
+        referenced_namespace.nspname as referenced_schema,
+        referenced_class.relname as referenced_name
+
+    -- Query for views: views are entries in pg_class with an entry in pg_rewrite, but we avoid
+    -- a seq scan on pg_rewrite by leveraging the fact there is an "internal" row in pg_depend for
+    -- the view...
+    from pg_class as dependent_class
+    join pg_namespace as dependent_namespace on dependent_namespace.oid = dependent_class.relnamespace
+    join pg_depend as dependent_depend on dependent_depend.refobjid = dependent_class.oid
+        and dependent_depend.classid = 'pg_rewrite'::regclass
+        and dependent_depend.refclassid = 'pg_class'::regclass
+        and dependent_depend.deptype = 'i'
+
+    -- ... and via pg_depend (that has a row per column, hence the need for "distinct" above, and
+    -- making sure to exclude the internal row to avoid a view appearing to depend on itself)...
+    join pg_depend as joining_depend on joining_depend.objid = dependent_depend.objid
+        and joining_depend.classid = 'pg_rewrite'::regclass
+        and joining_depend.refclassid = 'pg_class'::regclass
+        and joining_depend.refobjid != dependent_depend.refobjid
+
+    -- ... we can find the tables they query from in pg_class, but excluding system tables. Note we
+    -- don't need need to exclude _dependent_ system tables, because they only query from other
+    -- system tables, and so are automatically excluded by excluding _referenced_ system tables
+    join pg_class as referenced_class on referenced_class.oid = joining_depend.refobjid
+    join pg_namespace as referenced_namespace on referenced_namespace.oid = referenced_class.relnamespace
+        and referenced_namespace.nspname != 'information_schema'
+        and referenced_namespace.nspname not like 'pg\_%'
+
+    order by
+        dependent_schema, dependent_name, referenced_schema, referenced_name;
+[0m18:17:09.353663 [debug] [MainThread]: Opening a new connection, currently in state init
+[0m18:17:10.014769 [debug] [MainThread]: SQL status: SELECT 131 in 0.661 seconds
+[0m18:17:10.019580 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D024A0B930>]}
+[0m18:17:10.020415 [debug] [MainThread]: On master: ROLLBACK
+[0m18:17:10.095819 [debug] [MainThread]: On master: COMMIT
+[0m18:17:10.096645 [debug] [MainThread]: Using postgres connection "master"
+[0m18:17:10.097829 [debug] [MainThread]: On master: COMMIT
+[0m18:17:10.250218 [debug] [MainThread]: SQL status: COMMIT in 0.152 seconds
+[0m18:17:10.250994 [debug] [MainThread]: On master: Close
+[0m18:17:10.260268 [debug] [Thread-1 (]: Began running node model.lemmaai_analytics.vw_column_lineage
+[0m18:17:10.261832 [info ] [Thread-1 (]: 1 of 1 START sql view model analytics.vw_column_lineage ........................ [RUN]
+[0m18:17:10.262857 [debug] [Thread-1 (]: Acquiring new postgres connection 'model.lemmaai_analytics.vw_column_lineage'
+[0m18:17:10.263621 [debug] [Thread-1 (]: Began compiling node model.lemmaai_analytics.vw_column_lineage
+[0m18:17:10.280380 [debug] [Thread-1 (]: Writing injected SQL for node "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:10.282162 [debug] [Thread-1 (]: Began executing node model.lemmaai_analytics.vw_column_lineage
+[0m18:17:10.341082 [debug] [Thread-1 (]: Writing runtime sql for node "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:10.343261 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:10.344544 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+
+  create view "postgres"."analytics"."vw_column_lineage__dbt_tmp"
+    
+    
+  as (
+    
+
+-- This model is intentionally a documentation table.  It makes column-level
+-- lineage queryable in tools whose graph only renders table-to-table edges.
+-- depends_on: "postgres"."public"."ai_sessions"
+-- depends_on: "postgres"."public"."attempt_steps"
+-- depends_on: "postgres"."public"."class_sections"
+-- depends_on: "postgres"."public"."dda_events"
+-- depends_on: "postgres"."public"."math_problems"
+-- depends_on: "postgres"."public"."math_skills"
+-- depends_on: "postgres"."public"."math_topics"
+-- depends_on: "postgres"."public"."show_me_breakdowns"
+-- depends_on: "postgres"."public"."student_attempts"
+-- depends_on: "postgres"."public"."student_help_events"
+-- depends_on: "postgres"."public"."student_profiles"
+-- depends_on: "postgres"."public"."student_skill_predictions"
+
+WITH column_lineage AS (
+    SELECT * FROM (
+        VALUES
+            -- mv_daily_student_performance
+            ('mv_daily_student_performance', 'performance_date', 'student_attempts', 'created_at', 'CAST(created_at AS date)', 'derived'),
+            ('mv_daily_student_performance', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_daily_student_performance', 'section_name', 'class_sections', 'section_name', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'grade_level', 'class_sections', 'grade_level', 'lookup through student_profiles.section_id', 'direct'),
+            ('mv_daily_student_performance', 'sessions_started', 'ai_sessions', 'session_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'sessions_completed', 'ai_sessions', 'session_status', 'COUNT(*) FILTER (session_status = completed)', 'derived'),
+            ('mv_daily_student_performance', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_daily_student_performance', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_daily_student_performance', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_daily_student_performance', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_daily_student_performance', 'help_request_count', 'student_help_events', 'help_event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'dda_trigger_count', 'dda_events', 'dda_event_id', 'COUNT(*) by student and date', 'derived'),
+            ('mv_daily_student_performance', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_daily_student_performance', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+
+            -- mv_weekly_skill_mastery
+            ('mv_weekly_skill_mastery', 'week_start_date', 'student_attempts', 'created_at', 'DATE_TRUNC(week, created_at)', 'derived'),
+            ('mv_weekly_skill_mastery', 'student_id', 'student_attempts', 'student_id', 'activity key', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_id', 'math_problems', 'skill_id', 'lookup from student_attempts.problem_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_weekly_skill_mastery', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_score', 'student_attempts', 'score', 'AVG(score)', 'derived'),
+            ('mv_weekly_skill_mastery', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hinted_attempt_count', 'attempt_steps', 'hint_used', 'COUNT attempts with BOOL_OR(hint_used > 0)', 'derived'),
+            ('mv_weekly_skill_mastery', 'hint_usage_rate', 'attempt_steps', 'hint_used', 'hinted_attempt_count / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_count', 'student_help_events', 'help_event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'help_request_rate', 'student_help_events', 'help_event_id', 'help_request_count / (attempts + help requests)', 'derived'),
+            ('mv_weekly_skill_mastery', 'dda_trigger_count', 'dda_events', 'dda_event_id', 'COUNT(*) by week, student, skill', 'derived'),
+            ('mv_weekly_skill_mastery', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) joined to ai_sessions', 'derived'),
+            ('mv_weekly_skill_mastery', 'accuracy_rate', 'student_attempts', 'is_correct', 'correct_attempts / total_answer_attempts', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_predicted_mastery_score', 'student_skill_predictions', 'predicted_mastery_score', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_risk_level', 'student_skill_predictions', 'risk_level', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'recommended_action', 'student_skill_predictions', 'recommended_action', 'latest prediction in the week', 'derived'),
+            ('mv_weekly_skill_mastery', 'latest_prediction_at', 'student_skill_predictions', 'predicted_at', 'latest prediction timestamp in the week', 'derived'),
+
+            -- mv_topic_failure_patterns
+            ('mv_topic_failure_patterns', 'topic_name', 'math_topics', 'topic_name', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'grade_level', 'math_topics', 'grade_level', 'lookup through math_skills.topic_id', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_id', 'math_skills', 'skill_id', 'activity key', 'direct'),
+            ('mv_topic_failure_patterns', 'skill_name', 'math_skills', 'skill_name', 'lookup by skill_id', 'direct'),
+            ('mv_topic_failure_patterns', 'total_answer_attempts', 'student_attempts', 'attempt_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'correct_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_attempts', 'student_attempts', 'is_correct', 'COUNT(*) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'failure_rate', 'student_attempts', 'is_correct', 'wrong_attempts / total_answer_attempts', 'derived'),
+            ('mv_topic_failure_patterns', 'avg_time_spent_seconds', 'student_attempts', 'time_spent_seconds', 'AVG(time_spent_seconds)', 'derived'),
+            ('mv_topic_failure_patterns', 'affected_student_count', 'student_attempts', 'student_id', 'COUNT(DISTINCT student_id)', 'derived'),
+            ('mv_topic_failure_patterns', 'latest_failure_at', 'student_attempts', 'created_at', 'MAX(created_at) FILTER (not is_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'wrong_step_count', 'attempt_steps', 'is_step_correct', 'COUNT(*) FILTER (not is_step_correct)', 'derived'),
+            ('mv_topic_failure_patterns', 'hinted_step_count', 'attempt_steps', 'hint_used', 'COUNT(*) FILTER (hint_used > 0)', 'derived'),
+            ('mv_topic_failure_patterns', 'help_request_count', 'student_help_events', 'help_event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'dda_trigger_count', 'dda_events', 'dda_event_id', 'COUNT(*) by skill', 'derived'),
+            ('mv_topic_failure_patterns', 'show_me_count', 'show_me_breakdowns', 'breakdown_id', 'COUNT(*) by skill', 'derived')
+    ) AS mapping (mv_name, mv_column, source_table, source_column, transformation, lineage_type)
+)
+
+SELECT
+    mv_name,
+    mv_column,
+    source_table,
+    source_column,
+    transformation,
+    lineage_type
+FROM column_lineage
+ORDER BY mv_name, mv_column, source_table, source_column
+  );
+[0m18:17:10.345470 [debug] [Thread-1 (]: Opening a new connection, currently in state init
+[0m18:17:10.864227 [debug] [Thread-1 (]: SQL status: CREATE VIEW in 0.518 seconds
+[0m18:17:10.873810 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:10.874944 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+alter table "postgres"."analytics"."vw_column_lineage" rename to "vw_column_lineage__dbt_backup"
+[0m18:17:10.939005 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.063 seconds
+[0m18:17:10.942340 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:10.942687 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+alter table "postgres"."analytics"."vw_column_lineage__dbt_tmp" rename to "vw_column_lineage"
+[0m18:17:11.004049 [debug] [Thread-1 (]: SQL status: ALTER TABLE in 0.061 seconds
+[0m18:17:11.027406 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: COMMIT
+[0m18:17:11.028045 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:11.028517 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: COMMIT
+[0m18:17:11.088007 [debug] [Thread-1 (]: SQL status: COMMIT in 0.059 seconds
+[0m18:17:11.096892 [debug] [Thread-1 (]: Applying DROP to: "postgres"."analytics"."vw_column_lineage__dbt_backup"
+[0m18:17:11.103112 [debug] [Thread-1 (]: Using postgres connection "model.lemmaai_analytics.vw_column_lineage"
+[0m18:17:11.103876 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: /* {"app": "dbt", "dbt_version": "1.12.0", "profile_name": "lemmaai_analytics", "target_name": "dev", "node_id": "model.lemmaai_analytics.vw_column_lineage"} */
+drop view if exists "postgres"."analytics"."vw_column_lineage__dbt_backup" cascade
+[0m18:17:11.168247 [debug] [Thread-1 (]: SQL status: DROP VIEW in 0.064 seconds
+[0m18:17:11.170544 [debug] [Thread-1 (]: On model.lemmaai_analytics.vw_column_lineage: Close
+[0m18:17:11.173951 [debug] [Thread-1 (]: Sending event: {'category': 'dbt', 'action': 'run_model', 'label': '38287c43-f763-4d9d-9996-f8f0cfd1bf7e', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D024889610>]}
+[0m18:17:11.174967 [info ] [Thread-1 (]: 1 of 1 OK created sql view model analytics.vw_column_lineage ................... [[32mCREATE VIEW[0m in 0.91s]
+[0m18:17:11.176136 [debug] [Thread-1 (]: Finished running node model.lemmaai_analytics.vw_column_lineage
+[0m18:17:11.178511 [debug] [MainThread]: On master: COMMIT
+[0m18:17:11.179214 [debug] [MainThread]: Using postgres connection "master"
+[0m18:17:11.179669 [debug] [MainThread]: On master: COMMIT
+[0m18:17:11.180117 [debug] [MainThread]: Opening a new connection, currently in state closed
+[0m18:17:11.742164 [debug] [MainThread]: SQL status: COMMIT in 0.562 seconds
+[0m18:17:11.742608 [debug] [MainThread]: On master: Close
+[0m18:17:11.743273 [debug] [MainThread]: Connection 'master' was properly closed.
+[0m18:17:11.743572 [debug] [MainThread]: Connection 'list_postgres' was properly closed.
+[0m18:17:11.744400 [debug] [MainThread]: Connection 'list_postgres_analytics' was properly closed.
+[0m18:17:11.744911 [debug] [MainThread]: Connection 'model.lemmaai_analytics.vw_column_lineage' was properly closed.
+[0m18:17:11.745516 [info ] [MainThread]: 
+[0m18:17:11.746163 [info ] [MainThread]: Finished running 1 view model in 0 hours 0 minutes and 4.10 seconds (4.10s).
+[0m18:17:11.747049 [debug] [MainThread]: Command end result
+[0m18:17:11.810104 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m18:17:11.814608 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m18:17:11.820060 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m18:17:11.830679 [debug] [MainThread]: Wrote artifact RunExecutionResult to .\target\run_results.json
+[0m18:17:11.831919 [info ] [MainThread]: 
+[0m18:17:11.832682 [info ] [MainThread]: [32mCompleted successfully[0m
+[0m18:17:11.833260 [info ] [MainThread]: 
+[0m18:17:11.834036 [info ] [MainThread]: Done. PASS=1 WARN=0 ERROR=0 SKIP=0 NO-OP=0 REUSED=0 TOTAL=1
+[0m18:17:11.835380 [debug] [MainThread]: Command `dbt run` succeeded at 18:17:11.835035 after 5.30 seconds
+[0m18:17:11.836235 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D0248F3C20>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D024C3BCF0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001D024C3BE30>]}
+[0m18:17:11.837014 [debug] [MainThread]: Flushing usage events
+[0m18:17:13.140505 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:19:36.329273 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B96414EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B98B23ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B98B23C50>]}
+
+
+============================== 18:19:36.332856 | 9c46627a-82c3-4662-97ff-1f2bfad9183b ==============================
+[0m18:19:36.332856 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:19:36.333318 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'target_path': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'invocation_command': 'dbt ', 'hints_enabled': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m18:19:36.445937 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '9c46627a-82c3-4662-97ff-1f2bfad9183b', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B96AE16E0>]}
+[0m18:19:36.471728 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:19:36.473026 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:19:36.473834 [debug] [MainThread]: Command `cli deps` succeeded at 18:19:36.473690 after 0.31 seconds
+[0m18:19:36.474129 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B94D0D590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B98D4C050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021B98989850>]}
+[0m18:19:36.474408 [debug] [MainThread]: Flushing usage events
+[0m18:19:37.600961 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:21:04.847199 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F20F4EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F4803ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F4803C50>]}
+
+
+============================== 18:21:04.850821 | ff3f6de5-5eff-426f-bc03-7f36296b8a66 ==============================
+[0m18:21:04.850821 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:21:04.851328 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'indirect_selection': 'eager', 'hints_enabled': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'invocation_command': 'dbt ', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m18:21:04.965620 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'ff3f6de5-5eff-426f-bc03-7f36296b8a66', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F27C56E0>]}
+[0m18:21:04.984665 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:21:04.985913 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:21:04.986687 [debug] [MainThread]: Command `cli deps` succeeded at 18:21:04.986576 after 0.29 seconds
+[0m18:21:04.986971 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F19BD590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F4A54050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209F4669850>]}
+[0m18:21:04.987298 [debug] [MainThread]: Flushing usage events
+[0m18:21:06.174235 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:28:23.395625 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EBEB4EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EE5C3ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EE5C3C50>]}
+
+
+============================== 18:28:23.401240 | 035aa519-4279-4373-8014-0ef57e65f8e0 ==============================
+[0m18:28:23.401240 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:28:23.402415 [debug] [MainThread]: running dbt with arguments {'maximum_seed_size_mib': '1', 'no_print': 'None', 'static_parser': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'version_check': 'True', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'invocation_command': 'dbt ', 'hints_enabled': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m18:28:23.504939 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '035aa519-4279-4373-8014-0ef57e65f8e0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EC5796E0>]}
+[0m18:28:23.524292 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:28:23.526096 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:28:23.527043 [debug] [MainThread]: Command `cli deps` succeeded at 18:28:23.526912 after 0.30 seconds
+[0m18:28:23.527415 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EA7AD590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EE7FC050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001B2EE429850>]}
+[0m18:28:23.527714 [debug] [MainThread]: Flushing usage events
+[0m18:28:24.697248 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:30:33.187644 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000256357E4EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000025637EF3ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000025637EF3C50>]}
+
+
+============================== 18:30:33.190765 | acb2ba89-e9d7-445a-8d50-f10f83f3a4b0 ==============================
+[0m18:30:33.190765 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:30:33.191204 [debug] [MainThread]: running dbt with arguments {'maximum_seed_size_mib': '1', 'no_print': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'invocation_command': 'dbt ', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m18:30:33.289821 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'acb2ba89-e9d7-445a-8d50-f10f83f3a4b0', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000025635EA16E0>]}
+[0m18:30:33.309748 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:30:33.311297 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:30:33.312126 [debug] [MainThread]: Command `cli deps` succeeded at 18:30:33.312006 after 0.27 seconds
+[0m18:30:33.312426 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000256340DD590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000256381FC050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000025637D59850>]}
+[0m18:30:33.312703 [debug] [MainThread]: Flushing usage events
+[0m18:30:34.378137 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m18:43:22.784788 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F3068F4EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F30900BED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F30900BC50>]}
+
+
+============================== 18:43:22.788252 | 5cead1f1-9dc2-4698-9be9-0e66aacf4617 ==============================
+[0m18:43:22.788252 [info ] [MainThread]: Running with dbt=1.12.0
+[0m18:43:22.788747 [debug] [MainThread]: running dbt with arguments {'maximum_seed_size_mib': '1', 'no_print': 'None', 'version_check': 'True', 'target_path': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'use_colors': 'True', 'hints_enabled': 'True', 'invocation_command': 'dbt ', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m18:43:22.907069 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '5cead1f1-9dc2-4698-9be9-0e66aacf4617', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F306FD16E0>]}
+[0m18:43:22.929118 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:43:22.930451 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m18:43:22.931271 [debug] [MainThread]: Command `cli deps` succeeded at 18:43:22.931132 after 0.31 seconds
+[0m18:43:22.931567 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F3051ED590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F3092DC050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F308E79850>]}
+[0m18:43:22.931851 [debug] [MainThread]: Flushing usage events
+[0m18:43:24.016579 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m19:18:05.456879 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7C98BD400>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC01FED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC01FC50>]}
+
+
+============================== 19:18:05.461572 | c5f9db21-9738-42e9-9b07-fbf06a65ca63 ==============================
+[0m19:18:05.461572 [info ] [MainThread]: Running with dbt=1.12.0
+[0m19:18:05.462317 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'target_path': 'None', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': '.', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'invocation_command': 'dbt parse --project-dir . --profiles-dir .', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'logs'}
+[0m19:18:05.614906 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'c5f9db21-9738-42e9-9b07-fbf06a65ca63', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7C9FD1810>]}
+[0m19:18:05.676701 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': 'c5f9db21-9738-42e9-9b07-fbf06a65ca63', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC0E3460>]}
+[0m19:18:05.677861 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m19:18:05.820613 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m19:18:06.024287 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m19:18:06.024657 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m19:18:06.024865 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m19:18:06.032561 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': 'c5f9db21-9738-42e9-9b07-fbf06a65ca63', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC86D250>]}
+[0m19:18:06.036640 [info ] [MainThread]: Performance info: .\target\perf_info.json
+[0m19:18:06.175438 [debug] [MainThread]: Wrote artifact WritableManifest to .\target\manifest.json
+[0m19:18:06.179143 [debug] [MainThread]: Wrote artifact SemanticManifest to .\target\semantic_manifest.json
+[0m19:18:06.220518 [debug] [MainThread]: Wrote artifact OsiDocument to .\target\osi_document.json
+[0m19:18:06.221795 [debug] [MainThread]: Command `dbt parse` succeeded at 19:18:06.221549 after 0.92 seconds
+[0m19:18:06.222376 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC022300>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CC8274D0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001F7CBEE7E70>]}
+[0m19:18:06.222893 [debug] [MainThread]: Flushing usage events
+[0m19:18:07.411943 [debug] [MainThread]: An error was encountered while trying to flush usage events
