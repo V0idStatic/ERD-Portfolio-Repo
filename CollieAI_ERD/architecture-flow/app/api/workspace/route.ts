@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 
-const workspaceId = "collie";
+const workspaceId = (request: Request) => new URL(request.url).searchParams.get("id")?.replace(/[^a-z0-9-]/g, "").slice(0, 48) || "collie";
 
 const responseHeaders = (request: Request) => {
   const origin = request.headers.get("origin");
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   await initializeWorkspaceTable();
   const row = await env.DB
     .prepare("SELECT payload, updated_at FROM workspace_snapshots WHERE id = ?")
-    .bind(workspaceId)
+    .bind(workspaceId(request))
     .first<{ payload: string; updated_at: number }>();
 
   return Response.json(row ? { data: JSON.parse(row.payload), updatedAt: row.updated_at } : { data: null }, { headers: responseHeaders(request) });
@@ -33,7 +33,7 @@ export async function PUT(request: Request) {
     .prepare(
       "INSERT INTO workspace_snapshots (id, payload, updated_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at",
     )
-    .bind(workspaceId, JSON.stringify(data), updatedAt)
+    .bind(workspaceId(request), JSON.stringify(data), updatedAt)
     .run();
 
   return Response.json({ ok: true, updatedAt }, { headers: responseHeaders(request) });
@@ -44,7 +44,7 @@ export async function PATCH(request: Request) {
   const update = await request.json();
   const existing = await env.DB
     .prepare("SELECT payload FROM workspace_snapshots WHERE id = ?")
-    .bind(workspaceId)
+    .bind(workspaceId(request))
     .first<{ payload: string }>();
   const payload = { ...(existing ? JSON.parse(existing.payload) : {}), ...update };
   const updatedAt = Date.now();
@@ -52,7 +52,7 @@ export async function PATCH(request: Request) {
     .prepare(
       "INSERT INTO workspace_snapshots (id, payload, updated_at) VALUES (?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at",
     )
-    .bind(workspaceId, JSON.stringify(payload), updatedAt)
+    .bind(workspaceId(request), JSON.stringify(payload), updatedAt)
     .run();
   return Response.json({ ok: true, updatedAt }, { headers: responseHeaders(request) });
 }

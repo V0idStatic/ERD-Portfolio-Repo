@@ -742,9 +742,9 @@ const historyStorageKey = (pageId: string) => `collieai-architecture-history-${p
 const MAX_HISTORY_ENTRIES = 40;
 
 const workspaceApiUrl = () =>
-  typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace"
-    : "/api/workspace";
+  typeof window !== "undefined"
+    ? `${window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace" : "/api/workspace"}?id=${encodeURIComponent(window.localStorage.getItem("collieai-active-workspace-v1") ?? "collie")}`
+    : "/api/workspace?id=collie";
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
   JSON.stringify({ nodes, edges }, (key, value) =>
@@ -943,7 +943,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         setNodes([]);
         setEdges([]);
       }
-      if (!pageData) {
+      if (!pageData || window.localStorage.getItem("collieai-active-workspace-v1") !== "collie") {
         void fetch(workspaceApiUrl())
           .then((response) => response.json())
           .then((body) => {
@@ -953,7 +953,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
               activePageId?: string;
               diagrams?: Record<string, { nodes?: ArchitectureNode[]; edges?: Edge[] }>;
             } | null;
-            if (!cloud?.pages?.length) return;
+            if (!cloud?.pages?.length) {
+              if (window.localStorage.getItem("collieai-active-workspace-v1") !== "collie") {
+                setNodes([]);
+                setEdges([]);
+              }
+              return;
+            }
             const cloudActive = cloud.pages.find((page) => page.id === cloud.activePageId)?.id ?? cloud.pages[0].id;
             const cloudDiagram = cloud.diagrams?.[cloudActive];
             if (!cloudDiagram) return;

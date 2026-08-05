@@ -1257,6 +1257,9 @@ button { cursor: pointer; }
 .workspace-single button { width:24px; height:24px; display:grid; place-items:center; padding:0; border:0; border-radius:6px; color:#8a989f; background:transparent; }
 .workspace-single button:hover { color:#087e92; background:#e0f4f6; }
 .workspace-single .workspace-star { color:#a3aeb4; }.workspace-single .workspace-star.is-favorite { color:#e6a142; }
+.extra-workspace { width:100%; display:grid; grid-template-columns:auto 1fr; align-items:center; gap:8px; margin-top:5px; padding:8px 7px; border:0; border-radius:9px; color:#52636d; background:transparent; text-align:left; }
+.extra-workspace:hover { background:#f0f4f5; }.extra-workspace > span:last-child { display:grid; gap:3px; min-width:0; }.extra-workspace strong { overflow:hidden; font-size:10.5px; text-overflow:ellipsis; white-space:nowrap; }.extra-workspace small { color:#99a5ad; font-size:8px; }
+.create-workspace-link { display:flex; align-items:center; gap:8px; width:100%; margin-top:8px; padding:8px 9px; border:1px dashed #b7d4d9; border-radius:8px; color:#087e92; background:#f5fbfc; font-size:9px; font-weight:750; }
 .home-profile {
   margin-top:auto; display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:9px;
   padding:12px 9px; border-top:1px solid #e7ecee; color:#7e8b94;
