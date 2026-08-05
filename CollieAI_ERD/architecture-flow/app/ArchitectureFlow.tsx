@@ -735,10 +735,16 @@ const createLegendDraft = (): LegendDraft => ({
 
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
+const WORKSPACE_META_KEY = "collieai-workspace-home-v1";
 const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
 const pageStorageKey = (pageId: string) => `collieai-architecture-page-${pageId}`;
 const historyStorageKey = (pageId: string) => `collieai-architecture-history-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
+
+const workspaceApiUrl = () =>
+  typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace"
+    : "/api/workspace";
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
   JSON.stringify({ nodes, edges }, (key, value) =>
@@ -936,6 +942,32 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       } else if (restoredActive !== "main") {
         setNodes([]);
         setEdges([]);
+      }
+      if (!pageData) {
+        void fetch(workspaceApiUrl())
+          .then((response) => response.json())
+          .then((body) => {
+            const cloud = body.data as {
+              pages?: DiagramPage[];
+              trashedPages?: DiagramPage[];
+              activePageId?: string;
+              diagrams?: Record<string, { nodes?: ArchitectureNode[]; edges?: Edge[] }>;
+            } | null;
+            if (!cloud?.pages?.length) return;
+            const cloudActive = cloud.pages.find((page) => page.id === cloud.activePageId)?.id ?? cloud.pages[0].id;
+            const cloudDiagram = cloud.diagrams?.[cloudActive];
+            if (!cloudDiagram) return;
+            window.localStorage.setItem(PAGE_INDEX_KEY, JSON.stringify({ pages: cloud.pages, trashedPages: cloud.trashedPages ?? [], activePageId: cloudActive }));
+            Object.entries(cloud.diagrams ?? {}).forEach(([pageId, diagram]) => {
+              window.localStorage.setItem(pageStorageKey(pageId), JSON.stringify(diagram));
+            });
+            setPages(cloud.pages);
+            setTrashedPages(cloud.trashedPages ?? []);
+            setActivePageId(cloudActive);
+            setNodes(synchronizeLegendKey(cloudDiagram.nodes ?? []));
+            setEdges(cloudDiagram.edges ?? []);
+          })
+          .catch(() => undefined);
       }
     } catch {
       window.localStorage.removeItem(PAGE_INDEX_KEY);
@@ -1154,6 +1186,23 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     if (activePageId === "main") {
       window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: cleanNodes, edges }));
     }
+  };
+
+  const syncWorkspaceToCloud = (nextPages: DiagramPage[], nextTrashedPages: DiagramPage[], nextActivePageId: string) => {
+    const allPages = [...nextPages, ...nextTrashedPages];
+    const diagrams = Object.fromEntries(
+      allPages.map((page) => {
+        const stored = window.localStorage.getItem(pageStorageKey(page.id));
+        return [page.id, stored ? JSON.parse(stored) : { nodes: [], edges: [] }];
+      }),
+    );
+    let workspace = { name: "Collie", favorite: false };
+    try { workspace = JSON.parse(window.localStorage.getItem(WORKSPACE_META_KEY) ?? JSON.stringify(workspace)); } catch { /* defaults are safe */ }
+    void fetch(workspaceApiUrl(), {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workspace, pages: nextPages, trashedPages: nextTrashedPages, activePageId: nextActivePageId, diagrams }),
+    }).catch(() => undefined);
   };
 
   const persistAnimationData = () => {
@@ -1731,6 +1780,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const saveDiagram = () => {
     persistCurrentPage();
     persistPageIndex(pages, activePageId, trashedPages);
+    syncWorkspaceToCloud(pages, trashedPages, activePageId);
     persistAnimationData();
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1400);
@@ -1756,6 +1806,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         PAGE_INDEX_KEY,
         JSON.stringify({ pages, trashedPages, activePageId }),
       );
+      syncWorkspaceToCloud(pages, trashedPages, activePageId);
 
       if (signature !== lastHistorySignatureRef.current) {
         const entry: DiagramHistoryEntry = {

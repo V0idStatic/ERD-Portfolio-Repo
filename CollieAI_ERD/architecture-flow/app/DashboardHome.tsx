@@ -16,7 +16,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type HomeView = "recent" | "favorites";
 type StoredNode = { id: string; position?: { x: number; y: number }; data?: { label?: string } };
@@ -80,30 +80,54 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const [renaming, setRenaming] = useState(false);
   const [nodes, setNodes] = useState<StoredNode[]>([]);
   const [diagramName, setDiagramName] = useState("Main architecture");
+  const [navigation, setNavigation] = useState<"home" | "recent" | "favorites">("home");
+  const [workspaceReady, setWorkspaceReady] = useState(false);
 
   useEffect(() => {
-    const savedWorkspace = window.localStorage.getItem(WORKSPACE_KEY);
-    if (savedWorkspace) {
+    const loadWorkspace = async () => {
+      const savedWorkspace = window.localStorage.getItem(WORKSPACE_KEY);
+      let localWorkspace = defaultWorkspace;
+      let localNodes: StoredNode[] = [];
+      let localDiagramName = "Main architecture";
+      if (savedWorkspace) {
       try {
         const parsed = JSON.parse(savedWorkspace) as WorkspaceMeta;
         if (parsed.name?.trim()) {
-          setWorkspace(parsed);
-          setDraftName(parsed.name);
+            localWorkspace = parsed;
         }
       } catch { /* Use the default workspace when legacy storage cannot be read. */ }
-    }
-    try {
-      const storedPage = JSON.parse(window.localStorage.getItem(PAGE_KEY) ?? "{}");
-      setNodes(Array.isArray(storedPage.nodes) ? storedPage.nodes : []);
-      const index = JSON.parse(window.localStorage.getItem(PAGE_INDEX_KEY) ?? "{}");
-      const mainPage = Array.isArray(index.pages) ? index.pages.find((page: { id?: string }) => page.id === "main") : null;
-      if (mainPage?.name) setDiagramName(mainPage.name);
-    } catch { /* The empty-state preview explains what to do next. */ }
+      }
+      try {
+        const storedPage = JSON.parse(window.localStorage.getItem(PAGE_KEY) ?? "{}");
+        localNodes = Array.isArray(storedPage.nodes) ? storedPage.nodes : [];
+        const index = JSON.parse(window.localStorage.getItem(PAGE_INDEX_KEY) ?? "{}");
+        const mainPage = Array.isArray(index.pages) ? index.pages.find((page: { id?: string }) => page.id === "main") : null;
+        if (mainPage?.name) localDiagramName = mainPage.name;
+      } catch { /* The empty-state preview explains what to do next. */ }
+      let cloudData: { workspace?: WorkspaceMeta; diagrams?: Record<string, { nodes?: StoredNode[] }>; pages?: { id?: string; name?: string }[] } | null = null;
+      try {
+        const response = await fetch("/api/workspace");
+        const body = await response.json();
+        cloudData = body.data;
+      } catch { /* Keep the local workspace available while offline. */ }
+      const cloudMain = cloudData?.diagrams?.main;
+      const cloudMainPage = cloudData?.pages?.find((page) => page.id === "main");
+      const nextWorkspace = cloudData?.workspace?.name ? cloudData.workspace : localWorkspace;
+      setWorkspace(nextWorkspace);
+      setDraftName(nextWorkspace.name);
+      setNodes(Array.isArray(cloudMain?.nodes) ? cloudMain.nodes : localNodes);
+      setDiagramName(cloudMainPage?.name || localDiagramName);
+      setWorkspaceReady(true);
+    };
+    void loadWorkspace();
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(workspace));
-  }, [workspace]);
+    if (workspaceReady) {
+      void fetch("/api/workspace", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace }) });
+    }
+  }, [workspace, workspaceReady]);
 
   const showsWorkspace = view === "recent" || workspace.favorite;
   const matchesSearch = !query.trim() || diagramName.toLowerCase().includes(query.trim().toLowerCase());
@@ -122,9 +146,9 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
         <div className="home-brand"><span><Network size={19} /></span><strong>LemmaAI</strong></div>
         <button className="home-create" onClick={onOpenWorkspace}>Open workspace <ArrowRight size={16} /></button>
         <nav className="home-navigation" aria-label="Home navigation">
-          <button className="active"><Home size={17} /> Home</button>
-          <button onClick={() => setView("recent")}><Clock3 size={17} /> Recent</button>
-          <button onClick={() => setView("favorites")}><Star size={17} /> Favorites</button>
+          <button className={navigation === "home" ? "active" : ""} onClick={() => { setNavigation("home"); setView("recent"); }}><Home size={17} /> Home</button>
+          <button className={navigation === "recent" ? "active" : ""} onClick={() => { setNavigation("recent"); setView("recent"); }}><Clock3 size={17} /> Recent</button>
+          <button className={navigation === "favorites" ? "active" : ""} onClick={() => { setNavigation("favorites"); setView("favorites"); }}><Star size={17} /> Favorites</button>
         </nav>
         <div className="workspace-heading"><span>WORKSPACE</span></div>
         <div className="workspace-single">
