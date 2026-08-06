@@ -27,7 +27,27 @@ type ExtraWorkspace = { id: string; name: string; favorite: boolean };
 const WORKSPACE_KEY = "collieai-workspace-home-v1";
 const PAGE_KEY = "collieai-architecture-page-main";
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
+const ACTIVE_WORKSPACE_KEY = "collieai-active-workspace-v1";
 const defaultWorkspace: WorkspaceMeta = { name: "Collie", favorite: false };
+
+// Reads the main page's name for a workspace from its own localStorage
+// namespace (the same keys the editor uses), so the home preview shows the
+// correct page name even when the cloud snapshot is unreachable.
+const readLocalDiagramName = (workspaceId: string) => {
+  try {
+    const indexKey =
+      workspaceId === "collie"
+        ? PAGE_INDEX_KEY
+        : `collieai-architecture-pages-${workspaceId}-v1`;
+    const index = JSON.parse(window.localStorage.getItem(indexKey) ?? "{}");
+    const mainPage = Array.isArray(index.pages)
+      ? index.pages.find((page: { id?: string }) => page.id === "main")
+      : null;
+    return mainPage?.name ?? "";
+  } catch {
+    return "";
+  }
+};
 
 function ActualDiagramPreview({ nodes }: { nodes: StoredNode[] }) {
   if (!nodes.length) {
@@ -88,53 +108,70 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const [extraWorkspaces, setExtraWorkspaces] = useState<ExtraWorkspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState("collie");
 
-  useEffect(() => {
-    const loadWorkspace = async () => {
-      const savedWorkspace = window.localStorage.getItem(WORKSPACE_KEY);
-      let localWorkspace = defaultWorkspace;
-      let localNodes: StoredNode[] = [];
-      let localDiagramName = "Main architecture";
-      if (savedWorkspace) {
-      try {
-        const parsed = JSON.parse(savedWorkspace) as WorkspaceMeta;
-        if (parsed.name?.trim()) {
-            localWorkspace = parsed;
-        }
-      } catch { /* Use the default workspace when legacy storage cannot be read. */ }
-      }
-      try {
-        const storedPage = JSON.parse(window.localStorage.getItem(PAGE_KEY) ?? "{}");
-        localNodes = Array.isArray(storedPage.nodes) ? storedPage.nodes : [];
-        const index = JSON.parse(window.localStorage.getItem(PAGE_INDEX_KEY) ?? "{}");
-        const mainPage = Array.isArray(index.pages) ? index.pages.find((page: { id?: string }) => page.id === "main") : null;
-        if (mainPage?.name) localDiagramName = mainPage.name;
-      } catch { /* The empty-state preview explains what to do next. */ }
-      let cloudData: { workspace?: WorkspaceMeta; diagrams?: Record<string, { nodes?: StoredNode[] }>; pages?: { id?: string; name?: string }[] } | null = null;
-      try {
-        const response = await fetch("/api/workspace");
-        const body = await response.json();
-        cloudData = body.data;
-      } catch { /* Keep the local workspace available while offline. */ }
-      const cloudMain = cloudData?.diagrams?.main;
-      const cloudMainPage = cloudData?.pages?.find((page) => page.id === "main");
-      const nextWorkspace = cloudData?.workspace?.name ? cloudData.workspace : localWorkspace;
-      setWorkspace(nextWorkspace);
-      setCollieMeta(nextWorkspace);
-      setDraftName(nextWorkspace.name);
-      setNodes(Array.isArray(cloudMain?.nodes) ? cloudMain.nodes : localNodes);
-      setDiagramName(cloudMainPage?.name || localDiagramName);
-      setWorkspaceReady(true);
-    };
-    void loadWorkspace();
+useEffect(() => {
+    let normalized: ExtraWorkspace[] = [];
     try {
       const savedExtras = JSON.parse(window.localStorage.getItem("collieai-extra-workspaces-v1") ?? "[]") as Array<ExtraWorkspace | string>;
-      const normalized = savedExtras.map((item, index) => {
+      normalized = savedExtras.map((item, index) => {
         const base = typeof item === "string" ? { id: `legacy-workspace-${index}`, name: item } : item;
         return { ...base, favorite: Boolean((base as ExtraWorkspace).favorite) };
       }).filter((item) => item.id && item.name);
       setExtraWorkspaces(normalized);
       window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(normalized));
     } catch { /* no extra workspaces yet */ }
+
+    const loadWorkspace = async () => {
+      // Always load the collie workspace metadata so its sidebar row and any
+      // collie selection use the correct name instead of the default.
+      let localCollie = defaultWorkspace;
+      try {
+        const savedWorkspace = window.localStorage.getItem(WORKSPACE_KEY);
+        if (savedWorkspace) {
+          const parsed = JSON.parse(savedWorkspace) as WorkspaceMeta;
+          if (parsed.name?.trim()) localCollie = parsed;
+        }
+      } catch { /* use the default workspace when legacy storage cannot be read. */ }
+      setCollieMeta(localCollie);
+
+      // Restore whichever workspace the user last had open, instead of always
+      // falling back to the default "collie" workspace.
+      const savedActiveId = window.localStorage.getItem(ACTIVE_WORKSPACE_KEY) ?? "collie";
+      const activeIsCollie = savedActiveId === "collie";
+      const activeExtra = activeIsCollie ? null : normalized.find((item) => item.id === savedActiveId) ?? null;
+      const targetId = activeIsCollie || !activeExtra ? "collie" : savedActiveId;
+      const activeWorkspace: WorkspaceMeta = activeIsCollie
+        ? localCollie
+        : activeExtra
+          ? { name: activeExtra.name, favorite: activeExtra.favorite }
+          : localCollie;
+
+      setSelectedWorkspaceId(targetId);
+      setWorkspace(activeWorkspace);
+      setDraftName(activeWorkspace.name);
+
+      // Load the preview for that workspace: cloud snapshot first, then the
+      // workspace's own namespaced localStorage as the offline fallback.
+      const localName = readLocalDiagramName(targetId);
+      setNodes([]);
+      setDiagramName(localName || "Main architecture");
+      try {
+        const response = await fetch(targetId === "collie" ? "/api/workspace" : `/api/workspace?id=${targetId}`);
+        const body = await response.json();
+        const cloud = body.data as { workspace?: WorkspaceMeta; diagrams?: Record<string, { nodes?: StoredNode[] }>; pages?: { id?: string; name?: string }[] } | null;
+        const main = cloud?.diagrams?.main;
+        const pageName = cloud?.pages?.find((page) => page.id === "main")?.name;
+        if (targetId === "collie" && cloud?.workspace?.name) {
+          const next = cloud.workspace;
+          setCollieMeta(next);
+          setWorkspace(next);
+          setDraftName(next.name);
+        }
+        setNodes(Array.isArray(main?.nodes) ? main.nodes : []);
+        setDiagramName(pageName || localName || "Main architecture");
+      } catch { /* Keep the local preview while offline. */ }
+      setWorkspaceReady(true);
+    };
+    void loadWorkspace();
   }, []);
 
   useEffect(() => {
@@ -158,13 +195,13 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
       window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
       return next;
     });
-    window.localStorage.setItem("collieai-active-workspace-v1", workspace.id);
+    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspace.id);
     await fetch(`/api/workspace?id=${workspace.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: workspace.name, favorite: false }, pages: [{ id: "main", name: "Main architecture" }], trashedPages: [], activePageId: "main", diagrams: { main: { nodes: [], edges: [] } } }) });
     onOpenWorkspace();
   };
 
-  const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorite = false) => {
-    window.localStorage.setItem("collieai-active-workspace-v1", id);
+const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorite = false) => {
+    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, id);
     setSelectedWorkspaceId(id);
     setRenamingId(null);
     if (id === "collie") {
@@ -174,7 +211,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
       setWorkspace({ name: fallbackName, favorite: fallbackFavorite });
     }
     setNodes([]);
-    setDiagramName("Main architecture");
+    setDiagramName(readLocalDiagramName(id) || "Main architecture");
     try {
       const response = await fetch(`/api/workspace?id=${id}`);
       const cloud = (await response.json()).data as { workspace?: WorkspaceMeta; diagrams?: Record<string, { nodes?: StoredNode[] }>; pages?: { id?: string; name?: string }[] } | null;
@@ -188,7 +225,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
         setWorkspace({ name: fallbackName, favorite: fallbackFavorite });
       }
       setNodes(Array.isArray(main?.nodes) ? main.nodes : []);
-      setDiagramName(cloud?.pages?.find((page) => page.id === "main")?.name || "Main architecture");
+      setDiagramName(cloud?.pages?.find((page) => page.id === "main")?.name || readLocalDiagramName(id) || "Main architecture");
     } catch { /* The empty workspace remains usable offline. */ }
   };
 
@@ -283,7 +320,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
           {visibleWorkspaces.length && matchesSearch ? <div className={`project-grid single-project ${display === "list" ? "is-list" : ""}`}>{visibleWorkspaces.map((item) => {
             const isSelected = item.id === selectedWorkspaceId;
             const itemNodes = isSelected ? nodes : [];
-            return <article className="project-card" key={item.id}><button className="project-open" onClick={() => { if (isSelected) onOpenWorkspace(); else void selectWorkspace(item.id, item.name, item.favorite); }} aria-label={`Open ${item.name} workspace`}><ActualDiagramPreview nodes={itemNodes} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> LIVE DIAGRAM</span><div className="project-title-row"><button onClick={() => { if (isSelected) onOpenWorkspace(); else void selectWorkspace(item.id, item.name, item.favorite); }}>{isSelected ? diagramName : item.name}</button><button className="favorite-button is-favorite" onClick={() => toggleFavorite(item.id)} aria-label="Remove workspace from favorites"><Star size={16} fill="currentColor" /></button></div><p>{isSelected ? "Preview generated from the components in this workspace." : "Select this workspace to view its live diagram."}</p><footer><span>{item.name} workspace</span><span>{isSelected ? `${nodes.length} components` : "Favorite workspace"}</span></footer></div></article>;
+            return <article className="project-card" key={item.id}><button className="project-open" onClick={() => { if (isSelected) onOpenWorkspace(); else void selectWorkspace(item.id, item.name, item.favorite); }} aria-label={`Open ${item.name} workspace`}><ActualDiagramPreview nodes={itemNodes} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> LIVE DIAGRAM</span><div className="project-title-row"><button onClick={() => { if (isSelected) onOpenWorkspace(); else void selectWorkspace(item.id, item.name, item.favorite); }}>{item.name}</button><button className="favorite-button is-favorite" onClick={() => toggleFavorite(item.id)} aria-label="Remove workspace from favorites"><Star size={16} fill="currentColor" /></button></div><p>{isSelected ? "Preview generated from the components in this workspace." : "Select this workspace to view its live diagram."}</p><footer><span>{isSelected ? (diagramName || `${item.name} · Main architecture`) : `${item.name} workspace`}</span><span>{isSelected ? `${nodes.length} components` : "Favorite workspace"}</span></footer></div></article>;
           })}</div> : <div className="empty-library"><Layers3 size={22} /><strong>{query ? "No matching diagrams" : view === "favorites" ? "No favorite workspaces" : "This workspace is empty"}</strong><p>{query ? "Try a different search." : view === "favorites" ? "Star a workspace to keep it here." : "Open this workspace to create its first diagram."}</p></div>}
         </section>
       </section>

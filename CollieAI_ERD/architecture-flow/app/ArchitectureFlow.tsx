@@ -760,18 +760,41 @@ const createLegendDraft = (): LegendDraft => ({
   nodeIds: [],
 });
 
+const ACTIVE_WORKSPACE_KEY = "collieai-active-workspace-v1";
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
 const WORKSPACE_META_KEY = "collieai-workspace-home-v1";
 const EXTRA_WORKSPACES_KEY = "collieai-extra-workspaces-v1";
 const defaultPages: DiagramPage[] = [{ id: "main", name: "Main architecture" }];
-const pageStorageKey = (pageId: string) => `collieai-architecture-page-${pageId}`;
-const historyStorageKey = (pageId: string) => `collieai-architecture-history-${pageId}`;
+
+// Every workspace keeps its own pages, diagrams, history and animation data
+// in localStorage.  The original "collie" workspace keeps its legacy keys so
+// existing diagrams continue to load; all other workspaces use namespaced
+// keys so a page id such as "main" never collides between workspaces.
+const pageIndexKey = (workspaceId: string) =>
+  workspaceId === "collie" ? PAGE_INDEX_KEY : `collieai-architecture-pages-${workspaceId}-v1`;
+const pageStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-architecture-page-${pageId}`
+    : `collieai-architecture-page-${workspaceId}-${pageId}`;
+const historyStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-architecture-history-${pageId}`
+    : `collieai-architecture-history-${workspaceId}-${pageId}`;
+const animationStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-animation-${pageId}`
+    : `collieai-animation-${workspaceId}-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
+
+const activeWorkspaceId = () =>
+  typeof window !== "undefined"
+    ? (window.localStorage.getItem(ACTIVE_WORKSPACE_KEY) ?? "collie")
+    : "collie";
 
 const workspaceApiUrl = () =>
   typeof window !== "undefined"
-    ? `${window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace" : "/api/workspace"}?id=${encodeURIComponent(window.localStorage.getItem("collieai-active-workspace-v1") ?? "collie")}`
+    ? `${window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace" : "/api/workspace"}?id=${encodeURIComponent(activeWorkspaceId())}`
     : "/api/workspace?id=collie";
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
@@ -851,7 +874,6 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [exportNotice, setExportNotice] = useState<string | null>(null);
   const historyReadyRef = useRef(false);
   const lastHistorySignatureRef = useRef("");
-  const animationStorageKeySuffix = useCallback((pageId: string) => `collieai-animation-${pageId}`, []);
   const [animationOpen, setAnimationOpen] = useState(false);
   const [animationMode, setAnimationMode] = useState<"editing" | "presentation">("editing");
   const [animationSequences, setAnimationSequences] = useState<AnimationSequence[]>([]);
@@ -871,6 +893,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { fitView, screenToFlowPosition } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
+  // The active workspace is fixed for the lifetime of this FlowWorkspace
+  // mount (the home screen sets it right before opening the workspace),
+  // so capture it once and reuse it for every namespaced storage key.
+  const workspaceId = useRef<string>(activeWorkspaceId());
+  // Set once the initial cloud snapshot for this workspace has been applied.
+  // Until then, local-to-cloud sync is suspended so stale local data cannot
+  // be pushed back to the cloud and re-corrupt the workspace.
+  const cloudHydratedRef = useRef(false);
 
   useEffect(() => {
     // React Flow's internal ResizeObserver can occasionally finish a resize
@@ -920,8 +950,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   }, []);
 
   useEffect(() => {
+    const wsId = workspaceId.current;
+    const restore = (pages: DiagramPage[], trashed: DiagramPage[], activeId: string) => {
+      setPages(pages);
+      setTrashedPages(trashed);
+      setActivePageId(activeId);
+    };
     try {
-      const savedIndex = window.localStorage.getItem(PAGE_INDEX_KEY);
+      const savedIndex = window.localStorage.getItem(pageIndexKey(wsId));
       const parsedIndex = savedIndex
         ? (JSON.parse(savedIndex) as {
             pages?: DiagramPage[];
@@ -934,13 +970,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         restoredPages.find((page) => page.id === parsedIndex?.activePageId)?.id ??
         restoredPages[0].id;
       const pageData =
-        window.localStorage.getItem(pageStorageKey(restoredActive)) ??
-        (restoredActive === "main" ? window.localStorage.getItem(LEGACY_STORAGE_KEY) : null);
+        window.localStorage.getItem(pageStorageKey(wsId, restoredActive)) ??
+        (restoredActive === "main" && wsId === "collie"
+          ? window.localStorage.getItem(LEGACY_STORAGE_KEY)
+          : null);
 
-      setPages(restoredPages);
-      setTrashedPages(parsedIndex?.trashedPages ?? []);
-      setActivePageId(restoredActive);
-      const storedHistory = window.localStorage.getItem(historyStorageKey(restoredActive));
+      restore(restoredPages, parsedIndex?.trashedPages ?? [], restoredActive);
+      const storedHistory = window.localStorage.getItem(historyStorageKey(wsId, restoredActive));
       const restoredHistory = storedHistory
         ? (JSON.parse(storedHistory) as DiagramHistoryEntry[])
         : [];
@@ -948,7 +984,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       lastHistorySignatureRef.current = restoredHistory[0]
         ? diagramSignature(restoredHistory[0].nodes, restoredHistory[0].edges)
         : "";
-      const storedAnimation = window.localStorage.getItem(`collieai-animation-${restoredActive}`);
+      const storedAnimation = window.localStorage.getItem(animationStorageKey(wsId, restoredActive));
       if (storedAnimation) {
         try {
           const parsed = JSON.parse(storedAnimation) as {
@@ -967,44 +1003,60 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
         setNodes(synchronizeLegendKey(parsed.nodes ?? []));
         setEdges(parsed.edges ?? []);
-      } else if (restoredActive !== "main") {
+      } else if (wsId !== "collie" || restoredActive !== "main") {
+        // A workspace other than the original collie one starts (and stays)
+        // empty until the user adds content.  Only the default collie "main"
+        // page falls back to the bundled demo diagram when nothing is saved.
         setNodes([]);
         setEdges([]);
       }
-      if (!pageData || window.localStorage.getItem("collieai-active-workspace-v1") !== "collie") {
-        void fetch(workspaceApiUrl())
-          .then((response) => response.json())
-          .then((body) => {
-            const cloud = body.data as {
-              pages?: DiagramPage[];
-              trashedPages?: DiagramPage[];
-              activePageId?: string;
-              diagrams?: Record<string, { nodes?: ArchitectureNode[]; edges?: Edge[] }>;
-            } | null;
-            if (!cloud?.pages?.length) {
-              if (window.localStorage.getItem("collieai-active-workspace-v1") !== "collie") {
-                setNodes([]);
-                setEdges([]);
-              }
+      // Always reconcile with the cloud snapshot for this workspace.  This
+      // repairs stale local data (such as a page name leaked from another
+      // workspace before storage was namespaced) and keeps every workspace
+      // consistent with its own cloud copy.
+      void fetch(workspaceApiUrl())
+        .then((response) => response.json())
+        .then((body) => {
+          const cloud = body.data as {
+            pages?: DiagramPage[];
+            trashedPages?: DiagramPage[];
+            activePageId?: string;
+            diagrams?: Record<string, { nodes?: ArchitectureNode[]; edges?: Edge[] }>;
+          } | null;
+          if (!cloud?.pages?.length) {
+            // No cloud snapshot for this workspace yet.
+            if (pageData || savedIndex) {
+              // It already has local data (e.g. before its first cloud sync),
+              // so keep it instead of resetting to a blank page.
               return;
             }
-            const cloudActive = cloud.pages.find((page) => page.id === cloud.activePageId)?.id ?? cloud.pages[0].id;
-            const cloudDiagram = cloud.diagrams?.[cloudActive];
-            if (!cloudDiagram) return;
-            window.localStorage.setItem(PAGE_INDEX_KEY, JSON.stringify({ pages: cloud.pages, trashedPages: cloud.trashedPages ?? [], activePageId: cloudActive }));
-            Object.entries(cloud.diagrams ?? {}).forEach(([pageId, diagram]) => {
-              window.localStorage.setItem(pageStorageKey(pageId), JSON.stringify(diagram));
-            });
-            setPages(cloud.pages);
-            setTrashedPages(cloud.trashedPages ?? []);
-            setActivePageId(cloudActive);
-            setNodes(synchronizeLegendKey(cloudDiagram.nodes ?? []));
-            setEdges(cloudDiagram.edges ?? []);
-          })
-          .catch(() => undefined);
-      }
+            if (wsId === "collie") {
+              // Brand-new default workspace: keep the bundled starter diagram.
+              return;
+            }
+            restore(defaultPages, [], defaultPages[0].id);
+            setNodes([]);
+            setEdges([]);
+            return;
+          }
+          const cloudActive = cloud.pages.find((page) => page.id === cloud.activePageId)?.id ?? cloud.pages[0].id;
+          const cloudDiagram = cloud.diagrams?.[cloudActive];
+          if (!cloudDiagram) return;
+          window.localStorage.setItem(pageIndexKey(wsId), JSON.stringify({ pages: cloud.pages, trashedPages: cloud.trashedPages ?? [], activePageId: cloudActive }));
+          Object.entries(cloud.diagrams ?? {}).forEach(([pageId, diagram]) => {
+            window.localStorage.setItem(pageStorageKey(wsId, pageId), JSON.stringify(diagram));
+          });
+          restore(cloud.pages, cloud.trashedPages ?? [], cloudActive);
+          setNodes(synchronizeLegendKey(cloudDiagram.nodes ?? []));
+          setEdges(cloudDiagram.edges ?? []);
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          cloudHydratedRef.current = true;
+        });
     } catch {
-      window.localStorage.removeItem(PAGE_INDEX_KEY);
+      window.localStorage.removeItem(pageIndexKey(wsId));
+      cloudHydratedRef.current = true;
     }
     window.setTimeout(() => {
       historyReadyRef.current = true;
@@ -1196,13 +1248,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     setInspectorOpen(false);
   };
 
-  const persistPageIndex = (
+const persistPageIndex = (
     nextPages: DiagramPage[],
     nextActivePageId: string,
     nextTrashedPages: DiagramPage[] = trashedPages,
   ) => {
     window.localStorage.setItem(
-      PAGE_INDEX_KEY,
+      pageIndexKey(workspaceId.current),
       JSON.stringify({
         pages: nextPages,
         trashedPages: nextTrashedPages,
@@ -1216,26 +1268,27 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       const { _animState, ...cleanData } = n.data;
       return { ...n, data: cleanData };
     });
-    window.localStorage.setItem(pageStorageKey(activePageId), JSON.stringify({ nodes: cleanNodes, edges }));
-    if (activePageId === "main") {
+    const wsId = workspaceId.current;
+    window.localStorage.setItem(pageStorageKey(wsId, activePageId), JSON.stringify({ nodes: cleanNodes, edges }));
+    if (activePageId === "main" && wsId === "collie") {
       window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: cleanNodes, edges }));
     }
   };
 
   const syncWorkspaceToCloud = (nextPages: DiagramPage[], nextTrashedPages: DiagramPage[], nextActivePageId: string) => {
+    const wsId = workspaceId.current;
     const allPages = [...nextPages, ...nextTrashedPages];
     const diagrams = Object.fromEntries(
       allPages.map((page) => {
-        const stored = window.localStorage.getItem(pageStorageKey(page.id));
+        const stored = window.localStorage.getItem(pageStorageKey(wsId, page.id));
         return [page.id, stored ? JSON.parse(stored) : { nodes: [], edges: [] }];
       }),
     );
-    const activeId = window.localStorage.getItem("collieai-active-workspace-v1");
     let workspace = { name: "Collie", favorite: false };
     try {
-      if (activeId && activeId !== "collie") {
+      if (wsId !== "collie") {
         const extras = JSON.parse(window.localStorage.getItem(EXTRA_WORKSPACES_KEY) ?? "[]") as { id?: string; name?: string; favorite?: boolean }[];
-        const match = extras.find((item) => item.id === activeId);
+        const match = extras.find((item) => item.id === wsId);
         if (match?.name) workspace = { name: match.name, favorite: Boolean(match.favorite) };
       } else {
         workspace = JSON.parse(window.localStorage.getItem(WORKSPACE_META_KEY) ?? JSON.stringify(workspace));
@@ -1250,14 +1303,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
 
   const persistAnimationData = () => {
     window.localStorage.setItem(
-      `collieai-animation-${activePageId}`,
+      animationStorageKey(workspaceId.current, activePageId),
       JSON.stringify({ sequences: animationSequences, activeSequenceId, branchChoices: animationBranchChoices }),
     );
   };
 
   const loadHistory = (pageId: string) => {
     try {
-      const stored = window.localStorage.getItem(historyStorageKey(pageId));
+      const stored = window.localStorage.getItem(historyStorageKey(workspaceId.current, pageId));
       const nextHistory = stored ? (JSON.parse(stored) as DiagramHistoryEntry[]) : [];
       setHistoryEntries(nextHistory);
       lastHistorySignatureRef.current = nextHistory[0]
@@ -1270,12 +1323,19 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   };
 
   const loadPage = (pageId: string) => {
+    const wsId = workspaceId.current;
     const stored =
-      window.localStorage.getItem(pageStorageKey(pageId)) ??
-      (pageId === "main" ? window.localStorage.getItem(LEGACY_STORAGE_KEY) : null);
+      window.localStorage.getItem(pageStorageKey(wsId, pageId)) ??
+      (pageId === "main" && wsId === "collie" ? window.localStorage.getItem(LEGACY_STORAGE_KEY) : null);
+    const emptyForNonCollie = () => wsId !== "collie" && pageId === "main";
     if (!stored) {
-      setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
-      setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
+      if (emptyForNonCollie()) {
+        setNodes([]);
+        setEdges([]);
+      } else {
+        setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+        setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
+      }
       return;
     }
     try {
@@ -1283,8 +1343,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       setNodes(synchronizeLegendKey(parsed.nodes ?? []));
       setEdges(parsed.edges ?? []);
     } catch {
-      setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
-      setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
+      if (emptyForNonCollie()) {
+        setNodes([]);
+        setEdges([]);
+      } else {
+        setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+        setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
+      }
     }
   };
 
@@ -1320,7 +1385,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       name: `Architecture page ${pages.length + 1}`,
     };
     const nextPages = [...pages, page];
-    window.localStorage.setItem(pageStorageKey(page.id), JSON.stringify({ nodes: [], edges: [] }));
+    window.localStorage.setItem(pageStorageKey(workspaceId.current, page.id), JSON.stringify({ nodes: [], edges: [] }));
     persistPageIndex(nextPages, page.id);
     setPages(nextPages);
     setActivePageId(page.id);
@@ -1361,7 +1426,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       nextPages = [replacement];
       nextActive = replacement.id;
       window.localStorage.setItem(
-        pageStorageKey(replacement.id),
+        pageStorageKey(workspaceId.current, replacement.id),
         JSON.stringify({ nodes: [], edges: [] }),
       );
     } else if (page.id === activePageId) {
@@ -1389,8 +1454,8 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
 
   const permanentlyDeletePage = (page: DiagramPage) => {
     const nextTrashedPages = trashedPages.filter((item) => item.id !== page.id);
-    window.localStorage.removeItem(pageStorageKey(page.id));
-    window.localStorage.removeItem(historyStorageKey(page.id));
+    window.localStorage.removeItem(pageStorageKey(workspaceId.current, page.id));
+    window.localStorage.removeItem(historyStorageKey(workspaceId.current, page.id));
     setTrashedPages(nextTrashedPages);
     persistPageIndex(pages, activePageId, nextTrashedPages);
   };
@@ -1823,7 +1888,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const saveDiagram = () => {
     persistCurrentPage();
     persistPageIndex(pages, activePageId, trashedPages);
-    syncWorkspaceToCloud(pages, trashedPages, activePageId);
+    if (cloudHydratedRef.current) {
+      syncWorkspaceToCloud(pages, trashedPages, activePageId);
+    }
     persistAnimationData();
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1400);
@@ -1839,17 +1906,19 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         edges: Edge[];
       };
       window.localStorage.setItem(
-        pageStorageKey(activePageId),
+        pageStorageKey(workspaceId.current, activePageId),
         JSON.stringify(cleanDiagram),
       );
-      if (activePageId === "main") {
+      if (activePageId === "main" && workspaceId.current === "collie") {
         window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(cleanDiagram));
       }
       window.localStorage.setItem(
-        PAGE_INDEX_KEY,
+        pageIndexKey(workspaceId.current),
         JSON.stringify({ pages, trashedPages, activePageId }),
       );
-      syncWorkspaceToCloud(pages, trashedPages, activePageId);
+      if (cloudHydratedRef.current) {
+        syncWorkspaceToCloud(pages, trashedPages, activePageId);
+      }
 
       if (signature !== lastHistorySignatureRef.current) {
         const entry: DiagramHistoryEntry = {
@@ -1861,7 +1930,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         };
         const nextHistory = [entry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
         setHistoryEntries(nextHistory);
-        window.localStorage.setItem(historyStorageKey(activePageId), JSON.stringify(nextHistory));
+        window.localStorage.setItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
         lastHistorySignatureRef.current = signature;
       }
       setAutoSaveState("saved");
@@ -1899,10 +1968,10 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     setHistoryEntries(nextHistory);
     lastHistorySignatureRef.current = diagramSignature(entry.nodes, entry.edges);
     window.localStorage.setItem(
-      pageStorageKey(activePageId),
+      pageStorageKey(workspaceId.current, activePageId),
       JSON.stringify({ nodes: entry.nodes, edges: entry.edges }),
     );
-    window.localStorage.setItem(historyStorageKey(activePageId), JSON.stringify(nextHistory));
+    window.localStorage.setItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
     if (activePageId === "main") {
       window.localStorage.setItem(
         LEGACY_STORAGE_KEY,
@@ -2330,10 +2399,12 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   };
 
   const resetDiagram = () => {
-    window.localStorage.removeItem(pageStorageKey(activePageId));
-    if (activePageId === "main") window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-    setNodes(activePageId === "main" ? initialNodes : []);
-    setEdges(activePageId === "main" ? initialEdges : []);
+    const wsId = workspaceId.current;
+    const showDemo = wsId === "collie" && activePageId === "main";
+    window.localStorage.removeItem(pageStorageKey(wsId, activePageId));
+    if (showDemo) window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    setNodes(showDemo ? initialNodes : []);
+    setEdges(showDemo ? initialEdges : []);
     setSelectedId(null);
     setSelectedEdgeId(null);
     window.setTimeout(() => fitView({ padding: 0.08, duration: 500 }), 30);
