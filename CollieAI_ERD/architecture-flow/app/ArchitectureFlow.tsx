@@ -26,6 +26,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useViewport,
   useUpdateNodeInternals,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -48,6 +49,8 @@ import {
   LayoutDashboard,
   List,
   LoaderCircle,
+  MessageCircle,
+  Send,
   Maximize2,
   MessageSquareText,
   Network,
@@ -85,9 +88,19 @@ type NodeShape =
   | "terminal"
   | "legend"
   | "legend-key"
-  | "text";
+  | "text"
+  | "comment";
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
+type DiagramCommentReply = { id: string; author: string; text: string; createdAt: string };
+type DiagramComment = {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+  position: { x: number; y: number };
+  replies: DiagramCommentReply[];
+};
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
 type EdgeBend = { x: number; y: number };
 type DiagramHistoryEntry = {
@@ -137,6 +150,7 @@ type ArchitectureNodeData = {
   onLabelChange?: (value: string) => void;
   onEditingChange?: (editing: boolean) => void;
   onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
+  commentId?: string;
 };
 
 type LegendKeyEntry = {
@@ -276,6 +290,17 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (data.shape === "comment") {
+    return (
+      <>
+        <div className={`comment-marker comment-marker-hit ${selected ? "is-selected" : ""}`} title={data.label || "Comment"} />
+        <NodeToolbar nodeId={id} isVisible position={Position.Top} offset={-40} className="comment-marker-toolbar">
+          <MessageCircle size={27} fill="currentColor" strokeWidth={2.2} aria-label="Comment" />
+        </NodeToolbar>
+      </>
     );
   }
 
@@ -593,11 +618,20 @@ const n = (
   data: { label, description, shape, icon, tone },
 });
 
+const commentNode = (comment: DiagramComment): ArchitectureNode => ({
+  id: `comment-marker-${comment.id}`,
+  type: "architecture",
+  position: comment.position,
+  data: { label: comment.text, description: "", shape: "comment", icon: "input", tone: "violet", commentId: comment.id },
+  style: { width: 34, height: 34, zIndex: 20 },
+});
+
 const getLegendFrame = (allNodes: ArchitectureNode[], nodeIds: string[]) => {
   const members = allNodes.filter(
     (node) =>
       node.data.shape !== "legend" &&
       node.data.shape !== "legend-key" &&
+      node.data.shape !== "comment" &&
       nodeIds.includes(node.id),
   );
   if (!members.length) return null;
@@ -855,6 +889,10 @@ const animationStorageKey = (workspaceId: string, pageId: string) =>
   workspaceId === "collie"
     ? `collieai-animation-${pageId}`
     : `collieai-animation-${workspaceId}-${pageId}`;
+const commentsStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-comments-${pageId}`
+    : `collieai-comments-${workspaceId}-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
 
 const activeWorkspaceId = () =>
@@ -868,7 +906,7 @@ const workspaceApiUrl = () =>
     : "/api/workspace?id=collie";
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
-  JSON.stringify({ nodes, edges }, (key, value) =>
+  JSON.stringify({ nodes: nodes.filter((node) => node.data.shape !== "comment"), edges }, (key, value) =>
     ["selected", "dragging", "resizing", "measured", "_animState"].includes(key) ? undefined : value,
   );
 
@@ -905,6 +943,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [textOpen, setTextOpen] = useState(false);
   const [textPlacementMode, setTextPlacementMode] = useState(false);
   const [textDraft, setTextDraft] = useState<ArchitectureNodeData>({ label: "Text", description: "", shape: "text", icon: "sparkles", tone: "slate" });
+  const [comments, setComments] = useState<DiagramComment[]>([]);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentPlacementMode, setCommentPlacementMode] = useState(false);
+  const [commentComposer, setCommentComposer] = useState<{ position: { x: number; y: number }; screenX: number; screenY: number } | null>(null);
+  const [commentThread, setCommentThread] = useState<{ id: string; position: { x: number; y: number } } | null>(null);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [replyDraft, setReplyDraft] = useState("");
+  const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
   const [docsExportOpen, setDocsExportOpen] = useState(false);
   const [docsExportMode, setDocsExportMode] = useState<DocsExportMode>("readable");
   const [docsShowTitles, setDocsShowTitles] = useState(true);
@@ -964,7 +1010,8 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // the real connector between them.
   const customFlowStartNodeRef = useRef<string | null>(null);
   const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { fitView, screenToFlowPosition } = useReactFlow();
+  const { fitView, screenToFlowPosition, flowToScreenPosition } = useReactFlow();
+  const viewport = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
   // The active workspace is fixed for the lifetime of this FlowWorkspace
   // mount (the home screen sets it right before opening the workspace),
@@ -974,6 +1021,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // Until then, local-to-cloud sync is suspended so stale local data cannot
   // be pushed back to the cloud and re-corrupt the workspace.
   const cloudHydratedRef = useRef(false);
+  const commentMarkers = (items: DiagramComment[]) => items.map(commentNode);
 
   useEffect(() => {
     // React Flow's internal ResizeObserver can occasionally finish a resize
@@ -1042,6 +1090,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       const restoredActive =
         restoredPages.find((page) => page.id === parsedIndex?.activePageId)?.id ??
         restoredPages[0].id;
+      const storedComments = window.localStorage.getItem(commentsStorageKey(wsId, restoredActive));
+      const restoredComments = storedComments ? (JSON.parse(storedComments) as DiagramComment[]) : [];
+      setComments(restoredComments);
       const pageData =
         window.localStorage.getItem(pageStorageKey(wsId, restoredActive)) ??
         (restoredActive === "main" && wsId === "collie"
@@ -1074,7 +1125,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       }
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-        setNodes(synchronizeLegendKey(parsed.nodes ?? []));
+        setNodes(synchronizeLegendKey([...(parsed.nodes ?? []), ...commentMarkers(restoredComments)]));
         setEdges(parsed.edges ?? []);
       } else if (wsId !== "collie" || restoredActive !== "main") {
         // A workspace other than the original collie one starts (and stays)
@@ -1120,7 +1171,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
             window.localStorage.setItem(pageStorageKey(wsId, pageId), JSON.stringify(diagram));
           });
           restore(cloud.pages, cloud.trashedPages ?? [], cloudActive);
-          setNodes(synchronizeLegendKey(cloudDiagram.nodes ?? []));
+          setNodes(synchronizeLegendKey([...(cloudDiagram.nodes ?? []), ...commentMarkers(restoredComments)]));
           setEdges(cloudDiagram.edges ?? []);
         })
         .catch(() => undefined)
@@ -1137,6 +1188,21 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   }, [setEdges, setNodes]);
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
+  const activeCommentThread = commentThread
+    ? comments.find((comment) => comment.id === commentThread.id) ?? null
+    : null;
+  const commentComposerScreen = commentComposer ? flowToScreenPosition(commentComposer.position) : null;
+  const commentThreadScreen = commentThread ? flowToScreenPosition(commentThread.position) : null;
+  const commentPopupPosition = (screen: { x: number; y: number } | null, _width: number, height: number) => {
+    if (!screen) return null;
+    const gap = 16;
+    return {
+      left: screen.x + gap,
+      top: Math.max(8, Math.min(screen.y - 18, window.innerHeight - height)),
+    };
+  };
+  const commentThreadPopupPosition = commentPopupPosition(commentThreadScreen, 420, 450);
+  const commentComposerPopupPosition = commentPopupPosition(commentComposerScreen, 340, 230);
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
@@ -1170,7 +1236,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     [],
   );
   const componentNodes = nodes.filter(
-    (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key",
+    (node) => node.data.shape !== "legend" && node.data.shape !== "legend-key" && node.data.shape !== "comment",
   );
   const updateSelected = useCallback(
     (patch: Partial<ArchitectureNodeData>) => {
@@ -1337,7 +1403,7 @@ const persistPageIndex = (
   };
 
   const persistCurrentPage = () => {
-    const cleanNodes = nodes.map((n) => {
+    const cleanNodes = nodes.filter((n) => n.data.shape !== "comment").map((n) => {
       const { _animState, ...cleanData } = n.data;
       return { ...n, data: cleanData };
     });
@@ -1397,30 +1463,33 @@ const persistPageIndex = (
 
   const loadPage = (pageId: string) => {
     const wsId = workspaceId.current;
+    const storedComments = window.localStorage.getItem(commentsStorageKey(wsId, pageId));
+    const nextComments = storedComments ? (JSON.parse(storedComments) as DiagramComment[]) : [];
+    setComments(nextComments);
     const stored =
       window.localStorage.getItem(pageStorageKey(wsId, pageId)) ??
       (pageId === "main" && wsId === "collie" ? window.localStorage.getItem(LEGACY_STORAGE_KEY) : null);
     const emptyForNonCollie = () => wsId !== "collie" && pageId === "main";
     if (!stored) {
       if (emptyForNonCollie()) {
-        setNodes([]);
+        setNodes(commentMarkers(nextComments));
         setEdges([]);
       } else {
-        setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+        setNodes([...(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []), ...commentMarkers(nextComments)]);
         setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
       }
       return;
     }
     try {
       const parsed = JSON.parse(stored) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-      setNodes(synchronizeLegendKey(parsed.nodes ?? []));
+      setNodes(synchronizeLegendKey([...(parsed.nodes ?? []), ...commentMarkers(nextComments)]));
       setEdges(parsed.edges ?? []);
     } catch {
       if (emptyForNonCollie()) {
-        setNodes([]);
+        setNodes(commentMarkers(nextComments));
         setEdges([]);
       } else {
-        setNodes(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []);
+        setNodes([...(pageId === "main" ? initialNodes : pageId === "user-flow" ? userFlowNodes : []), ...commentMarkers(nextComments)]);
         setEdges(pageId === "main" ? initialEdges : pageId === "user-flow" ? userFlowEdges : []);
       }
     }
@@ -2634,6 +2703,56 @@ const persistPageIndex = (
     setTextPlacementMode(true);
   };
 
+  const persistComments = (nextComments: DiagramComment[]) => {
+    window.localStorage.setItem(
+      commentsStorageKey(workspaceId.current, activePageId),
+      JSON.stringify(nextComments),
+    );
+  };
+
+  const syncCommentMarkers = (nextComments: DiagramComment[]) => {
+    setNodes((current) => [
+      ...current.filter((node) => node.data.shape !== "comment"),
+      ...commentMarkers(nextComments),
+    ]);
+  };
+
+  const addComment = () => {
+    if (!commentComposer || !commentDraft.trim()) return;
+    const comment: DiagramComment = {
+      id: `comment-${Date.now()}`,
+      author: "Yestin Guarin",
+      text: commentDraft.trim(),
+      createdAt: new Date().toISOString(),
+      position: commentComposer.position,
+      replies: [],
+    };
+    const nextComments = [...comments, comment];
+    setComments(nextComments);
+    persistComments(nextComments);
+    syncCommentMarkers(nextComments);
+    setSelectedCommentId(comment.id);
+    setCommentsOpen(true);
+    setCommentComposer(null);
+    setCommentDraft("");
+  };
+
+  const addCommentReply = (commentId: string) => {
+    if (!replyDraft.trim()) return;
+    const reply: DiagramCommentReply = {
+      id: `reply-${Date.now()}`,
+      author: "Yestin Guarin",
+      text: replyDraft.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    const nextComments = comments.map((comment) =>
+      comment.id === commentId ? { ...comment, replies: [...comment.replies, reply] } : comment,
+    );
+    setComments(nextComments);
+    persistComments(nextComments);
+    setReplyDraft("");
+  };
+
   const addLegendArea = () => {
     if (!legendDraft.label.trim() || legendDraft.nodeIds.length === 0) return;
     const frame = getLegendFrame(nodes, legendDraft.nodeIds);
@@ -3019,6 +3138,13 @@ const persistPageIndex = (
           elementsSelectable={animationMode !== "presentation"}
           onNodeClick={(_, node) => {
             if (animationMode === "presentation") return;
+            if (node.data.shape === "comment" && node.data.commentId) {
+              setSelectedCommentId(node.data.commentId);
+              setCommentThread({ id: node.data.commentId, position: { x: node.position.x + 34, y: node.position.y + 34 } });
+              setSelectedId(null);
+              setSelectedEdgeId(null);
+              return;
+            }
             if (animationOpen && activeSequence) {
               addCustomFlowNode(node.id);
               return;
@@ -3039,6 +3165,17 @@ const persistPageIndex = (
           }}
           onPaneClick={(event) => {
             if (animationMode === "presentation") return;
+            if (commentPlacementMode) {
+              setCommentComposer({
+                position: screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+                screenX: event.clientX,
+                screenY: event.clientY,
+              });
+              setCommentPlacementMode(false);
+              setSelectedId(null);
+              setSelectedEdgeId(null);
+              return;
+            }
             if (textPlacementMode) {
               addTextNode(screenToFlowPosition({ x: event.clientX, y: event.clientY }), true);
               return;
@@ -3052,7 +3189,7 @@ const persistPageIndex = (
               item.id === node.id ? { ...item, data: { ...item.data, editing: true } } : item,
             ));
           }}
-          className={textPlacementMode ? "text-placement-active" : ""}
+           className={commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""}
           fitView
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.18}
@@ -3136,6 +3273,30 @@ const persistPageIndex = (
             aria-pressed={textPlacementMode}
           >
             <Type size={18} /> <span>Text</span>
+          </button>
+          <button
+            className={`tools-panel-tab ${commentPlacementMode || commentsOpen ? "active" : ""}`}
+            title="Add or view comments"
+            onClick={() => {
+              if (commentPlacementMode || commentsOpen) {
+                setCommentPlacementMode(false);
+                setCommentsOpen(false);
+                setCommentComposer(null);
+                setCommentThread(null);
+              } else {
+                setCommentPlacementMode(true);
+                setCommentsOpen(true);
+                setCommentComposer(null);
+                setCommentThread(null);
+                setCreatorOpen(false);
+                setLegendCreatorOpen(false);
+                setTextOpen(false);
+                setTextPlacementMode(false);
+                setAnimationOpen(false);
+              }
+            }}
+          >
+            <MessageCircle size={18} /> <span>Comments</span>
           </button>
           <button
             className={`tools-panel-tab ${animationOpen ? "active" : ""}`}
@@ -3679,6 +3840,79 @@ const persistPageIndex = (
           </div>
         ) : null}
       </aside>
+
+      {activeCommentThread && commentThread && commentThreadPopupPosition ? (
+        <section
+          className="comment-thread-popup"
+          data-viewport-x={viewport.x}
+          style={commentThreadPopupPosition}
+        >
+          <header>
+            <button type="button" aria-label="Back" onClick={() => setCommentThread(null)}>‹</button>
+            <span />
+            <button type="button" aria-label="Close comment" onClick={() => setCommentThread(null)}><X size={16} /></button>
+          </header>
+          <div className="comment-thread-body">
+            <div className="comment-item-head"><span className="comment-avatar">YG</span><strong>{activeCommentThread.author}</strong><time>{new Date(activeCommentThread.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>
+            <p>{activeCommentThread.text}</p>
+            {activeCommentThread.replies.map((reply) => (
+              <div className="comment-thread-reply" key={reply.id}><span className="comment-avatar">YG</span><div><strong>{reply.author}</strong><p>{reply.text}</p></div></div>
+            ))}
+            <form className="comment-reply comment-thread-reply-form" onSubmit={(event) => { event.preventDefault(); addCommentReply(activeCommentThread.id); }}>
+              <input value={replyDraft} onChange={(event) => setReplyDraft(event.target.value)} placeholder="Reply here" aria-label="Reply" />
+              <button type="submit" disabled={!replyDraft.trim()} aria-label="Send reply"><Send size={14} /></button>
+            </form>
+          </div>
+        </section>
+      ) : commentComposer && commentComposerPopupPosition ? (
+        <form
+          className="comment-composer"
+          data-viewport-x={viewport.x}
+          style={commentComposerPopupPosition}
+          onSubmit={(event) => { event.preventDefault(); addComment(); }}
+        >
+          <div className="comment-composer-avatar">YG</div>
+          <textarea
+            autoFocus
+            rows={3}
+            value={commentDraft}
+            onChange={(event) => setCommentDraft(event.target.value)}
+            placeholder="Add a comment. Use @ to mention"
+            aria-label="Comment text"
+          />
+          <div className="comment-composer-actions">
+            <span>@</span><span>☺</span>
+            <button type="submit" disabled={!commentDraft.trim()} aria-label="Send comment"><Send size={16} /></button>
+          </div>
+        </form>
+      ) : null}
+
+      {commentsOpen ? (
+        <aside className="comments-panel" aria-label="Comments">
+          <div className="comments-panel-head">
+            <strong>Comments</strong>
+            <button type="button" onClick={() => setCommentsOpen(false)} aria-label="Close comments"><X size={17} /></button>
+          </div>
+          <div className="comments-list">
+            {!comments.length ? (
+              <div className="comments-empty"><MessageCircle size={24} /><strong>No comments yet</strong><span>Choose the comment tool, then click anywhere on the canvas.</span></div>
+            ) : comments.map((comment) => (
+              <article
+                key={comment.id}
+                className={`comment-item ${selectedCommentId === comment.id ? "is-selected" : ""}`}
+                onClick={() => {
+                  setSelectedCommentId(comment.id);
+                  setCommentThread({ id: comment.id, position: { x: comment.position.x + 34, y: comment.position.y + 34 } });
+                }}
+              >
+                <div className="comment-item-head"><span className="comment-avatar">YG</span><strong>{comment.author}</strong><time>{new Date(comment.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>
+                <p>{comment.text}</p>
+                <span className="comment-replies">{comment.replies.length} {comment.replies.length === 1 ? "reply" : "replies"}</span>
+              </article>
+            ))}
+          </div>
+        </aside>
+      ) : null}
 
       <aside className={`inspector ${inspectorOpen && (selectedNode || selectedEdge) && selectedNode?.data.shape !== "text" ? "is-open" : ""}`}>
         <div className="inspector-head">
