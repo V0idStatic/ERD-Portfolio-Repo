@@ -18,6 +18,7 @@ import {
   Node,
   NodeProps,
   NodeResizer,
+  NodeToolbar,
   Panel,
   Position,
   ReactFlow,
@@ -66,6 +67,7 @@ import {
   UserRound,
   Workflow,
   X,
+Type,
   Zap,
   ZoomIn,
   ZoomOut,
@@ -82,7 +84,8 @@ type NodeShape =
   | "cloud"
   | "terminal"
   | "legend"
-  | "legend-key";
+  | "legend-key"
+  | "text";
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
@@ -129,6 +132,11 @@ type ArchitectureNodeData = {
   legendNodeIds?: string[];
   legendEntries?: LegendKeyEntry[];
   _animState?: "inactive" | "active" | "completed";
+  editing?: boolean;
+  fontWeight?: CSSProperties["fontWeight"];
+  onLabelChange?: (value: string) => void;
+  onEditingChange?: (editing: boolean) => void;
+  onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
 };
 
 type LegendKeyEntry = {
@@ -184,8 +192,9 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
   check: Check,
 };
 
-function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<ArchitectureNode>) {
+function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
+  const animState = data._animState;
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
     const opacity = data.legendOpacity ?? 0.12;
@@ -270,7 +279,67 @@ function ArchitectureNodeCard({ data, selected, width, height }: NodeProps<Archi
     );
   }
 
-  const animState = data._animState;
+  if (data.shape === "text") {
+    return (
+      <div
+        className={`architecture-node shape-text ${selected ? "is-selected" : ""} ${animState ? `anim-${animState}` : ""}`}
+        style={
+          {
+            "--node-title-size": `${data.titleSize ?? 16}px`,
+            "--node-description-size": `${data.descriptionSize ?? 12}px`,
+          } as CSSProperties
+        }
+      >
+        <NodeResizer
+          minWidth={60}
+          minHeight={24}
+          isVisible={selected}
+          color="#0ea5c6"
+          handleStyle={{ width: 8, height: 8, borderRadius: 3 }}
+        />
+        {data.editing ? (
+          <textarea
+            className="text-node-editor nodrag nopan"
+            autoFocus
+            rows={1}
+            value={data.label}
+            placeholder="Type something"
+            aria-label="Text annotation"
+            style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 600 }}
+            onChange={(event) => data.onLabelChange?.(event.target.value)}
+            onBlur={() => data.onEditingChange?.(false)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                data.onEditingChange?.(false);
+              }
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                data.onEditingChange?.(false);
+              }
+            }}
+          />
+        ) : (
+          <div className={`text-node-content ${data.label ? "" : "is-placeholder"}`} style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 600 }}>
+            {data.label || "Type something"}
+          </div>
+        )}
+        <NodeToolbar nodeId={id} isVisible={selected} position={Position.Top} offset={10} className="text-format-toolbar nodrag nopan">
+            <button type="button" title="Smaller text" onClick={() => data.onTextStyleChange?.({ titleSize: Math.max(10, (data.titleSize ?? 16) - 1) })}>A−</button>
+            <select aria-label="Text size" value={data.titleSize ?? 16} onChange={(event) => data.onTextStyleChange?.({ titleSize: Number(event.target.value) })}>
+              {[12, 14, 16, 18, 20, 24, 28, 32, 40].map((size) => <option key={size} value={size}>{size}px</option>)}
+            </select>
+            <button type="button" className={data.fontWeight === 700 ? "active" : ""} title="Bold" onClick={() => data.onTextStyleChange?.({ fontWeight: data.fontWeight === 700 ? 600 : 700 })}><strong>B</strong></button>
+            <label title="Text color"><span>A</span><input type="color" value={data.legendColor ?? "#334155"} onChange={(event) => data.onTextStyleChange?.({ legendColor: event.target.value })} /></label>
+            <button type="button" title="Edit text" onClick={() => data.onEditingChange?.(true)}><Type size={16} /></button>
+        </NodeToolbar>
+        {selected && (
+          <Handle className="side-handle" type="source" position={Position.Right} id="right" style={{ top: "50%" }} />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={`architecture-node shape-${data.shape} tone-${data.tone} ${
@@ -385,6 +454,7 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "cloud") return { width: 290, height: 118 };
   if (shape === "database") return { width: 270, height: 78 };
   if (shape === "terminal") return { width: 250, height: 62 };
+  if (shape === "text") return { width: 200, height: 40 };
   return { width: 270, height: 78 };
 };
 
@@ -832,6 +902,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [legendCreatorOpen, setLegendCreatorOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
+  const [textPlacementMode, setTextPlacementMode] = useState(false);
+  const [textDraft, setTextDraft] = useState<ArchitectureNodeData>({ label: "Text", description: "", shape: "text", icon: "sparkles", tone: "slate" });
   const [docsExportOpen, setDocsExportOpen] = useState(false);
   const [docsExportMode, setDocsExportMode] = useState<DocsExportMode>("readable");
   const [docsShowTitles, setDocsShowTitles] = useState(true);
@@ -2514,9 +2587,51 @@ const persistPageIndex = (
     ]);
     setSelectedId(id);
     setSelectedEdgeId(null);
+    setInspectorOpen(false);
     setCreatorOpen(false);
     setNodeDraft(createNodeDraft());
     setInspectorOpen(true);
+  };
+
+  const addTextNode = (canvasPoint?: { x: number; y: number }, startEditing = false) => {
+    if (!textDraft.label.trim() && !startEditing) return;
+    const id = `text-${Date.now()}`;
+    const placement = canvasPoint ?? screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+    setNodes((current) => [
+      ...current,
+      {
+        ...n(id, placement.x - 90, placement.y - 16, textDraft.label.trim(), "", "text", "sparkles", "slate"),
+        data: {
+          ...textDraft,
+          label: textDraft.label.trim(),
+          editing: startEditing,
+          onLabelChange: (label) => setNodes((items) => items.map((node) =>
+            node.id === id ? { ...node, data: { ...node.data, label } } : node,
+          )),
+          onEditingChange: (editing) => setNodes((items) => items.map((node) =>
+            node.id === id ? { ...node, data: { ...node.data, editing } } : node,
+          )),
+        },
+        style: { width: 200, height: 40 },
+      },
+    ]);
+    setSelectedId(id);
+    setSelectedEdgeId(null);
+    setTextOpen(false);
+    setTextPlacementMode(false);
+    setTextDraft({ label: "Text", description: "", shape: "text", icon: "sparkles", tone: "slate" });
+  };
+
+  const startTextPlacement = () => {
+    setCreatorOpen(false);
+    setLegendCreatorOpen(false);
+    setAnimationOpen(false);
+    setTextOpen(false);
+    setTextDraft((draft) => ({ ...draft, label: draft.label === "Text" ? "" : draft.label }));
+    setTextPlacementMode(true);
   };
 
   const addLegendArea = () => {
@@ -2645,19 +2760,6 @@ const persistPageIndex = (
           <strong>Build and organize your architecture</strong>
         </div>
         <div className="tool-navbar-actions">
-          <button className="button secondary" onClick={() => setCreatorOpen(true)}>
-            <Plus size={15} /> <span className="button-label">Add node</span>
-          </button>
-          <button
-            className="button secondary"
-            onClick={() => {
-              setLegendDraft(createLegendDraft());
-              setLegendCreatorOpen(true);
-            }}
-            title="Create a colored legend area around selected components"
-          >
-            <LayoutDashboard size={15} /> <span className="button-label">Add legend</span>
-          </button>
           <button
             className="button secondary"
             onClick={applySmartLandscapeLayout}
@@ -2676,19 +2778,6 @@ const persistPageIndex = (
           >
             {exporting ? <LoaderCircle className="spin" size={15} /> : <Download size={15} />}
             <span className="button-label">{exporting ? "Rendering…" : "Export PNG"}</span>
-          </button>
-          <button
-            className={`button secondary ${animationOpen ? "active" : ""}`}
-            onClick={() => {
-              setAnimationOpen((open) => !open);
-              setPagesOpen(false);
-              setInspectorOpen(false);
-              setHistoryOpen(false);
-            }}
-            title="Create and play highlight animation sequences"
-          >
-            <List size={15} />
-            <span className="button-label">Flow Animation</span>
           </button>
           <button
             className={`button secondary tool-duplicate ${historyOpen ? "active" : ""}`}
@@ -2887,11 +2976,19 @@ const persistPageIndex = (
       <section className="canvas-wrap" aria-label="CollieAI architecture canvas">
         <ReactFlow
           nodes={nodes.map((node) => {
-            if (!animActiveIds.size && !animCompletedIds.size) return node;
+            const textData = node.data.shape === "text"
+              ? {
+                  ...node.data,
+                  onLabelChange: (label: string) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, label } } : item)),
+                  onEditingChange: (editing: boolean) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, editing } } : item)),
+                  onTextStyleChange: (patch: Partial<ArchitectureNodeData>) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, ...patch } } : item)),
+                }
+              : node.data;
+            if (!animActiveIds.size && !animCompletedIds.size) return { ...node, data: textData };
             let state: "inactive" | "active" | "completed" = "inactive";
             if (animActiveIds.has(node.id)) state = "active";
             else if (animCompletedIds.has(node.id)) state = "completed";
-            return { ...node, data: { ...node.data, _animState: state } };
+            return { ...node, data: { ...textData, _animState: state } };
           })}
           edges={edges.map((edgeItem) => ({
             ...edgeItem,
@@ -2928,7 +3025,7 @@ const persistPageIndex = (
             }
             setSelectedId(node.id);
             setSelectedEdgeId(null);
-            setInspectorOpen(true);
+            setInspectorOpen(node.data.shape !== "text");
           }}
           onEdgeClick={(_, edgeItem) => {
             if (animationMode === "presentation") return;
@@ -2940,11 +3037,22 @@ const persistPageIndex = (
             setSelectedId(null);
             setInspectorOpen(true);
           }}
-          onPaneClick={() => {
+          onPaneClick={(event) => {
             if (animationMode === "presentation") return;
+            if (textPlacementMode) {
+              addTextNode(screenToFlowPosition({ x: event.clientX, y: event.clientY }), true);
+              return;
+            }
             setSelectedId(null);
             setSelectedEdgeId(null);
           }}
+          onNodeDoubleClick={(_, node) => {
+            if (node.data.shape !== "text" || animationMode === "presentation") return;
+            setNodes((items) => items.map((item) =>
+              item.id === node.id ? { ...item, data: { ...item.data, editing: true } } : item,
+            ));
+          }}
+          className={textPlacementMode ? "text-placement-active" : ""}
           fitView
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.18}
@@ -2955,6 +3063,7 @@ const persistPageIndex = (
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#cbd5e1" />
           <MiniMap
+            position="bottom-left"
             pannable
             zoomable
             nodeColor={(node) => {
@@ -2981,227 +3090,597 @@ const persistPageIndex = (
         </ReactFlow>
       </section>
 
-      <aside className={`animation-panel ${animationOpen ? "is-open" : ""}`} aria-label="Flow animation sequencer">
-        <div className="inspector-head">
-          <div>
-            <span>FLOW ANIMATION</span>
-            <strong>{activeSequence ? activeSequence.name : "No sequence selected"}</strong>
-          </div>
-          <button aria-label="Close animation panel" onClick={() => { setAnimationOpen(false); if (animationMode === "presentation") stopPlayback(); }}>
-            <X size={18} />
+      <aside className={`tools-panel ${(creatorOpen || legendCreatorOpen || textOpen || animationOpen) ? "is-open" : ""}`} aria-label="Diagram tools">
+        <div className="tools-panel-tabs">
+          <button
+            className={`tools-panel-tab ${creatorOpen ? "active" : ""}`}
+            onClick={() => {
+              if (creatorOpen) {
+                setCreatorOpen(false);
+              } else {
+                setCreatorOpen(true);
+                setLegendCreatorOpen(false);
+                setTextOpen(false);
+                setTextPlacementMode(false);
+                setAnimationOpen(false);
+                if (animationMode === "presentation") stopPlayback();
+              }
+            }}
+          >
+            <Plus size={18} /> <span>Add node</span>
+          </button>
+          <button
+            className={`tools-panel-tab ${legendCreatorOpen ? "active" : ""}`}
+            onClick={() => {
+              if (legendCreatorOpen) {
+                setLegendCreatorOpen(false);
+              } else {
+                setLegendCreatorOpen(true);
+                setCreatorOpen(false);
+                setTextOpen(false);
+                setTextPlacementMode(false);
+                setAnimationOpen(false);
+                if (animationMode === "presentation") stopPlayback();
+              }
+            }}
+          >
+            <LayoutDashboard size={18} /> <span>Add legend</span>
+          </button>
+          <button
+            className={`tools-panel-tab ${textOpen || textPlacementMode ? "active" : ""}`}
+            title="Place text on the canvas"
+            onClick={() => {
+              if (textPlacementMode) setTextPlacementMode(false);
+              else startTextPlacement();
+            }}
+            aria-pressed={textPlacementMode}
+          >
+            <Type size={18} /> <span>Text</span>
+          </button>
+          <button
+            className={`tools-panel-tab ${animationOpen ? "active" : ""}`}
+            onClick={() => {
+              if (animationOpen) {
+                setAnimationOpen(false);
+                if (animationMode === "presentation") stopPlayback();
+              } else {
+                setAnimationOpen(true);
+                setCreatorOpen(false);
+                setLegendCreatorOpen(false);
+                setTextOpen(false);
+                setTextPlacementMode(false);
+              }
+            }}
+          >
+            <List size={18} /> <span>Flow Animation</span>
           </button>
         </div>
-        <div className="animation-panel-body">
-          {/* Sequence selector */}
-          <div className="animation-sequence-selector">
-            <select
-              value={activeSequenceId ?? ""}
-              onChange={(e) => {
-                clearAnimationEffects();
-                setActiveSequenceId(e.target.value || null);
-              }}
-              aria-label="Select animation sequence"
-            >
-              {animationSequences.length === 0 && <option value="">No sequences</option>}
-              {animationSequences.map((seq) => (
-                <option key={seq.id} value={seq.id}>{seq.name}</option>
-              ))}
-            </select>
-            <div className="animation-sequence-actions">
-              <button className="button secondary" onClick={createSequence} title="Create new sequence"><Plus size={14} /></button>
-              {activeSequence && (
-                <>
-                  <button className="button secondary" onClick={() => duplicateSequence(activeSequence.id)} title="Duplicate sequence"><Copy size={14} /></button>
-                  <button className="button secondary" onClick={() => {
-                    const name = window.prompt("Rename sequence", activeSequence.name);
-                    if (name?.trim()) renameSequence(activeSequence.id, name.trim());
-                  }} title="Rename sequence"><FileText size={14} /></button>
-                  <button className="button secondary" onClick={() => {
-                    if (window.confirm(`Delete "${activeSequence.name}"?`)) deleteSequence(activeSequence.id);
-                  }} title="Delete sequence"><Trash2 size={14} /></button>
-                </>
-              )}
-            </div>
-          </div>
-
-          <section className="guided-flow-builder">
-            <div>
-              <span>GUIDED PATH</span>
-              <strong>Choose each decision outcome</strong>
-              <p>Each diamond follows the selected connection label when the sequence is generated.</p>
-            </div>
-            {decisionNodesWithBranches.length ? (
-              <div className="guided-branch-list">
-                {decisionNodesWithBranches.map((node) => {
-                  const outgoing = edges.filter((edgeItem) => edgeItem.source === node.id);
-                  const selectedEdgeId = animationBranchChoices[node.id] ?? outgoing[0].id;
-                  return (
-                    <label key={node.id}>
-                      <span>{node.data.label}</span>
-                      <select
-                        value={selectedEdgeId}
-                        onChange={(event) =>
-                          setAnimationBranchChoices((previous) => ({
-                            ...previous,
-                            [node.id]: event.target.value,
-                          }))
-                        }
-                      >
-                        {outgoing.map((edgeItem, index) => (
-                          <option key={edgeItem.id} value={edgeItem.id}>
-                            {edgeItem.label || `Option ${index + 1}`}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="guided-flow-empty">No branching diamonds are available on this page.</p>
-            )}
-            <button className="guided-flow-create" onClick={buildGuidedSequence}>
-              <Route size={15} /> Generate selected flow
-            </button>
-          </section>
-
-          {activeSequence && (
-            <>
-              {/* Step list */}
-              <div className="animation-step-list">
-                <div className="animation-step-list-header">
-                  <span>Steps ({activeSequence.steps.length})</span>
-                  {activeSequence.steps.length > 0 && (
-                    <button className="button secondary" onClick={() => {
-                      if (window.confirm("Clear all steps?")) {
-                        setAnimationSequences((prev) =>
-                          prev.map((s) => s.id === activeSequenceId ? { ...s, steps: [] } : s)
-                        );
-                        window.setTimeout(persistAnimationData, 0);
-                      }
-                    }} title="Clear all steps"><Trash2 size={12} /> Clear</button>
-                  )}
-                </div>
-                {activeSequence.steps.length === 0 && (
-                  <div className="animation-empty">
-                    <List size={22} />
-                    <strong>No steps yet</strong>
-                    <p>Click nodes or connectors on the diagram to add them to this sequence.</p>
+        {(creatorOpen || legendCreatorOpen || textOpen || animationOpen) ? (
+          <div className="tools-panel-body">
+            {creatorOpen && (
+              <form
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-node-title"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addNode();
+                }}
+              >
+                <div className="inspector-head">
+                  <div>
+                    <span>NEW COMPONENT</span>
+                    <strong id="create-node-title">Add node to canvas</strong>
                   </div>
-                )}
-                <div className="animation-steps">
-                  {activeSequence.steps.map((step, index) => (
-                    <div key={step.id} className={`animation-step ${currentStepIndex === index && animationMode === "presentation" ? "is-current" : ""}`}>
-                      <div className="animation-step-handle">
-                        <span className="animation-step-number">{index + 1}</span>
-                      </div>
-                      <div className="animation-step-content">
-                        <div className="animation-step-elements">
-                          {step.elementIds.map((eid) => {
-                            const n = nodes.find((nd) => nd.id === eid);
-                            const ed = edges.find((eg) => eg.id === eid);
-                            const missing = !n && !ed;
-                            return (
-                              <span key={eid} className={`animation-step-element ${missing ? "is-missing" : ""}`} title={eid}>
-                                {missing ? "⚠ Missing element" : n ? n.data.label : `Connection: ${ed!.source} → ${ed!.target}`}
-                              </span>
-                            );
-                          })}
-                        </div>
-                        <div className="animation-step-controls">
-                          <div className="animation-step-timing">
-                            <label>
-                              <span>Dur.</span>
-                              <input
-                                type="range"
-                                min="200" max="4000" step="100"
-                                value={step.duration}
-                                onChange={(e) => updateStep(step.id, { duration: Number(e.target.value) })}
-                              />
-                              <output>{(step.duration / 1000).toFixed(1)}s</output>
-                            </label>
-                            <label>
-                              <span>Delay</span>
-                              <input
-                                type="range"
-                                min="0" max="3000" step="100"
-                                value={step.delayAfter}
-                                onChange={(e) => updateStep(step.id, { delayAfter: Number(e.target.value) })}
-                              />
-                              <output>{(step.delayAfter / 1000).toFixed(1)}s</output>
-                            </label>
-                          </div>
-                          <div className="animation-step-actions">
-                            <button className="button secondary" onClick={() => moveStep(step.id, -1)} disabled={index === 0} title="Move up"><SkipBack size={12} /></button>
-                            <button className="button secondary" onClick={() => moveStep(step.id, 1)} disabled={index === activeSequence.steps.length - 1} title="Move down"><SkipForward size={12} /></button>
-                            <button className="button secondary" onClick={() => duplicateStep(step.id)} title="Duplicate step"><Copy size={12} /></button>
-                            <button className="button secondary" onClick={() => removeStep(step.id)} title="Remove step"><X size={12} /></button>
-                          </div>
-                        </div>
-                      </div>
+                  <button type="button" aria-label="Close node creator" onClick={() => setCreatorOpen(false)}>
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="creator-body">
+                  <label>
+                    <span>Title</span>
+                    <input
+                      autoFocus
+                      value={nodeDraft.label}
+                      onChange={(event) => setNodeDraft({ ...nodeDraft, label: event.target.value })}
+                    />
+                  </label>
+                  <label>
+                    <span>Description</span>
+                    <textarea
+                      rows={2}
+                      value={nodeDraft.description}
+                      onChange={(event) => setNodeDraft({ ...nodeDraft, description: event.target.value })}
+                    />
+                  </label>
+                  <fieldset>
+                    <legend>Shape</legend>
+                    <div className="option-grid shape-grid">
+                      {shapeOptions.map((option) => (
+                        <button
+                          type="button"
+                          key={option.value}
+                          className={nodeDraft.shape === option.value ? "active" : ""}
+                          onClick={() =>
+                            setNodeDraft({
+                              ...nodeDraft,
+                              shape: option.value,
+                              icon:
+                                option.value === "decision"
+                                  ? "decision"
+                                  : option.value === "database"
+                                    ? "database"
+                                    : option.value === "cloud"
+                                      ? "memory"
+                                      : option.value === "terminal"
+                                        ? "play"
+                                        : "server",
+                            })
+                          }
+                        >
+                          {option.value === "database" ? (
+                            <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
+                              <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
+                              <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
+                              <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
+                              <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
+                            </svg>
+                          ) : option.value === "cloud" ? (
+                            <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
+                              <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
+                            </svg>
+                          ) : option.value === "decision" ? (
+                            <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
+                              <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
+                          ) : (
+                            <i className={`shape-preview shape-preview-${option.value}`} />
+                          )}
+                          {option.label}
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </fieldset>
+                  <fieldset>
+                    <legend>Icon</legend>
+                    <div className="option-grid icon-grid">
+                      {iconOptions.map((option) => {
+                        const Icon = iconMap[option.value];
+                        return (
+                          <button
+                            type="button"
+                            key={option.value}
+                            title={option.label}
+                            className={nodeDraft.icon === option.value ? "active" : ""}
+                            onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value })}
+                          >
+                            <Icon size={18} />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                  <fieldset>
+                    <legend>Color</legend>
+                    <div className="tone-row">
+                      {(["cyan", "violet", "amber", "emerald", "slate", "rose"] as NodeTone[]).map(
+                        (tone) => (
+                          <button
+                            type="button"
+                            key={tone}
+                            className={`tone-button ${tone} ${nodeDraft.tone === tone ? "active" : ""}`}
+                            aria-label={`${tone} color`}
+                            onClick={() => setNodeDraft({ ...nodeDraft, tone })}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </fieldset>
+                  <button className="create-node-submit" type="submit" disabled={!nodeDraft.label.trim()}>
+                    <Plus size={16} />
+                    Add to current view
+                  </button>
                 </div>
-              </div>
-
-              {/* Playback controls */}
-              <div className="animation-playback">
-                <div className="animation-playback-main">
-                  <button className="button secondary" onClick={previousStep} disabled={currentStepIndex <= 0 || animationPlaying} title="Previous step"><SkipBack size={15} /></button>
-                  {animationPaused ? (
-                    <button className="button primary" onClick={resumePlayback} title="Resume"><Play size={15} /> <span className="button-label">Resume</span></button>
-                  ) : animationPlaying ? (
-                    <button className="button primary" onClick={pausePlayback} title="Pause"><Pause size={15} /> <span className="button-label">Pause</span></button>
-                  ) : (
-                    <button className="button primary" onClick={startPlayback} disabled={activeSequence.steps.length === 0} title="Play"><Play size={15} /> <span className="button-label">Play</span></button>
-                  )}
-                  <button className="button secondary" onClick={nextStep} disabled={currentStepIndex >= activeSequence.steps.length - 1 || animationPlaying} title="Next step"><SkipForward size={15} /></button>
-                  <button className="button secondary" onClick={stopPlayback} disabled={!animationPlaying && !animationPaused} title="Stop"><Square size={15} /></button>
-                </div>
-                <div className="animation-playback-settings">
-                  <label className="animation-loop-toggle">
-                    <input type="checkbox" checked={activeSequence.loop} onChange={toggleLoop} />
-                    <Repeat size={13} />
-                    <span>Loop</span>
-                  </label>
-                  <label className="animation-speed">
-                    <span>Speed</span>
-                    <select value={activeSequence.playbackSpeed} onChange={(e) => setPlaybackSpeed(Number(e.target.value))}>
-                      <option value={0.5}>0.5×</option>
-                      <option value={0.75}>0.75×</option>
-                      <option value={1}>1×</option>
-                      <option value={1.5}>1.5×</option>
-                      <option value={2}>2×</option>
-                    </select>
-                  </label>
-                </div>
-                {currentStepIndex >= 0 && (
-                  <div className="animation-progress">
-                    Step {currentStepIndex + 1} of {activeSequence.steps.length}
-                    {activeSequence.steps[currentStepIndex] && (
-                      <> &mdash; {activeSequence.steps[currentStepIndex].elementIds.map((eid) => {
-                        const n = nodes.find((nd) => nd.id === eid);
-                        const ed = edges.find((eg) => eg.id === eid);
-                        return n ? n.data.label : ed ? `${ed.source} → ${ed.target}` : eid;
-                      }).join(", ")}</>
-                    )}
+              </form>
+            )}
+            {legendCreatorOpen && (
+              <form
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="create-legend-title"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  addLegendArea();
+                }}
+              >
+                <div className="inspector-head">
+                  <div>
+                    <span>NEW MAP AREA</span>
+                    <strong id="create-legend-title">Create a draggable legend</strong>
                   </div>
-                )}
-              </div>
-            </>
-          )}
-          {!animationSequences.length && (
-            <div className="animation-empty">
-              <List size={22} />
-              <strong>No animation sequences</strong>
-              <p>Create a sequence to get started. Then click nodes and connectors in the order you want them to highlight.</p>
-              <button className="button primary" onClick={createSequence}><Plus size={15} /> Create first sequence</button>
-            </div>
-          )}
-        </div>
+                  <button
+                    type="button"
+                    aria-label="Close legend creator"
+                    onClick={() => setLegendCreatorOpen(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="creator-body">
+                  <label>
+                    <span>Legend label</span>
+                    <input
+                      autoFocus
+                      value={legendDraft.label}
+                      placeholder="Example: User, Backend, AI services"
+                      onChange={(event) =>
+                        setLegendDraft({ ...legendDraft, label: event.target.value })
+                      }
+                    />
+                  </label>
+                  <div className="legend-appearance-grid">
+                    <label className="legend-color-control">
+                      <span>Area color</span>
+                      <div>
+                        <input
+                          type="color"
+                          value={legendDraft.color}
+                          onChange={(event) =>
+                            setLegendDraft({ ...legendDraft, color: event.target.value })
+                          }
+                        />
+                        <output>{legendDraft.color}</output>
+                      </div>
+                    </label>
+                    <label className="line-label-size">
+                      <span>Transparency</span>
+                      <div>
+                        <input
+                          type="range"
+                          min="0.04"
+                          max="0.32"
+                          step="0.02"
+                          value={legendDraft.opacity}
+                          onChange={(event) =>
+                            setLegendDraft({
+                              ...legendDraft,
+                              opacity: Number(event.target.value),
+                            })
+                          }
+                        />
+                        <output>{Math.round(legendDraft.opacity * 100)}%</output>
+                      </div>
+                    </label>
+                  </div>
+                  <fieldset>
+                    <legend>Select components inside this legend</legend>
+                    <div className="legend-member-list legend-member-create-list">
+                      {componentNodes.length ? (
+                        componentNodes.map((node) => {
+                          const checked = legendDraft.nodeIds.includes(node.id);
+                          return (
+                            <label key={node.id} className="legend-member-option">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() =>
+                                  setLegendDraft({
+                                    ...legendDraft,
+                                    nodeIds: checked
+                                      ? legendDraft.nodeIds.filter((id) => id !== node.id)
+                                      : [...legendDraft.nodeIds, node.id],
+                                  })
+                                }
+                              />
+                              <span>{node.data.label}</span>
+                            </label>
+                          );
+                        })
+                      ) : (
+                        <p className="legend-empty-state">Add components before creating a legend area.</p>
+                      )}
+                    </div>
+                  </fieldset>
+                  <div className="legend-selection-summary">
+                    <LayoutDashboard size={16} />
+                    <span>
+                      {legendDraft.nodeIds.length
+                        ? `${legendDraft.nodeIds.length} components selected`
+                        : "Select at least one component"}
+                    </span>
+                  </div>
+                  <button
+                    className="create-node-submit"
+                    type="submit"
+                    disabled={!legendDraft.label.trim() || legendDraft.nodeIds.length === 0}
+                  >
+                    <Plus size={16} />
+                    Create legend area
+                  </button>
+                </div>
+              </form>
+            )}
+            {textOpen && (
+              <form
+                className="creator-body"
+                onSubmit={(event) => { event.preventDefault(); addTextNode(); }}
+              >
+                <div className="inspector-head">
+                  <div><span>ANNOTATION</span><strong>Add text to canvas</strong></div>
+                  <button type="button" aria-label="Close text creator" onClick={() => setTextOpen(false)}><X size={18} /></button>
+                </div>
+                <label>
+                  <span>Text content</span>
+                  <textarea
+                    autoFocus
+                    rows={3}
+                    value={textDraft.label}
+                    placeholder="Type your annotation…"
+                    onChange={(event) => setTextDraft({ ...textDraft, label: event.target.value })}
+                  />
+                </label>
+                <label>
+                  <span>Font size (px)</span>
+                  <input
+                    type="range"
+                    min="10"
+                    max="48"
+                    step="1"
+                    value={textDraft.titleSize ?? 16}
+                    onChange={(event) => setTextDraft({ ...textDraft, titleSize: Number(event.target.value) })}
+                  />
+                </label>
+                <fieldset>
+                  <legend>Text color</legend>
+                  <div className="legend-color-control">
+                    <div>
+                      <input
+                        type="color"
+                        value={textDraft.legendColor ?? "#334155"}
+                        onChange={(event) => setTextDraft({ ...textDraft, legendColor: event.target.value })}
+                      />
+                      <output>{textDraft.legendColor ?? "#334155"}</output>
+                    </div>
+                  </div>
+                </fieldset>
+                <div className="tone-row">
+                  {(["cyan", "violet", "amber", "emerald", "slate", "rose"] as NodeTone[]).map(
+                    (tone) => (
+                      <button type="button" key={tone} className={`tone-swatch tone-${tone} ${textDraft.tone === tone ? "active" : ""}`} title={tone} onClick={() => setTextDraft({ ...textDraft, tone })} aria-label={`Color ${tone}`} />
+                    )
+                  )}
+                </div>
+                <button className="create-node-submit" type="submit" disabled={!textDraft.label.trim()}>
+                  <Type size={16} /> Add text to canvas
+                </button>
+              </form>
+            )}
+            {animationOpen && (
+              <>
+                <div className="inspector-head">
+                  <div>
+                    <span>FLOW ANIMATION</span>
+                    <strong>{activeSequence ? activeSequence.name : "No sequence selected"}</strong>
+                  </div>
+                  <button aria-label="Close animation panel" onClick={() => { setAnimationOpen(false); if (animationMode === "presentation") stopPlayback(); }}>
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="animation-panel-body">
+                  {/* Sequence selector */}
+                  <div className="animation-sequence-selector">
+                    <select
+                      value={activeSequenceId ?? ""}
+                      onChange={(e) => {
+                        clearAnimationEffects();
+                        setActiveSequenceId(e.target.value || null);
+                      }}
+                      aria-label="Select animation sequence"
+                    >
+                      {animationSequences.length === 0 && <option value="">No sequences</option>}
+                      {animationSequences.map((seq) => (
+                        <option key={seq.id} value={seq.id}>{seq.name}</option>
+                      ))}
+                    </select>
+                    <div className="animation-sequence-actions">
+                      <button className="button secondary" onClick={createSequence} title="Create new sequence"><Plus size={14} /></button>
+                      {activeSequence && (
+                        <>
+                          <button className="button secondary" onClick={() => duplicateSequence(activeSequence.id)} title="Duplicate sequence"><Copy size={14} /></button>
+                          <button className="button secondary" onClick={() => {
+                            const name = window.prompt("Rename sequence", activeSequence.name);
+                            if (name?.trim()) renameSequence(activeSequence.id, name.trim());
+                          }} title="Rename sequence"><FileText size={14} /></button>
+                          <button className="button secondary" onClick={() => {
+                            if (window.confirm(`Delete "${activeSequence.name}"?`)) deleteSequence(activeSequence.id);
+                          }} title="Delete sequence"><Trash2 size={14} /></button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <section className="guided-flow-builder">
+                    <div>
+                      <span>GUIDED PATH</span>
+                      <strong>Choose each decision outcome</strong>
+                      <p>Each diamond follows the selected connection label when the sequence is generated.</p>
+                    </div>
+                    {decisionNodesWithBranches.length ? (
+                      <div className="guided-branch-list">
+                        {decisionNodesWithBranches.map((node) => {
+                          const outgoing = edges.filter((edgeItem) => edgeItem.source === node.id);
+                          const selectedEdgeId = animationBranchChoices[node.id] ?? outgoing[0].id;
+                          return (
+                            <label key={node.id}>
+                              <span>{node.data.label}</span>
+                              <select
+                                value={selectedEdgeId}
+                                onChange={(event) =>
+                                  setAnimationBranchChoices((previous) => ({
+                                    ...previous,
+                                    [node.id]: event.target.value,
+                                  }))
+                                }
+                              >
+                                {outgoing.map((edgeItem, index) => (
+                                  <option key={edgeItem.id} value={edgeItem.id}>
+                                    {edgeItem.label || `Option ${index + 1}`}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="guided-flow-empty">No branching diamonds are available on this page.</p>
+                    )}
+                    <button className="guided-flow-create" onClick={buildGuidedSequence}>
+                      <Route size={15} /> Generate selected flow
+                    </button>
+                  </section>
+
+                  {activeSequence && (
+                    <>
+                      {/* Step list */}
+                      <div className="animation-step-list">
+                        <div className="animation-step-list-header">
+                          <span>Steps ({activeSequence.steps.length})</span>
+                          {activeSequence.steps.length > 0 && (
+                            <button className="button secondary" onClick={() => {
+                              if (window.confirm("Clear all steps?")) {
+                                setAnimationSequences((prev) =>
+                                  prev.map((s) => s.id === activeSequenceId ? { ...s, steps: [] } : s)
+                                );
+                                window.setTimeout(persistAnimationData, 0);
+                              }
+                            }} title="Clear all steps"><Trash2 size={12} /> Clear</button>
+                          )}
+                        </div>
+                        {activeSequence.steps.length === 0 && (
+                          <div className="animation-empty">
+                            <List size={22} />
+                            <strong>No steps yet</strong>
+                            <p>Click nodes or connectors on the diagram to add them to this sequence.</p>
+                          </div>
+                        )}
+                        <div className="animation-steps">
+                          {activeSequence.steps.map((step, index) => (
+                            <div key={step.id} className={`animation-step ${currentStepIndex === index && animationMode === "presentation" ? "is-current" : ""}`}>
+                              <div className="animation-step-handle">
+                                <span className="animation-step-number">{index + 1}</span>
+                              </div>
+                              <div className="animation-step-content">
+                                <div className="animation-step-elements">
+                                  {step.elementIds.map((eid) => {
+                                    const n = nodes.find((nd) => nd.id === eid);
+                                    const ed = edges.find((eg) => eg.id === eid);
+                                    const missing = !n && !ed;
+                                    return (
+                                      <span key={eid} className={`animation-step-element ${missing ? "is-missing" : ""}`} title={eid}>
+                                        {missing ? "⚠ Missing element" : n ? n.data.label : `Connection: ${ed!.source} → ${ed!.target}`}
+                                      </span>
+                                    );
+                                  })}
+                                </div>
+                                <div className="animation-step-controls">
+                                  <div className="animation-step-timing">
+                                    <label>
+                                      <span>Dur.</span>
+                                      <input
+                                        type="range"
+                                        min="200" max="4000" step="100"
+                                        value={step.duration}
+                                        onChange={(e) => updateStep(step.id, { duration: Number(e.target.value) })}
+                                      />
+                                      <output>{(step.duration / 1000).toFixed(1)}s</output>
+                                    </label>
+                                    <label>
+                                      <span>Delay</span>
+                                      <input
+                                        type="range"
+                                        min="0" max="3000" step="100"
+                                        value={step.delayAfter}
+                                        onChange={(e) => updateStep(step.id, { delayAfter: Number(e.target.value) })}
+                                      />
+                                      <output>{(step.delayAfter / 1000).toFixed(1)}s</output>
+                                    </label>
+                                  </div>
+                                  <div className="animation-step-actions">
+                                    <button className="button secondary" onClick={() => moveStep(step.id, -1)} disabled={index === 0} title="Move up"><SkipBack size={12} /></button>
+                                    <button className="button secondary" onClick={() => moveStep(step.id, 1)} disabled={index === activeSequence.steps.length - 1} title="Move down"><SkipForward size={12} /></button>
+                                    <button className="button secondary" onClick={() => duplicateStep(step.id)} title="Duplicate step"><Copy size={12} /></button>
+                                    <button className="button secondary" onClick={() => removeStep(step.id)} title="Remove step"><X size={12} /></button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Playback controls */}
+                      <div className="animation-playback">
+                        <div className="animation-playback-main">
+                          <button className="button secondary" onClick={previousStep} disabled={currentStepIndex <= 0 || animationPlaying} title="Previous step"><SkipBack size={15} /></button>
+                          {animationPaused ? (
+                            <button className="button primary" onClick={resumePlayback} title="Resume"><Play size={15} /> <span className="button-label">Resume</span></button>
+                          ) : animationPlaying ? (
+                            <button className="button primary" onClick={pausePlayback} title="Pause"><Pause size={15} /> <span className="button-label">Pause</span></button>
+                          ) : (
+                            <button className="button primary" onClick={startPlayback} disabled={activeSequence.steps.length === 0} title="Play"><Play size={15} /> <span className="button-label">Play</span></button>
+                          )}
+                          <button className="button secondary" onClick={nextStep} disabled={currentStepIndex >= activeSequence.steps.length - 1 || animationPlaying} title="Next step"><SkipForward size={15} /></button>
+                          <button className="button secondary" onClick={stopPlayback} disabled={!animationPlaying && !animationPaused} title="Stop"><Square size={15} /></button>
+                        </div>
+                        <div className="animation-playback-settings">
+                          <label className="animation-loop-toggle">
+                            <input type="checkbox" checked={activeSequence.loop} onChange={toggleLoop} />
+                            <Repeat size={13} />
+                            <span>Loop</span>
+                          </label>
+                          <label className="animation-speed">
+                            <span>Speed</span>
+                            <select value={activeSequence.playbackSpeed} onChange={(e) => setPlaybackSpeed(Number(e.target.value))}>
+                              <option value={0.5}>0.5×</option>
+                              <option value={0.75}>0.75×</option>
+                              <option value={1}>1×</option>
+                              <option value={1.5}>1.5×</option>
+                              <option value={2}>2×</option>
+                            </select>
+                          </label>
+                        </div>
+                        {currentStepIndex >= 0 && (
+                          <div className="animation-progress">
+                            Step {currentStepIndex + 1} of {activeSequence.steps.length}
+                            {activeSequence.steps[currentStepIndex] && (
+                              <> &mdash; {activeSequence.steps[currentStepIndex].elementIds.map((eid) => {
+                                const n = nodes.find((nd) => nd.id === eid);
+                                const ed = edges.find((eg) => eg.id === eid);
+                                return n ? n.data.label : ed ? `${ed.source} → ${ed.target}` : eid;
+                              }).join(", ")}</>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  )}
+                  {!animationSequences.length && (
+                    <div className="animation-empty">
+                      <List size={22} />
+                      <strong>No animation sequences</strong>
+                      <p>Create a sequence to get started. Then click nodes and connectors in the order you want them to highlight.</p>
+                      <button className="button primary" onClick={createSequence}><Plus size={15} /> Create first sequence</button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
       </aside>
 
-      <aside className={`inspector ${inspectorOpen && (selectedNode || selectedEdge) ? "is-open" : ""}`}>
+      <aside className={`inspector ${inspectorOpen && (selectedNode || selectedEdge) && selectedNode?.data.shape !== "text" ? "is-open" : ""}`}>
         <div className="inspector-head">
           <div>
             <span>
@@ -3575,257 +4054,8 @@ const persistPageIndex = (
         ) : null}
       </aside>
 
-      {creatorOpen ? (
-        <div className="creator-backdrop" onMouseDown={() => setCreatorOpen(false)}>
-          <form
-            className="node-creator"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-node-title"
-            onMouseDown={(event) => event.stopPropagation()}
-            onSubmit={(event) => {
-              event.preventDefault();
-              addNode();
-            }}
-          >
-            <div className="inspector-head">
-              <div>
-                <span>NEW COMPONENT</span>
-                <strong id="create-node-title">Add node to canvas</strong>
-              </div>
-              <button type="button" aria-label="Close node creator" onClick={() => setCreatorOpen(false)}>
-                <X size={18} />
-              </button>
-            </div>
-            <div className="creator-body">
-              <label>
-                <span>Title</span>
-                <input
-                  autoFocus
-                  value={nodeDraft.label}
-                  onChange={(event) => setNodeDraft({ ...nodeDraft, label: event.target.value })}
-                />
-              </label>
-              <label>
-                <span>Description</span>
-                <textarea
-                  rows={2}
-                  value={nodeDraft.description}
-                  onChange={(event) => setNodeDraft({ ...nodeDraft, description: event.target.value })}
-                />
-              </label>
-              <fieldset>
-                <legend>Shape</legend>
-                <div className="option-grid shape-grid">
-                  {shapeOptions.map((option) => (
-                    <button
-                      type="button"
-                      key={option.value}
-                      className={nodeDraft.shape === option.value ? "active" : ""}
-                      onClick={() =>
-                        setNodeDraft({
-                          ...nodeDraft,
-                          shape: option.value,
-                          icon:
-                            option.value === "decision"
-                              ? "decision"
-                              : option.value === "database"
-                                ? "database"
-                                : option.value === "cloud"
-                                  ? "memory"
-                                  : option.value === "terminal"
-                                    ? "play"
-                                    : "server",
-                        })
-                      }
-                    >
-                      {option.value === "database" ? (
-                        <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
-                          <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
-                          <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
-                          <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
-                          <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
-                        </svg>
-                      ) : option.value === "cloud" ? (
-                        <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
-                          <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
-                        </svg>
-                      ) : option.value === "decision" ? (
-                        <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
-                          <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
-                        </svg>
-                      ) : (
-                        <i className={`shape-preview shape-preview-${option.value}`} />
-                      )}
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
-              <fieldset>
-                <legend>Icon</legend>
-                <div className="option-grid icon-grid">
-                  {iconOptions.map((option) => {
-                    const Icon = iconMap[option.value];
-                    return (
-                      <button
-                        type="button"
-                        key={option.value}
-                        title={option.label}
-                        className={nodeDraft.icon === option.value ? "active" : ""}
-                        onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value })}
-                      >
-                        <Icon size={18} />
-                      </button>
-                    );
-                  })}
-                </div>
-              </fieldset>
-              <fieldset>
-                <legend>Color</legend>
-                <div className="tone-row">
-                  {(["cyan", "violet", "amber", "emerald", "slate", "rose"] as NodeTone[]).map(
-                    (tone) => (
-                      <button
-                        type="button"
-                        key={tone}
-                        className={`tone-button ${tone} ${nodeDraft.tone === tone ? "active" : ""}`}
-                        aria-label={`${tone} color`}
-                        onClick={() => setNodeDraft({ ...nodeDraft, tone })}
-                      />
-                    ),
-                  )}
-                </div>
-              </fieldset>
-              <button className="create-node-submit" type="submit" disabled={!nodeDraft.label.trim()}>
-                <Plus size={16} />
-                Add to current view
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
-      {legendCreatorOpen ? (
-        <div className="creator-backdrop" onMouseDown={() => setLegendCreatorOpen(false)}>
-          <form
-            className="node-creator legend-creator"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-legend-title"
-            onMouseDown={(event) => event.stopPropagation()}
-            onSubmit={(event) => {
-              event.preventDefault();
-              addLegendArea();
-            }}
-          >
-            <div className="inspector-head">
-              <div>
-                <span>NEW MAP AREA</span>
-                <strong id="create-legend-title">Create a draggable legend</strong>
-              </div>
-              <button
-                type="button"
-                aria-label="Close legend creator"
-                onClick={() => setLegendCreatorOpen(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="creator-body">
-              <label>
-                <span>Legend label</span>
-                <input
-                  autoFocus
-                  value={legendDraft.label}
-                  placeholder="Example: User, Backend, AI services"
-                  onChange={(event) =>
-                    setLegendDraft({ ...legendDraft, label: event.target.value })
-                  }
-                />
-              </label>
-              <div className="legend-appearance-grid">
-                <label className="legend-color-control">
-                  <span>Area color</span>
-                  <div>
-                    <input
-                      type="color"
-                      value={legendDraft.color}
-                      onChange={(event) =>
-                        setLegendDraft({ ...legendDraft, color: event.target.value })
-                      }
-                    />
-                    <output>{legendDraft.color}</output>
-                  </div>
-                </label>
-                <label className="line-label-size">
-                  <span>Transparency</span>
-                  <div>
-                    <input
-                      type="range"
-                      min="0.04"
-                      max="0.32"
-                      step="0.02"
-                      value={legendDraft.opacity}
-                      onChange={(event) =>
-                        setLegendDraft({
-                          ...legendDraft,
-                          opacity: Number(event.target.value),
-                        })
-                      }
-                    />
-                    <output>{Math.round(legendDraft.opacity * 100)}%</output>
-                  </div>
-                </label>
-              </div>
-              <fieldset>
-                <legend>Select components inside this legend</legend>
-                <div className="legend-member-list legend-member-create-list">
-                  {componentNodes.length ? (
-                    componentNodes.map((node) => {
-                      const checked = legendDraft.nodeIds.includes(node.id);
-                      return (
-                        <label key={node.id} className="legend-member-option">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              setLegendDraft({
-                                ...legendDraft,
-                                nodeIds: checked
-                                  ? legendDraft.nodeIds.filter((id) => id !== node.id)
-                                  : [...legendDraft.nodeIds, node.id],
-                              })
-                            }
-                          />
-                          <span>{node.data.label}</span>
-                        </label>
-                      );
-                    })
-                  ) : (
-                    <p className="legend-empty-state">Add components before creating a legend area.</p>
-                  )}
-                </div>
-              </fieldset>
-              <div className="legend-selection-summary">
-                <LayoutDashboard size={16} />
-                <span>
-                  {legendDraft.nodeIds.length
-                    ? `${legendDraft.nodeIds.length} components selected`
-                    : "Select at least one component"}
-                </span>
-              </div>
-              <button
-                className="create-node-submit"
-                type="submit"
-                disabled={!legendDraft.label.trim() || legendDraft.nodeIds.length === 0}
-              >
-                <Plus size={16} />
-                Create legend area
-              </button>
-            </div>
-          </form>
-        </div>
-      ) : null}
+
+
       {deleteIntent ? (
         <div className="creator-backdrop" onMouseDown={() => setDeleteIntent(null)}>
           <form
