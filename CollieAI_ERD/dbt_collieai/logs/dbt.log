@@ -6742,3 +6742,16 @@ drop view if exists "postgres"."analytics"."vw_column_lineage__dbt_backup" casca
 [0m22:50:38.361182 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000002294DD1D590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022951E0C050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000022951999850>]}
 [0m22:50:38.361448 [debug] [MainThread]: Flushing usage events
 [0m22:50:39.493937 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m01:34:51.544789 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000002631EE44EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000026321553ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000026321553C50>]}
+
+
+============================== 01:34:51.548231 | 04bcafe8-0fdf-40e9-9cac-5142d876a5c3 ==============================
+[0m01:34:51.548231 [info ] [MainThread]: Running with dbt=1.12.0
+[0m01:34:51.548712 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'maximum_seed_size_mib': '1', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'use_colors': 'True', 'hints_enabled': 'True', 'invocation_command': 'dbt ', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m01:34:51.665815 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '04bcafe8-0fdf-40e9-9cac-5142d876a5c3', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000002631F5116E0>]}
+[0m01:34:51.690334 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m01:34:51.691605 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m01:34:51.692365 [debug] [MainThread]: Command `cli deps` succeeded at 01:34:51.692258 after 0.30 seconds
+[0m01:34:51.692637 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000002631D73D590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000026321784050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000263213B9850>]}
+[0m01:34:51.692904 [debug] [MainThread]: Flushing usage events
+[0m01:34:52.963801 [debug] [MainThread]: An error was encountered while trying to flush usage events
