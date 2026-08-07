@@ -7,3 +7,6 @@ dbt_collieai/logs/
 dbt_collieai/.user.yml
 local.cmd
 run-dbt.ps1
+dbt_collieai
+dbt.cmd
+architecture-flow
