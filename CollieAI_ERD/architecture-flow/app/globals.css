@@ -107,6 +107,14 @@ button { cursor: pointer; }
 .comment-thread-popup > header { height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 12px; border-bottom:1px solid #e2e8f0; }
 .comment-thread-popup > header button { width:30px; height:30px; display:grid; place-items:center; border:0; border-radius:7px; color:#475569; background:transparent; font-size:27px; line-height:1; }
 .comment-thread-popup > header button:hover { background:#f1f5f9; }
+.comment-thread-actions { display:flex; align-items:center; gap:4px; }
+.comment-thread-popup > header .comment-thread-actions button { font-size:16px; font-weight:800; }
+.comment-thread-popup > header .comment-thread-actions .is-resolved { color:#fff; background:#6b5cff; }
+.comment-actions-menu { position:relative; }
+.comment-actions-popover { position:absolute; z-index:2; top:36px; right:0; width:152px; padding:6px; border:1px solid #e2e8f0; border-radius:8px; background:#fff; box-shadow:0 8px 20px rgba(15,23,42,.14); }
+.comment-thread-popup > header .comment-actions-popover button { width:100%; height:32px; display:block; padding:0 9px; border-radius:5px; color:#334155; text-align:left; font-size:12px; font-weight:500; }
+.comment-thread-popup > header .comment-actions-popover button:hover { background:#f8fafc; }
+.comment-thread-popup > header .comment-actions-popover .danger { color:#dc2626; }
 .comment-thread-body { padding:18px; overflow:auto; max-height:390px; }
 .comment-thread-body > p { margin:10px 0 16px 38px; color:#334155; font-size:14px; line-height:1.5; }
 .comment-thread-reply { display:flex; gap:8px; margin:10px 0 0 20px; }

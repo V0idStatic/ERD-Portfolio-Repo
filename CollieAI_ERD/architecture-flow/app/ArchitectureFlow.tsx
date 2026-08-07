@@ -100,6 +100,7 @@ type DiagramComment = {
   createdAt: string;
   position: { x: number; y: number };
   replies: DiagramCommentReply[];
+  resolved?: boolean;
 };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
 type EdgeBend = { x: number; y: number };
@@ -951,6 +952,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [commentDraft, setCommentDraft] = useState("");
   const [replyDraft, setReplyDraft] = useState("");
   const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+  const [commentActionsOpen, setCommentActionsOpen] = useState(false);
   const [docsExportOpen, setDocsExportOpen] = useState(false);
   const [docsExportMode, setDocsExportMode] = useState<DocsExportMode>("readable");
   const [docsShowTitles, setDocsShowTitles] = useState(true);
@@ -2753,6 +2755,24 @@ const persistPageIndex = (
     setReplyDraft("");
   };
 
+  const updateComment = (commentId: string, update: Partial<DiagramComment>) => {
+    const nextComments = comments.map((comment) =>
+      comment.id === commentId ? { ...comment, ...update } : comment,
+    );
+    setComments(nextComments);
+    persistComments(nextComments);
+  };
+
+  const deleteComment = (commentId: string) => {
+    const nextComments = comments.filter((comment) => comment.id !== commentId);
+    setComments(nextComments);
+    persistComments(nextComments);
+    syncCommentMarkers(nextComments);
+    setCommentActionsOpen(false);
+    setCommentThread(null);
+    setSelectedCommentId((current) => current === commentId ? null : current);
+  };
+
   const addLegendArea = () => {
     if (!legendDraft.label.trim() || legendDraft.nodeIds.length === 0) return;
     const frame = getLegendFrame(nodes, legendDraft.nodeIds);
@@ -3849,8 +3869,25 @@ const persistPageIndex = (
         >
           <header>
             <button type="button" aria-label="Back" onClick={() => setCommentThread(null)}>‹</button>
-            <span />
-            <button type="button" aria-label="Close comment" onClick={() => setCommentThread(null)}><X size={16} /></button>
+            <div className="comment-thread-actions">
+              <button
+                type="button"
+                className={activeCommentThread.resolved ? "is-resolved" : ""}
+                aria-label={activeCommentThread.resolved ? "Mark comment as unread" : "Mark comment as read"}
+                title={activeCommentThread.resolved ? "Mark as unread" : "Mark as read"}
+                onClick={() => updateComment(activeCommentThread.id, { resolved: !activeCommentThread.resolved })}
+              ><Check size={16} /></button>
+              <div className="comment-actions-menu">
+                <button type="button" aria-label="Comment actions" aria-expanded={commentActionsOpen} onClick={() => setCommentActionsOpen((open) => !open)}>•••</button>
+                {commentActionsOpen ? (
+                  <div className="comment-actions-popover" role="menu">
+                    <button type="button" role="menuitem" onClick={() => { updateComment(activeCommentThread.id, { resolved: false }); setCommentActionsOpen(false); }}>Mark as unread</button>
+                    <button type="button" role="menuitem" className="danger" onClick={() => deleteComment(activeCommentThread.id)}>Delete comment</button>
+                  </div>
+                ) : null}
+              </div>
+              <button type="button" aria-label="Close comment" onClick={() => setCommentThread(null)}><X size={16} /></button>
+            </div>
           </header>
           <div className="comment-thread-body">
             <div className="comment-item-head"><span className="comment-avatar">YG</span><strong>{activeCommentThread.author}</strong><time>{new Date(activeCommentThread.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>

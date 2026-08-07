@@ -149,31 +149,289 @@ models:
       - name: active_recommendation_count
       - name: highest_priority_recommendation
   - name: vw_student_learning_summary
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      HAVE LINEAGE ( naturally fetch from the source of truth table ) :
+
+      - student_id
+
+      - section_name
+
+      - grade_level
+
+      - learning_status
+
+      - current_streak
+
+      -  total_star_points
+
+      ___________________________________________________________________________________
+
+      NO LINEAGE ( created and calculated with its function inside the view ONLY )
+
+      - total_sessions
+
+      - completed_sessions
+
+      - last_session
+
+      - total_answer_attempts
+
+      - correct_attempts
+
+      - wrong_attempts
+
+      - last_attempts
+
+      - overall_accuracy_rate ( CREATED FROM NO LINEAGE ITSELF )
+
+      - help_request_count
+
+      - last_help_at
+
+      - help_request_rate ( CREATED FROM NO LINEAGE ITSELF  )
+
+      - latest_risk_level
+
+      - latest_mastery_score
+
+      - latest_prediction_at
+
+      ___________________________________________________________________________________
+
+
+      CTE :
+
+      attempt_agg ( GROUP BY student_id )
+
+      - \"total_answer_attempts\" :
+
+      \   - calculated the \"is_correct\" column and branch it into two calculated column
+
+
+      - \"correct_attempts\" |  \"wrong_attempts\" :
+
+      \   - calculated the \"is_correct\" column and branch it into two calculated column
+
+      \   - IF TRUE +1 = \"correct_attempts\" | IF FALSE +1 = \"wrong_attempts\"
+
+
+      - \"last_attempt_at\" :
+
+      \   - gets the MAX(created_at) #Latest Record
+
+
+      \  Source of truth ( WRITE ) :  student_attempts
+
+      --------------------------------------------------------------------------------------
+
+      session_agg ( GROUP BY student_id )
+
+      - \"total_sessions\"
+
+      \  - all sessions count (*)
+
+
+      - \"completed_sessions\"
+
+      \  - WHERE session_status = 'completed'
+
+
+      - \"last_session_at\"
+
+      \  - MAX(COALESCE(s.ended_at, s.started_at, s.created_at))
+
+
+      \ Source of truth ( WRITE ) :  ai_sessions\ 
+
+      -------------------------------------------------------------------------------------
+
+      help_agg ( GROUP BY student_id )
+
+
+      - \"help_request_count\"
+
+      \ - COUNT(*) #counts all records
+
+
+      - \"last_help_at\"
+
+      \ - MAX(h.created_at) #Latest Record
+
+
+      \ Source of truth ( WRITE ) :  student_help_events
+
+      -------------------------------------------------------------------------------------
+
+      latest_prediction\ 
+
+
+      - \"latest_risk_level\"
+
+      - \"latest_mastery_score\"
+
+      - \"latest_prediction_at\"
+
+
+      all this because of Partition FROM the prediction_RANKED
+
+      ROW_NUMBER() OVER (
+
+      \            PARTITION BY p.student_id
+
+      \            ORDER BY p.predicted_at DESC, p.prediction_id DESC
+
+      \        ) AS row_num
+
+
+      then on the created nested CTE it just get where row_num = 1
+
+      # thats why the latest it renamed all column as \"latest\"
+
+
+      \ Source of truth ( WRITE ) : MAIN: ( latest_prediction ( prediction_ranked ( INHERITED FROM student_skill_predictions : CTE (prediction_ranked))
+
+      -------------------------------------------------------------------------------------
+
+      recommendation_agg ( GROUP BY student_id )
+
+
+      - \"active_recommendation_count\"
+
+      \ - COUNT(*) #counts all records WHERE \"is_completed\" FALSE
+
+
+      - \"latest_recommendation_text\"
+
+      \ - checks the \"is_completed\" # position  on array must be [1] # second (2nd) on record
+
+
+
+      Source of truth ( WRITE ) :  learning_recommendation"
     columns:
       - name: student_id
+        description: Have Lineage
+        data_type: integer
       - name: section_name
+        description: Have Lineage
+        data_type: character varying
       - name: grade_level
+        description: Have Lineage
+        data_type: smallint
       - name: learning_status
+        description: Have Lineage
+        data_type: text
       - name: current_streak
+        data_type: integer
+        description: Have Lineage
       - name: total_star_points
+        data_type: double precision
+        description: Have Lineage
       - name: total_sessions
+        data_type: bigint
+        description: |-
+          FROM CTE : attempt_agg
+          Source of Truth Table ( WRITE ) : 
+          - ai_sessions ( * ) #counts all record
       - name: completed_sessions
+        data_type: bigint
+        description: |-
+          FROM CTE : attempt_agg
+          Source of Truth Table ( WRITE ) : 
+          - ai_sessions ( (WHERE session_status = 'completed' )
       - name: last_session_at
+        data_type: timestamp with time zone
+        description: |-
+          FROM CTE : attempt_agg
+          Source of Truth Table ( WRITE ) :  
+           - MAX(COALESCE(s.ended_at, s.started_at, s.created_at))
       - name: total_answer_attempts
+        data_type: bigint
+        description: |-
+          FROM CTE : attempt_agg
+             - calculated the "(*)" all records
       - name: correct_attempts
+        description: |-
+          FROM CTE : attempt_agg
+          Source of Truth Table ( WRITE ) :
+          - student_attempts ( is_correct )
+        data_type: bigint
       - name: wrong_attempts
+        description: |-
+          FROM CTE : session_agg
+          Source of Truth Table ( WRITE ) : ai_sessions
+          - student_attempts ( is_correct )
+        data_type: bigint
       - name: last_attempt_at
+        data_type: timestamp with time zone
+        description: |-
+          FROM CTE : attempt_agg
+          - Gets the MAX(created_at) #Latest Record
       - name: overall_accuracy_rate
+        description: |-
+          This is a computation column ( exist only on this VWT )
+
+          Two columns use to calculate the accuracy
+          - correct_attempts default : Numeric
+          - total_ answer_ attempts : Numeric
+
+          accuracy = (correct_attempts / total_answer_attempts ) :: Numeric , 4 ( 4 decimals only )
+        data_type: numeric
       - name: help_request_count
+        data_type: bigint
+        description: |-
+          FROM CTE : help_agg
+           - COUNT(*) #counts all records
       - name: last_help_at
+        data_type: timestamp with time zone
+        description: |-
+          FROM CTE : help_agg
+          - MAX(h.created_at) #Latest Record
       - name: help_request_rate
+        data_type: numeric
+        description: |-
+          This is a computation column ( exist only on this VWT )
+
+          Two columns use to calculate the Request Rate
+          - total_answer_attempts : Numeric
+          - help_request_count : Numeric
+
+           Request Rate = request_count / (total_answer_attempts +  request_coun ) :: Numeric , 4 ( 4 decimals only )
       - name: latest_risk_level
+        data_type: text
+        description: "FROM BABY CTE : latest_prediction (PARENT CTE : prediction_ranked)"
       - name: latest_mastery_score
+        data_type: numeric
+        description: "FROM BABY CTE : help_agg (PARENT CTE : prediction_ranked)"
       - name: latest_prediction_at
+        data_type: timestamp with time zone
+        description: "FROM BABY CTE : help_agg (PARENT CTE : prediction_ranked)"
       - name: active_recommendation_count
+        data_type: bigint
+        description: |-
+          FROM CTE : recommendation_agg
+          - counts all record WHERE is_completed is FALSE
       - name: latest_recommendation_text
+        data_type: text
+        description: "FROM CTE : recommendation_agg
+
+          - checks the \"is_completed\" FROM learning_recommendation # position  on array must be [1] # second (2nd) on record"
       - name: last_activity_at
+        data_type: timestamp with time zone
+        description: |-
+          FILTERED NO LINEAGE : GREATEST()
+          - last_session_at,
+          - last_attempt_at,
+          - last_help_at,
+          - latest_prediction_at
   - name: vw_student_skill_mastery
     description: "Final view endpoint with explicit columns for lineage."
     columns:
