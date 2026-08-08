@@ -26,7 +26,6 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
-  useViewport,
   useUpdateNodeInternals,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -77,7 +76,7 @@ Type,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DashboardHome from "./DashboardHome";
 
 type NodeShape =
@@ -148,6 +147,8 @@ type ArchitectureNodeData = {
   _animState?: "inactive" | "active" | "completed";
   editing?: boolean;
   fontWeight?: CSSProperties["fontWeight"];
+  fontStyle?: CSSProperties["fontStyle"];
+  fontFamily?: CSSProperties["fontFamily"];
   onLabelChange?: (value: string) => void;
   onEditingChange?: (editing: boolean) => void;
   onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
@@ -331,7 +332,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             value={data.label}
             placeholder="Type something"
             aria-label="Text annotation"
-            style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 600 }}
+            style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 400, fontStyle: data.fontStyle ?? "normal", fontFamily: data.fontFamily }}
             onChange={(event) => data.onLabelChange?.(event.target.value)}
             onBlur={() => data.onEditingChange?.(false)}
             onKeyDown={(event) => {
@@ -346,17 +347,28 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             }}
           />
         ) : (
-          <div className={`text-node-content ${data.label ? "" : "is-placeholder"}`} style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 600 }}>
+          <div className={`text-node-content ${data.label ? "" : "is-placeholder"}`} style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 400, fontStyle: data.fontStyle ?? "normal", fontFamily: data.fontFamily }}>
             {data.label || "Type something"}
           </div>
         )}
         <NodeToolbar nodeId={id} isVisible={selected} position={Position.Top} offset={10} className="text-format-toolbar nodrag nopan">
-            <button type="button" title="Smaller text" onClick={() => data.onTextStyleChange?.({ titleSize: Math.max(10, (data.titleSize ?? 16) - 1) })}>A−</button>
             <select aria-label="Text size" value={data.titleSize ?? 16} onChange={(event) => data.onTextStyleChange?.({ titleSize: Number(event.target.value) })}>
-              {[12, 14, 16, 18, 20, 24, 28, 32, 40].map((size) => <option key={size} value={size}>{size}px</option>)}
+              {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72].map((size) => <option key={size} value={size}>{size}px</option>)}
             </select>
-            <button type="button" className={data.fontWeight === 700 ? "active" : ""} title="Bold" onClick={() => data.onTextStyleChange?.({ fontWeight: data.fontWeight === 700 ? 600 : 700 })}><strong>B</strong></button>
-            <label title="Text color"><span>A</span><input type="color" value={data.legendColor ?? "#334155"} onChange={(event) => data.onTextStyleChange?.({ legendColor: event.target.value })} /></label>
+            <span className="text-toolbar-divider" aria-hidden="true">|</span>
+            <select className="text-font-family-select" aria-label="Font family" value={data.fontFamily ?? ""} onChange={(event) => data.onTextStyleChange?.({ fontFamily: event.target.value || undefined })}>
+              <option value="">System</option>
+              <option value="Inter, Arial, sans-serif">Inter</option>
+              <option value="Arial, sans-serif">Arial</option>
+              <option value="'Times New Roman', Times, serif">Times New Roman</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier New</option>
+            </select>
+            <span className="text-toolbar-divider" aria-hidden="true">|</span>
+            <button type="button" className={data.fontWeight === 700 ? "active" : ""} title="Bold" onClick={() => data.onTextStyleChange?.({ fontWeight: data.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
+            <button type="button" className={data.fontStyle === "italic" ? "active" : ""} title="Italic" onClick={() => data.onTextStyleChange?.({ fontStyle: data.fontStyle === "italic" ? "normal" : "italic" })}><em>I</em></button>
+            <label title="Text color" style={{ "--text-color": data.legendColor ?? "#334155" } as CSSProperties}><span>A</span><input type="color" value={data.legendColor ?? "#334155"} onChange={(event) => data.onTextStyleChange?.({ legendColor: event.target.value })} /></label>
+            <span className="text-toolbar-divider" aria-hidden="true">|</span>
             <button type="button" title="Edit text" onClick={() => data.onEditingChange?.(true)}><Type size={16} /></button>
         </NodeToolbar>
         {selected && (
@@ -473,7 +485,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   );
 }
 
-const nodeTypes = { architecture: ArchitectureNodeCard };
+const nodeTypes = { architecture: memo(ArchitectureNodeCard) };
 
 const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "decision") return { width: 230, height: 126 };
@@ -895,6 +907,7 @@ const commentsStorageKey = (workspaceId: string, pageId: string) =>
     ? `collieai-comments-${pageId}`
     : `collieai-comments-${workspaceId}-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
+const MAX_DAILY_HISTORY_ENTRIES = 180;
 
 const activeWorkspaceId = () =>
   typeof window !== "undefined"
@@ -925,6 +938,24 @@ const describeDiagramChange = (
   if (edgeDelta > 0) changes.push(`Added ${edgeDelta} connection${edgeDelta === 1 ? "" : "s"}`);
   if (edgeDelta < 0) changes.push(`Removed ${Math.abs(edgeDelta)} connection${edgeDelta === -1 ? "" : "s"}`);
   return changes.join(" · ") || "Updated layout or content";
+};
+
+// Preserve the latest editing trail plus one snapshot per older day. A busy
+// day can no longer push yesterday's work out of the version history.
+const retainHistory = (entries: DiagramHistoryEntry[]) => {
+  const recent = entries.slice(0, MAX_HISTORY_ENTRIES);
+  const coveredDays = new Set(recent.map((entry) => new Date(entry.timestamp).toDateString()));
+  const dailySnapshots: DiagramHistoryEntry[] = [];
+
+  for (const entry of entries.slice(MAX_HISTORY_ENTRIES)) {
+    const day = new Date(entry.timestamp).toDateString();
+    if (coveredDays.has(day)) continue;
+    coveredDays.add(day);
+    dailySnapshots.push(entry);
+    if (dailySnapshots.length === MAX_DAILY_HISTORY_ENTRIES) break;
+  }
+
+  return [...recent, ...dailySnapshots];
 };
 
 const removeAnimationEdgeClasses = (className?: string) =>
@@ -1007,13 +1038,15 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [animCompletedIds, setAnimCompletedIds] = useState<Set<string>>(new Set());
   const animationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const commentPopupFrameRef = useRef<number | null>(null);
+  const commentThreadPopupRef = useRef<HTMLElement | null>(null);
+  const commentComposerPopupRef = useRef<HTMLElement | null>(null);
   // In custom-flow mode, consecutive node clicks are treated as a route.  This
   // keeps the authoring interaction focused on the boxes while playback uses
   // the real connector between them.
   const customFlowStartNodeRef = useRef<string | null>(null);
   const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { fitView, screenToFlowPosition, flowToScreenPosition } = useReactFlow();
-  const viewport = useViewport();
   const updateNodeInternals = useUpdateNodeInternals();
   // The active workspace is fixed for the lifetime of this FlowWorkspace
   // mount (the home screen sets it right before opening the workspace),
@@ -1205,6 +1238,23 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   };
   const commentThreadPopupPosition = commentPopupPosition(commentThreadScreen, 420, 450);
   const commentComposerPopupPosition = commentPopupPosition(commentComposerScreen, 340, 230);
+  const updateOpenCommentPopupPositions = () => {
+    if (commentThread && commentThreadPopupRef.current) {
+      const position = commentPopupPosition(flowToScreenPosition(commentThread.position), 420, 450);
+      if (position) Object.assign(commentThreadPopupRef.current.style, position);
+    }
+    if (commentComposer && commentComposerPopupRef.current) {
+      const position = commentPopupPosition(flowToScreenPosition(commentComposer.position), 340, 230);
+      if (position) Object.assign(commentComposerPopupRef.current.style, position);
+    }
+  };
+  const scheduleOpenCommentPopupPositionUpdate = () => {
+    if ((!commentThread && !commentComposer) || commentPopupFrameRef.current !== null) return;
+    commentPopupFrameRef.current = requestAnimationFrame(() => {
+      commentPopupFrameRef.current = null;
+      updateOpenCommentPopupPositions();
+    });
+  };
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
@@ -2042,9 +2092,13 @@ const persistPageIndex = (
 
   useEffect(() => {
     if (!historyReadyRef.current) return;
+    // Selection, panning and viewport changes are not diagram edits.  Do not
+    // flash the save state or write a version unless the actual diagram differs.
+    const signature = diagramSignature(nodes, edges);
+    if (signature === lastHistorySignatureRef.current) return;
+
     setAutoSaveState("saving");
     const autoSaveTimer = window.setTimeout(() => {
-      const signature = diagramSignature(nodes, edges);
       const cleanDiagram = JSON.parse(signature) as {
         nodes: ArchitectureNode[];
         edges: Edge[];
@@ -2072,7 +2126,7 @@ const persistPageIndex = (
           nodes: cleanDiagram.nodes,
           edges: cleanDiagram.edges,
         };
-        const nextHistory = [entry, ...historyEntries].slice(0, MAX_HISTORY_ENTRIES);
+        const nextHistory = retainHistory([entry, ...historyEntries]);
         setHistoryEntries(nextHistory);
         window.localStorage.setItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
         lastHistorySignatureRef.current = signature;
@@ -2102,10 +2156,7 @@ const persistPageIndex = (
       timestamp: new Date().toISOString(),
       summary: `Restored version from ${new Date(entry.timestamp).toLocaleString()}`,
     };
-    const nextHistory = [restoredEntry, recoveryEntry, ...historyEntries].slice(
-      0,
-      MAX_HISTORY_ENTRIES,
-    );
+    const nextHistory = retainHistory([restoredEntry, recoveryEntry, ...historyEntries]);
     historyReadyRef.current = false;
     setNodes(synchronizeLegendKey(entry.nodes));
     setEdges(entry.edges);
@@ -2773,6 +2824,27 @@ const persistPageIndex = (
     setSelectedCommentId((current) => current === commentId ? null : current);
   };
 
+  const updateDraggedCommentPosition = (node: ArchitectureNode, persist = false) => {
+    const commentId = node.data.commentId;
+    if (node.data.shape !== "comment" || !commentId) return;
+
+    const position = { x: node.position.x, y: node.position.y };
+    setCommentThread((current) =>
+      current?.id === commentId
+        ? { ...current, position: { x: position.x + 34, y: position.y + 34 } }
+        : current,
+    );
+    if (!persist) return;
+
+    setComments((current) => {
+      const next = current.map((comment) =>
+        comment.id === commentId ? { ...comment, position } : comment,
+      );
+      persistComments(next);
+      return next;
+    });
+  };
+
   const addLegendArea = () => {
     if (!legendDraft.label.trim() || legendDraft.nodeIds.length === 0) return;
     const frame = getLegendFrame(nodes, legendDraft.nodeIds);
@@ -2842,6 +2914,34 @@ const persistPageIndex = (
     setInspectorOpen(false);
   };
 
+  // Keep untouched nodes and edges referentially stable while dragging. This
+  // lets React Flow skip repainting the rest of the diagram on each pointer frame.
+  const renderedNodes = useMemo(() => {
+    const hasAnimationState = animActiveIds.size > 0 || animCompletedIds.size > 0;
+    return nodes.map((node) => {
+      if (node.data.shape === "text") {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            onLabelChange: (label: string) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, label } } : item)),
+            onEditingChange: (editing: boolean) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, editing } } : item)),
+            onTextStyleChange: (patch: Partial<ArchitectureNodeData>) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, ...patch } } : item)),
+          },
+        };
+      }
+      if (!hasAnimationState) return node;
+      const state = animActiveIds.has(node.id) ? "active" : animCompletedIds.has(node.id) ? "completed" : "inactive";
+      return { ...node, data: { ...node.data, _animState: state } };
+    });
+  }, [animActiveIds, animCompletedIds, nodes, setNodes]);
+
+  const renderedEdges = useMemo(() => edges.map((edgeItem) => ({
+    ...edgeItem,
+    selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
+    data: { ...edgeItem.data, onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints) },
+  })), [edges, selectedEdgeId, updateEdgeJoints]);
+
   return (
     <main className="architecture-shell">
       <header className="topbar">
@@ -2895,8 +2995,8 @@ const persistPageIndex = (
 
       <nav className="tool-navbar" aria-label="Diagram tools">
         <div className="tool-navbar-label">
-          <span>DIAGRAM TOOLS</span>
-          <strong>Build and organize your architecture</strong>
+          <span>PAGE {String(pages.findIndex((page) => page.id === activePageId) + 1).padStart(2, "0")}</span>
+          <strong>{pages.find((page) => page.id === activePageId)?.name || "Untitled architecture"}</strong>
         </div>
         <div className="tool-navbar-actions">
           <button
@@ -3114,32 +3214,14 @@ const persistPageIndex = (
       )}
       <section className="canvas-wrap" aria-label="CollieAI architecture canvas">
         <ReactFlow
-          nodes={nodes.map((node) => {
-            const textData = node.data.shape === "text"
-              ? {
-                  ...node.data,
-                  onLabelChange: (label: string) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, label } } : item)),
-                  onEditingChange: (editing: boolean) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, editing } } : item)),
-                  onTextStyleChange: (patch: Partial<ArchitectureNodeData>) => setNodes((items) => items.map((item) => item.id === node.id ? { ...item, data: { ...item.data, ...patch } } : item)),
-                }
-              : node.data;
-            if (!animActiveIds.size && !animCompletedIds.size) return { ...node, data: textData };
-            let state: "inactive" | "active" | "completed" = "inactive";
-            if (animActiveIds.has(node.id)) state = "active";
-            else if (animCompletedIds.has(node.id)) state = "completed";
-            return { ...node, data: { ...textData, _animState: state } };
-          })}
-          edges={edges.map((edgeItem) => ({
-            ...edgeItem,
-            selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
-            data: {
-              ...edgeItem.data,
-              onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
-            },
-          }))}
+          nodes={renderedNodes}
+          edges={renderedEdges}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={animationMode === "presentation" ? () => {} : onNodesChange}
+          onNodeDrag={(_, node) => updateDraggedCommentPosition(node)}
+          onNodeDragStop={(_, node) => updateDraggedCommentPosition(node, true)}
+          onMove={scheduleOpenCommentPopupPositionUpdate}
           onNodesDelete={(deletedNodes) => {
             if (animationMode === "presentation") return;
             if (deletedNodes.some((node) => node.data.shape === "legend")) {
@@ -3233,11 +3315,6 @@ const persistPageIndex = (
             maskColor="rgba(241,245,249,.72)"
           />
           <Controls showInteractive={false} />
-          <Panel position="top-left" className="canvas-note">
-            <span>PAGE {String(pages.findIndex((page) => page.id === activePageId) + 1).padStart(2, "0")}</span>
-            <strong>{pages.find((page) => page.id === activePageId)?.name || "Untitled architecture"}</strong>
-            <small>Drag nodes · connect dot to dot · select any line to edit</small>
-          </Panel>
           <Panel position="bottom-center" className="legend">
             <span><i className="legend-swatch cyan" /> Application & services</span>
             <span><i className="legend-swatch violet" /> Intelligence</span>
@@ -3863,8 +3940,8 @@ const persistPageIndex = (
 
       {activeCommentThread && commentThread && commentThreadPopupPosition ? (
         <section
+          ref={commentThreadPopupRef}
           className="comment-thread-popup"
-          data-viewport-x={viewport.x}
           style={commentThreadPopupPosition}
         >
           <header>
@@ -3903,8 +3980,8 @@ const persistPageIndex = (
         </section>
       ) : commentComposer && commentComposerPopupPosition ? (
         <form
+          ref={commentComposerPopupRef}
           className="comment-composer"
-          data-viewport-x={viewport.x}
           style={commentComposerPopupPosition}
           onSubmit={(event) => { event.preventDefault(); addComment(); }}
         >
