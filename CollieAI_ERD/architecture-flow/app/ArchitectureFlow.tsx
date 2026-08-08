@@ -878,6 +878,7 @@ const createLegendDraft = (): LegendDraft => ({
 });
 
 const ACTIVE_WORKSPACE_KEY = "collieai-active-workspace-v1";
+const ACTIVE_WORKFLOW_NAME_KEY = "collieai-active-workflow-name-v1";
 const PAGE_INDEX_KEY = "collieai-architecture-pages-v1";
 const LEGACY_STORAGE_KEY = "collieai-architecture-v1";
 const WORKSPACE_META_KEY = "collieai-workspace-home-v1";
@@ -1010,6 +1011,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [pages, setPages] = useState<DiagramPage[]>(defaultPages);
   const [trashedPages, setTrashedPages] = useState<DiagramPage[]>([]);
   const [activePageId, setActivePageId] = useState("main");
+  const [workflowTitle, setWorkflowTitle] = useState("Workflow");
   const [pagesOpen, setPagesOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyEntries, setHistoryEntries] = useState<DiagramHistoryEntry[]>([]);
@@ -1057,6 +1059,10 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // be pushed back to the cloud and re-corrupt the workspace.
   const cloudHydratedRef = useRef(false);
   const commentMarkers = (items: DiagramComment[]) => items.map(commentNode);
+
+  useEffect(() => {
+    setWorkflowTitle(window.localStorage.getItem(ACTIVE_WORKFLOW_NAME_KEY) || "Workflow");
+  }, []);
 
   useEffect(() => {
     // React Flow's internal ResizeObserver can occasionally finish a resize
@@ -2948,7 +2954,7 @@ const persistPageIndex = (
         <div className="brand">
           <button className="brand-mark" onClick={onGoHome} title="Back to home" aria-label="Back to home"><Network size={19} /></button>
           <div>
-            <strong>LemmaAI</strong>
+            <strong>{workflowTitle}</strong>
             <span>System architecture</span>
           </div>
         </div>
