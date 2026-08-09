@@ -79,75 +79,509 @@ models:
       - name: recommended_action
       - name: latest_prediction_at
   - name: vw_dda_effectiveness
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+      Source of Truth : dda_events
+
+      - \"dda_event_id\"
+
+      - \"student_id\"
+
+      - \"trigger_reason\"
+
+      - \"visual_analogy_used\"
+
+
+      Source of Truth : class_sections
+
+      - \"grade_level\"
+
+
+      Source of Truth : math_skills
+
+      - \"skill_name\"
+
+
+      Source of Truth : math_topic
+
+      - \"topic_name\"
+
+
+      Source of Truth : difficulty_levels
+
+      - \"skill_name\"
+
+
+      FILTERED LINEAGE (CREATED A FUNCTION TO FILTER IT OUT) |\ 
+
+      SAME NAME:
+
+      CTE:\ 
+
+      - NONE
+
+
+      RENAMED:
+
+      -  \"event_created_at\" ( created_at )
+
+
+      CTE : latest_feature : WRAPPED : feature_ranked : Source of Truth : student_skill_feautures
+
+      - \"latest_accuracy_rate\" WHERE f.row_num = 1 ( accuracy_rate )
+
+
+      CTE : latest_prediction : WRAPPED : prediction_ranked : Source of Truth : student_skill_prediction
+
+      - \"latest_risk_level\" ( risk_level )
+
+
+      DERIVED AGGREGATED LINEAGE
+
+      CTE : help_agg : Source of Truth : student_help_events
+
+      COUNT(*) AS \"related_help_event_count\"
+
+
+      CTE : show_me_agg : Source of Truth : show_me_breakdowns
+
+      COUNT(*)  AS \"related_show_me_count\"
+
+      COUNT(*) > 0 AS \"show_me_triggered\"
+
+
+      JOIN-ENRICHED LINEAGE (self-join)
+
+      Join path:
+
+      dda_events.previous_difficulty_id → difficulty_levels.difficulty_id
+
+      dda_events.new_difficulty_id → difficulty_levels.difficulty_id
+
+
+      ___________________________________________________________________________________
+
+      NO LINEAGE ( created from Direct/Filtered Lineage )
+
+      - NONE
+
+
+      ___________________________________________________________________________________"
     columns:
       - name: dda_event_id
+        description: DIRECT LINEAGE
       - name: student_id
+        description: DIRECT LINEAGE
       - name: grade_level
+        description: DIRECT LINEAGE
       - name: skill_name
+        description: DIRECT LINEAGE
       - name: topic_name
+        description: DIRECT LINEAGE
       - name: trigger_reason
+        description: DIRECT LINEAGE
       - name: previous_difficulty_name
+        description: |-
+          JOIN-ENRICHED LINEAGE (self-join)
+          dda_events.previous_difficulty_id → difficulty_levels.difficulty_id
       - name: previous_difficulty_value
+        description: |-
+          JOIN-ENRICHED LINEAGE (self-join)
+          dda_events.new_difficulty_id → difficulty_levels.difficulty_id
       - name: new_difficulty_name
+        description: |-
+          JOIN-ENRICHED LINEAGE (self-join)
+          dda_events.new_difficulty_id → difficulty_levels.difficulty_id
       - name: new_difficulty_value
+        description: |-
+          JOIN-ENRICHED LINEAGE (self-join)
+          dda_events.new_difficulty_id → difficulty_levels.difficulty_id
       - name: visual_analogy_used
+        description: DIRECT LINEAGE
       - name: event_created_at
+        description: |-
+          FILTERED LINEAGE ( RENAMED )
+          - "created_at"
       - name: related_help_event_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          CTE : help_agg : Source of Truth : student_help_events
       - name: related_show_me_count
+        description: |-
+          CTE : show_me_agg : Source of Truth : show_me_breakdowns
+          COUNT(*)  AS "related_show_me_count"
       - name: show_me_triggered
+        description: |-
+          CTE : show_me_agg : Source of Truth : show_me_breakdowns
+          COUNT(*) > 0 AS "show_me_triggered"
       - name: latest_accuracy_rate
+        description: "FILTERED LINEAGE ( RENAME )
+
+          CTE : latest_feature : WRAPPED : feature_ranked : Source of Truth : student_skill_feautures
+
+
+          WHERE f.row_num = 1
+
+          #Row_number ranking"
       - name: latest_risk_level
+        description: "FILTERED LINEAGE ( RENAME )
+
+          CTE : latest_prediction : WRAPPED : prediction_ranked : Source of Truth : student_skill_prediction
+
+
+          WHERE f.row_num = 1\ 
+
+          #Row_number ranking"
   - name: vw_gamification_summary
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+      Source of Truth : student_profiles
+
+      - \"student_id\"
+
+      - \"total_star_points\"
+
+      - \"current_streak\"
+
+
+      Source of Truth : avatars
+
+      - \"avatar_name\"
+
+
+
+      FILTERED LINEAGE (CREATED A FUNCTION TO FILTER IT OUT) |\ 
+
+      SAME NAME:
+
+      CTE: item_agg : Source of Truth : student_avatar_items
+
+      -  COUNT(*) FILTER (WHERE sai.equipped IS TRUE) AS equipped_item_count
+
+
+      RENAMED:
+
+      -  \"event_created_at\" ( created_at )
+
+
+      DERIVED AGGREGATED LINEAGE
+
+      CTE : reward_agg : Source of Truth : reward_transactions
+
+      - SUM(points_earned) \"total_points_earned\"
+
+      - COUNT(*)  \"reward_transaction_count\" #Count all records
+
+      - \"latest_reward_reason\" # number one (1) position for award latest
+
+      - MAX ( created_at ) latest_reward_reason #last it was created
+
+
+      CTE : item_agg : Source of Truth : student_avatar_items
+
+      -  COUNT(*) AS unlocked_item_count
+
+
+
+
+      ___________________________________________________________________________________
+
+      NO LINEAGE ( created from Direct/Filtered Lineage )
+
+      - NONE
+
+
+      ___________________________________________________________________________________"
     columns:
       - name: student_id
+        description: DIRECT LINEAGE
       - name: avatar_name
+        description: DIRECT LINEAGE
       - name: total_star_points
+        description: DIRECT LINEAGE
       - name: current_streak
+        description: DIRECT LINEAGE
       - name: total_points_earned
+        description: DERIVED AGGREGATED LINEAGE
+
+          SUM(points_earned) "total_points_earned"
       - name: reward_transaction_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          COUNT(*)  "reward_transaction_count" #Count all records
       - name: latest_reward_reason
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          # number one (1) position for award latest
       - name: latest_reward_at
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+           MAX ( created_at ) latest_reward_reason #last it was created
       - name: unlocked_item_count
+        description: DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) AS unlocked_item_count
       - name: equipped_item_count
+        description: FILTERED LINEAGE
+
+          COUNT(*) FILTER (WHERE sai.equipped IS TRUE) AS equipped_item_count
       - name: item_details
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          JSONB_AG #multiple columns for a singular column
   - name: vw_guardrail_summary
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+      Source of Truth : guardrail_checks
+
+      - \"guardrail_id\"
+
+      - \"is_math_related\"
+
+      - \"prompt_injection_deted\"
+
+      - \"violation_type\"
+
+      - \"action_take\"
+
+      - \"confidence_score\"
+
+      - \"checked_at\" ( created_at )
+
+
+
+      Source of Truth : ai_session
+
+      - \"student_id\"
+
+
+      Source of Truth : ai_messages
+
+      - \"sender\"
+
+      - \"message_type\"
+
+      - \"message_type
+
+
+      NO LINEAGE ( created from Direct/Filtered Lineage )
+
+      - NONE"
     columns:
       - name: guardrail_id
+        description: DIRECT LINEAGE
       - name: student_id
+        description: DIRECT LINEAGE
       - name: sender
+        description: DIRECT LINEAGE
       - name: message_type
+        description: DIRECT LINEAGE
       - name: message_text
+        description: DIRECT LINEAGE
       - name: is_math_related
+        description: DIRECT LINEAGE
       - name: prompt_injection_detected
+        description: DIRECT LINEAGE
       - name: violation_type
+        description: DIRECT LINEAGE
       - name: action_taken
+        description: DIRECT LINEAGE
       - name: confidence_score
+        description: DIRECT LINEAGE
       - name: checked_at
+        description: DIRECT LINEAGE
   - name: vw_parent_child_progress
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+      Source of Truth : class_sections
+
+      - \"section_name\"
+
+      - \"grade_level\"
+
+
+      Source of Truth : student_profile
+
+      - \"learning_status\"
+
+      - \"current_streak\"
+
+      - \"total_star_points\"
+
+
+      FILTERED LINEAGE (CREATED A FUNCTION TO FILTER IT OUT) |\ 
+
+      SAME NAME:
+
+      CTE: unique_link : Wrapped : link_ranked : Source of Truth : student_parent_links
+
+      - \"parent_id\"
+
+      - \"student_id\"
+
+      - \"relationship_type\"
+
+      - \"is_primary_guardian\"
+
+
+      CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+      - \"correct_attempts\" #Gets the total sum
+
+      - \"help_request_count\" #Gets the total sum
+
+
+      RENAMED:
+
+      CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+      -  \"total_answer_attempts\" ( total_attempts ) #Gets the total sum
+
+      - \"last_activity_at\" ( last_attempt_at ) #Gets the Latest activity\ 
+
+
+      CTE : risk_agg : Wrapped : prediction_ranked : Source of Truth : student_skill_predictation
+
+      - \"risk_level\" WHERE = \"at_risk\" ( at_risk_skill_count )
+
+      - \"risk_level\" WHERE = \"needs_practice\" ( need_practice_skill_count)
+
+
+
+      CTE : recommendation_agg : Source of Truth : learning_recommendations
+
+      - \"is_completed\" WHERE = FALSE ( active_recommendation_count )
+
+      - \"is_completed\" WHERE  = FALSE # but position must be 1 (highest_priority_recommendation)
+
+
+      ___________________________________________________________________________________
+
+      NO LINEAGE ( created from Direct/Filtered Lineage )
+
+      - \"wrong_attempts\" = \"total_answer_attempts\" - \"correct_attempts\"
+
+      - \"overall_accuracy_rate\" = \"correct_attempts\" / \"total_answer_attempts\"
+
+
+      ___________________________________________________________________________________"
     columns:
       - name: parent_id
+        description: FILTERED LINEAGE
       - name: student_id
+        description: FILTERED LINEAGE
       - name: relationship_type
+        description: FILTERED LINEAGE
       - name: is_primary_guardian
+        description: FILTERED LINEAGE
       - name: section_name
+        description: DIRECT LINEAGE
       - name: grade_level
+        description: DIRECT LINEAGE
       - name: learning_status
+        description: DIRECT LINEAGE
       - name: current_streak
+        description: DIRECT LINEAGE
       - name: total_star_points
+        description: DIRECT LINEAGE
       - name: total_answer_attempts
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "total_attempts" to "total_answer_attempts"
+          CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+          SUM("total_attempts")
       - name: correct_attempts
+        description: |-
+          FILTERED LINEAGE ( SAME NAME ) 
+          CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+          SUM("correct_attempts")
       - name: wrong_attempts
+        description: |-
+          NO LINEAGE
+
+          "total_answer_attempts" - "correct_attempts"
       - name: overall_accuracy_rate
+        description: |-
+          NO LINEAGE
+
+          "correct_attempts" / "total_answer_attempts"
       - name: help_request_count
+        description: |-
+          FILTERED LINEAGE ( SAME NAME ) 
+          CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+          SUM("help_request_count)
       - name: last_activity_at
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "last_attempt_at" to "last_activity_at"
+          CTE :  feauture_agg : Wrapped : feature ranked : Source of Truth : student_skill_feautures
+
+          MAX("last_attempt_at")
       - name: at_risk_skill_count
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "at_risk" to "at_risk_skill_count"
+          CTE : risk_agg : Wrapped : prediction_ranked : Source of Truth : student_skill_predictation
+
+          COUNTS(*) WHERE LOWER(p.risk_level) = 'at_risk'
       - name: needs_practice_skill_count
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "at_risk" to "needs_practice_skill_count"
+          CTE : risk_agg : Wrapped : prediction_ranked : Source of Truth : student_skill_predictation
+
+          COUNTS(*) WHERE LOWER(p.risk_level) = 'needs_practice'
       - name: active_recommendation_count
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "is_completed to "active_recommendation_count"
+          CTE : recommendation_agg : Source of Truth : learning_recommendations
+
+          - "is_completed" WHERE = FALSE
       - name: highest_priority_recommendation
+        description: |-
+          FILTERED LINEAGE ( RENAME) : "is_completed" to "active_recommendation_count"
+          CTE : recommendation_agg : Source of Truth : learning_recommendations
+
+          - "is_completed" WHERE = FALSE # but position must be 1
   - name: vw_student_learning_summary
     description: "VIEW TABLE ( READ )
 
@@ -160,6 +594,9 @@ models:
       ___________________________________________________________________________________
 
       HAVE LINEAGE ( naturally fetch from the source of truth table ) :
+
+
+      DIRECT LINEAGE :\ 
 
       - student_id
 
@@ -207,6 +644,28 @@ models:
 
       ___________________________________________________________________________________
 
+      CTE:
+
+      session_agg ( GROUP BY student_id )
+
+      - \"total_sessions\"
+
+      \  - all sessions count (*)
+
+
+      - \"completed_sessions\"
+
+      \  - WHERE session_status = 'completed'
+
+
+      - \"last_session_at\"
+
+      \  - MAX(COALESCE(s.ended_at, s.started_at, s.created_at))
+
+
+      \ Source of truth ( WRITE ) :  ai_sessions\ 
+
+      -------------------------------------------------------------------------------------
 
       CTE :
 
@@ -232,27 +691,6 @@ models:
       \  Source of truth ( WRITE ) :  student_attempts
 
       --------------------------------------------------------------------------------------
-
-      session_agg ( GROUP BY student_id )
-
-      - \"total_sessions\"
-
-      \  - all sessions count (*)
-
-
-      - \"completed_sessions\"
-
-      \  - WHERE session_status = 'completed'
-
-
-      - \"last_session_at\"
-
-      \  - MAX(COALESCE(s.ended_at, s.started_at, s.created_at))
-
-
-      \ Source of truth ( WRITE ) :  ai_sessions\ 
-
-      -------------------------------------------------------------------------------------
 
       help_agg ( GROUP BY student_id )
 
@@ -433,29 +871,186 @@ models:
           - last_help_at,
           - latest_prediction_at
   - name: vw_student_skill_mastery
-    description: "Final view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      No indexes, calculations already made from the raw tables
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+      Source of Truth : class_sections
+
+      - grade_level
+
+
+      Source of Truth : math_skills
+
+      - skill_name
+
+
+      Source of Truth : math_topics
+
+      - topic_name
+
+
+      Source of Truth : difficulty_levels
+
+      - recommended_difficulty_name
+
+      - recommended_difficulty_value
+
+
+      FILTERED LINEAGE (CREATED A FUNCTION TO FILTER IT OUT) |\ 
+
+      CTE: student_skill_keys : Wrapped : latest_predictions : -> prediction_ranked : Source of Truth : student_skill_prediction
+
+      - student_id
+
+      - skill_id
+
+
+      CTE : feauture_ranked : Source of Truth : student_skill_feautures
+
+      - total_answer_attempts
+
+      - correct_attempts
+
+      - wrong_attempts
+
+      - accuracy_rate
+
+      - avg_time_spent
+
+      - hint_usage_rate
+
+      - help_request_count
+
+      - help_request_rate
+
+      - failed_loop_count
+
+      - dda_trigger_count
+
+      - show_me_count
+
+      - recent_score_avg
+
+      - last_attempt_at
+
+
+      CTE : latest_prediction | WRAPPED : prediction_ranked : Source of Truth : student_skill_predictions
+
+      - predicted_mastery_score
+
+      - risk_level
+
+      - recommended_action
+
+      - predicted_at
+
+
+
+      ___________________________________________________________________________________
+
+      NO LINEAGE ( created and calculated with its function inside the view ONLY )
+
+      - None
+
+
+      DERIVED LINEAGE ( created from DIRECT LINEAGE )
+
+      - wrong_attempts
+
+
+      ___________________________________________________________________________________"
     columns:
       - name: student_id
+        description: "HAVE LINEAGE : DIRECT"
       - name: grade_level
+        description: "HAVE LINEAGE : DIRECT"
       - name: skill_id
+        description: "HAVE LINEAGE : DIRECT"
       - name: skill_name
+        description: "HAVE LINEAGE : DIRECT"
       - name: topic_name
+        description: "HAVE LINEAGE : DIRECT"
       - name: total_answer_attempts
+        description: |-
+          HAVE LINEAGE : Filtered
+
+          CTE : feauture_ranked
+          - "total_attempts"
       - name: correct_attempts
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: wrong_attempts
+        description: |-
+          NO LINEAGE : DERIVED
+          CTE : feauture_ranked : 
+          = ("total_attempts") - ("correct_attempts")
       - name: accuracy_rate
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: avg_time_spent
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: hint_usage_rate
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: help_request_count
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: help_request_rate
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: failed_loop_count
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: dda_trigger_count
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: show_me_count
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: recent_score_avg
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: last_attempt_at
+        description: |-
+          HAVE LINEAGE : Filtered
+          CTE : feauture_ranked
       - name: predicted_mastery_score
+        description: |-
+          HAVE LINEAGE : FILTERED
+          CTE : latest_prediction | WRAPPED : prediction_ranked :
       - name: risk_level
+        description: |-
+          HAVE LINEAGE : FILTERED
+          CTE : latest_prediction | WRAPPED : prediction_ranked :
       - name: recommended_difficulty_name
+        description: "HAVE LINEAGE : DIRECT"
       - name: recommended_difficulty_value
+        description: "HAVE LINEAGE : DIRECT"
       - name: recommended_action
+        description: |-
+          HAVE LINEAGE : FILTERED
+          CTE : latest_prediction | WRAPPED : prediction_ranked :
       - name: predicted_at
+        description: |-
+          HAVE LINEAGE : FILTERED
+          CTE : latest_prediction | WRAPPED : prediction_ranked :

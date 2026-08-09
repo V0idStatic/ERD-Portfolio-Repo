@@ -46,6 +46,21 @@ const workspaceApiUrl = (workspaceId: string) => {
   return `/api/workspace${query}`;
 };
 
+// Remote sync must never make a locally created workspace unusable. Network,
+// auth, or CORS failures stay local and do not become unhandled rejections.
+const syncWorkspace = async (workspaceId: string, method: "PUT" | "PATCH", payload: unknown) => {
+  try {
+    const response = await fetch(workspaceApiUrl(workspaceId), {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+};
+
 // Reads the main page's name for a workspace from its own localStorage
 // namespace (the same keys the editor uses), so the home preview shows the
 // correct page name even when the cloud snapshot is unreachable.
@@ -177,11 +192,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
 
   const saveWorkflows = (workspaceId: string, next: WorkflowMeta[]) => {
     window.localStorage.setItem(workflowIndexKey(workspaceId), JSON.stringify(next));
-    void fetch(workspaceApiUrl(workspaceId), {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ workflows: next }),
-    });
+    void syncWorkspace(workspaceId, "PATCH", { workflows: next });
   };
 
 useEffect(() => {
@@ -263,12 +274,12 @@ useEffect(() => {
   useEffect(() => {
     if (!workspaceReady) return;
     window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(collieMeta));
-    void fetch(workspaceApiUrl("collie"), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: collieMeta }) });
+    void syncWorkspace("collie", "PATCH", { workspace: collieMeta });
   }, [collieMeta, workspaceReady]);
 
   useEffect(() => {
     if (workspaceReady && selectedWorkspaceId !== "collie") {
-      void fetch(workspaceApiUrl(selectedWorkspaceId), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace }) });
+      void syncWorkspace(selectedWorkspaceId, "PATCH", { workspace });
     }
   }, [workspace, workspaceReady, selectedWorkspaceId]);
 
@@ -285,7 +296,7 @@ useEffect(() => {
     window.localStorage.setItem(ACTIVE_WORKSPACE_OWNER_KEY, workspace.id);
     window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, "main");
     window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, defaultWorkflows[0].name);
-    await fetch(workspaceApiUrl(workspace.id), { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: workspace.name, favorite: false }, workflows: defaultWorkflows, pages: [{ id: "main", name: "Main architecture" }], trashedPages: [], activePageId: "main", diagrams: { main: { nodes: [], edges: [] } } }) });
+    await syncWorkspace(workspace.id, "PUT", { workspace: { name: workspace.name, favorite: false }, workflows: defaultWorkflows, pages: [{ id: "main", name: "Main architecture" }], trashedPages: [], activePageId: "main", diagrams: { main: { nodes: [], edges: [] } } });
     onOpenWorkspace();
   };
 
@@ -341,16 +352,12 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
     window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, workflow.id);
     window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, workflow.name);
     window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, workflowWorkspaceId(selectedWorkspaceId, workflow.id));
-    await fetch(workspaceApiUrl(workflowWorkspaceId(selectedWorkspaceId, workflow.id)), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    await syncWorkspace(workflowWorkspaceId(selectedWorkspaceId, workflow.id), "PUT", {
         workspace: { name: `${workspace.name} · ${workflow.name}`, favorite: false },
         pages: [{ id: "main", name: "Main architecture" }],
         trashedPages: [],
         activePageId: "main",
         diagrams: { main: { nodes: [], edges: [] } },
-      }),
     });
     onOpenWorkspace();
   };
@@ -408,7 +415,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
         return next;
       });
       if (selectedWorkspaceId === id) setWorkspace((current) => ({ ...current, name: nextName }));
-      void fetch(workspaceApiUrl(id), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: nextName, favorite: existing?.favorite ?? false } }) });
+      void syncWorkspace(id, "PATCH", { workspace: { name: nextName, favorite: existing?.favorite ?? false } });
     }
     setDraftName(nextName);
     setRenamingId(null);
@@ -429,7 +436,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
         return next;
       });
       if (selectedWorkspaceId === id) setWorkspace((cur) => ({ ...cur, favorite }));
-      void fetch(workspaceApiUrl(id), { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ workspace: { name: current.name, favorite } }) });
+      void syncWorkspace(id, "PATCH", { workspace: { name: current.name, favorite } });
     }
   };
 

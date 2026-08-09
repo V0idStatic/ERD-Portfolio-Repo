@@ -23,6 +23,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  SelectionMode,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -34,6 +35,7 @@ import {
   Bot,
   BrainCircuit,
   Check,
+  ChevronDown,
   CircleHelp,
   Cloud,
   Copy,
@@ -52,7 +54,9 @@ import {
   Send,
   Maximize2,
   MessageSquareText,
+  MousePointer2,
   Network,
+  Hand,
   Pause,
   Play,
   Plus,
@@ -85,6 +89,15 @@ type NodeShape =
   | "database"
   | "cloud"
   | "terminal"
+  | "circle"
+  | "pentagon"
+  | "callout"
+  | "arrow"
+  | "hexagon"
+  | "triangle"
+  | "star"
+  | "parallelogram"
+  | "document"
   | "legend"
   | "legend-key"
   | "text"
@@ -170,6 +183,7 @@ type LegendDraft = {
 };
 
 type ArchitectureNode = Node<ArchitectureNodeData, "architecture">;
+type CanvasSnapshot = { nodes: ArchitectureNode[]; edges: Edge[] };
 
 type AnimationStep = {
   id: string;
@@ -843,11 +857,47 @@ const userFlowEdges: Edge[] = [
 
 const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "service", label: "Service" },
+  { value: "circle", label: "Circle" },
+  { value: "pentagon", label: "Pentagon" },
+  { value: "callout", label: "Callout" },
+  { value: "arrow", label: "Arrow" },
+  { value: "hexagon", label: "Hexagon" },
+  { value: "triangle", label: "Triangle" },
+  { value: "star", label: "Star" },
+  { value: "parallelogram", label: "Parallelogram" },
+  { value: "document", label: "Document" },
   { value: "decision", label: "Diamond" },
   { value: "database", label: "Database" },
   { value: "cloud", label: "Cloud" },
   { value: "terminal", label: "Start / End" },
 ];
+
+const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] = [
+  { id: "basic", label: "Shapes", shapes: ["service", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
+  { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "decision", "cloud"] },
+  { id: "erd", label: "ERD", shapes: ["database"] },
+];
+
+const defaultIconForShape = (shape: NodeShape): NodeIcon =>
+  shape === "decision" ? "decision" : shape === "database" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
+
+function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className?: string }) {
+  const svgProps = { className, viewBox: "0 0 32 26", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinejoin: "round" as const };
+  if (shape === "circle") return <svg {...svgProps}><circle cx="16" cy="13" r="10" /></svg>;
+  if (shape === "pentagon") return <svg {...svgProps}><path d="M16 2 29 11l-5 13H8L3 11Z" /></svg>;
+  if (shape === "callout") return <svg {...svgProps}><path d="M3 3h26v15H14l-5 5 1-5H3Z" /></svg>;
+  if (shape === "arrow") return <svg {...svgProps}><path d="M3 9h15V4l11 9-11 9v-5H3Z" /></svg>;
+  if (shape === "hexagon") return <svg {...svgProps}><path d="m9 2 14 0 7 11-7 11H9L2 13Z" /></svg>;
+  if (shape === "triangle") return <svg {...svgProps}><path d="M16 2 30 24H2Z" /></svg>;
+  if (shape === "star") return <svg {...svgProps}><path d="m16 2 3.7 7.5 8.3 1.2-6 5.8 1.4 8.2-7.4-3.9-7.4 3.9 1.4-8.2-6-5.8 8.3-1.2Z" /></svg>;
+  if (shape === "parallelogram") return <svg {...svgProps}><path d="M8 3h21l-5 20H3Z" /></svg>;
+  if (shape === "document") return <svg {...svgProps}><path d="M3 3h26v17l-5-3-5 5-5-5-5 3-6-3Z" /></svg>;
+  if (shape === "decision") return <svg {...svgProps}><path d="m16 1 15 12-15 12L1 13Z" /></svg>;
+  if (shape === "terminal") return <svg {...svgProps}><rect x="2" y="5" width="28" height="16" rx="8" /></svg>;
+  if (shape === "database") return <svg {...svgProps}><ellipse cx="16" cy="5" rx="11" ry="3" /><path d="M5 5v16c0 1.7 4.9 3 11 3s11-1.3 11-3V5" /><path d="M5 13c0 1.7 4.9 3 11 3s11-1.3 11-3" /></svg>;
+  if (shape === "cloud") return <svg {...svgProps}><path d="M7 22h17a6 6 0 0 0 .7-12A8 8 0 0 0 9.5 8 6 6 0 0 0 7 22Z" /></svg>;
+  return <svg {...svgProps}><rect x="3" y="4" width="26" height="18" rx="2" /></svg>;
+}
 
 const iconOptions: { value: NodeIcon; label: string }[] = [
   { value: "server", label: "Service" },
@@ -970,6 +1020,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [canvasMode, setCanvasMode] = useState<"select" | "move">("select");
+  const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ basic: true, flowchart: true, erd: true });
+  const [legendShapeFilter, setLegendShapeFilter] = useState<"all" | NodeShape>("all");
+  const selectionClipboardRef = useRef<{ nodes: ArchitectureNode[]; edges: Edge[] } | null>(null);
+  const undoHistoryRef = useRef<CanvasSnapshot[]>([]);
+  const redoHistoryRef = useRef<CanvasSnapshot[]>([]);
+  const latestCanvasSnapshotRef = useRef<CanvasSnapshot | null>(null);
+  const latestCanvasSignatureRef = useRef("");
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const [legendCreatorOpen, setLegendCreatorOpen] = useState(false);
@@ -1059,6 +1117,117 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // be pushed back to the cloud and re-corrupt the workspace.
   const cloudHydratedRef = useRef(false);
   const commentMarkers = (items: DiagramComment[]) => items.map(commentNode);
+
+  const createCanvasSnapshot = useCallback((): CanvasSnapshot => {
+    // Selection is UI state, not a diagram edit. Removing it also prevents a
+    // marquee selection from creating an undo step.
+    const snapshot = {
+      nodes: nodes.map(({ selected: _selected, ...node }) => ({ ...node })),
+      edges: edges.map(({ selected: _selected, ...edgeItem }) => ({ ...edgeItem })),
+    };
+    return JSON.parse(JSON.stringify(snapshot)) as CanvasSnapshot;
+  }, [edges, nodes]);
+
+  useEffect(() => {
+    const snapshot = createCanvasSnapshot();
+    const signature = JSON.stringify(snapshot);
+    if (!latestCanvasSnapshotRef.current) {
+      latestCanvasSnapshotRef.current = snapshot;
+      latestCanvasSignatureRef.current = signature;
+      return;
+    }
+    if (signature === latestCanvasSignatureRef.current) return;
+
+    // Coalesce rapid pointer updates (such as dragging a node) into one undo
+    // entry while preserving every meaningful diagram edit.
+    const timer = window.setTimeout(() => {
+      if (signature === latestCanvasSignatureRef.current) return;
+      undoHistoryRef.current = [...undoHistoryRef.current.slice(-49), latestCanvasSnapshotRef.current!];
+      redoHistoryRef.current = [];
+      latestCanvasSnapshotRef.current = snapshot;
+      latestCanvasSignatureRef.current = signature;
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [createCanvasSnapshot]);
+
+  // Keep copying inside the canvas so users can duplicate a marquee-selected
+  // group without writing diagram data to the operating system clipboard.
+  useEffect(() => {
+    const isEditableTarget = (target: EventTarget | null) => {
+      const element = target instanceof HTMLElement ? target : null;
+      return Boolean(element?.closest("input, textarea, [contenteditable='true']"));
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (animationMode === "presentation" || isEditableTarget(event.target)) return;
+      const modifier = event.metaKey || event.ctrlKey;
+      if (!modifier) return;
+
+      const key = event.key.toLowerCase();
+      const wantsRedo = (key === "z" && event.shiftKey) || key === "y";
+      if (key === "z" || wantsRedo) {
+        const history = wantsRedo ? redoHistoryRef.current : undoHistoryRef.current;
+        const target = history.pop();
+        const current = latestCanvasSnapshotRef.current;
+        if (!target || !current) return;
+        if (wantsRedo) undoHistoryRef.current.push(current);
+        else redoHistoryRef.current.push(current);
+        latestCanvasSnapshotRef.current = target;
+        latestCanvasSignatureRef.current = JSON.stringify(target);
+        setNodes(target.nodes);
+        setEdges(target.edges);
+        setSelectedId(null);
+        setSelectedEdgeId(null);
+        event.preventDefault();
+        return;
+      }
+
+      if (key === "c") {
+        const selectedNodes = nodes.filter((node) => node.selected);
+        if (!selectedNodes.length) return;
+        const selectedIds = new Set(selectedNodes.map((node) => node.id));
+        selectionClipboardRef.current = {
+          nodes: selectedNodes.map((node) => {
+            const { onLabelChange, onEditingChange, onTextStyleChange, ...data } = node.data;
+            return { ...node, data: { ...data }, selected: false };
+          }),
+          edges: edges.filter((edgeItem) => selectedIds.has(edgeItem.source) && selectedIds.has(edgeItem.target))
+            .map((edgeItem) => ({ ...edgeItem, selected: false })),
+        };
+        event.preventDefault();
+        return;
+      }
+
+      if (key !== "v" || !selectionClipboardRef.current) return;
+      const copied = selectionClipboardRef.current;
+      const idMap = new Map(copied.nodes.map((node) => [node.id, `${node.id}-copy-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`]));
+      const pastedNodes = copied.nodes.map((node) => ({
+        ...node,
+        id: idMap.get(node.id)!,
+        position: { x: node.position.x + 48, y: node.position.y + 48 },
+        selected: true,
+        data: {
+          ...node.data,
+          legendNodeIds: node.data.legendNodeIds?.map((id) => idMap.get(id) ?? id),
+        },
+      }));
+      const pastedEdges = copied.edges.map((edgeItem) => ({
+        ...edgeItem,
+        id: `${edgeItem.id}-copy-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        source: idMap.get(edgeItem.source)!,
+        target: idMap.get(edgeItem.target)!,
+        selected: true,
+      }));
+      setNodes((current) => synchronizeLegendKey([...current.map((node) => ({ ...node, selected: false })), ...pastedNodes]));
+      setEdges((current) => [...current.map((edgeItem) => ({ ...edgeItem, selected: false })), ...pastedEdges]);
+      setSelectedId(pastedNodes[0]?.id ?? null);
+      setSelectedEdgeId(null);
+      event.preventDefault();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [animationMode, edges, nodes, setEdges, setNodes]);
 
   useEffect(() => {
     setWorkflowTitle(window.localStorage.getItem(ACTIVE_WORKFLOW_NAME_KEY) || "Workflow");
@@ -3219,6 +3388,28 @@ const persistPageIndex = (
         </div>
       )}
       <section className="canvas-wrap" aria-label="CollieAI architecture canvas">
+        <div className="canvas-mode-tools" role="toolbar" aria-label="Canvas interaction mode">
+          <button
+            className={canvasMode === "select" ? "is-active" : ""}
+            type="button"
+            onClick={() => setCanvasMode("select")}
+            aria-pressed={canvasMode === "select"}
+            title="Select mode — drag on the canvas to select multiple components"
+          >
+            <MousePointer2 size={17} />
+            <span>Select mode</span>
+          </button>
+          <button
+            className={canvasMode === "move" ? "is-active" : ""}
+            type="button"
+            onClick={() => setCanvasMode("move")}
+            aria-pressed={canvasMode === "move"}
+            title="Move mode — drag to pan the canvas"
+          >
+            <Hand size={17} />
+            <span>Move mode</span>
+          </button>
+        </div>
         <ReactFlow
           nodes={renderedNodes}
           edges={renderedEdges}
@@ -3241,9 +3432,12 @@ const persistPageIndex = (
           onConnect={animationMode === "presentation" ? () => {} : onConnect}
           connectionMode={ConnectionMode.Loose}
           isValidConnection={isValidConnection}
-          nodesDraggable={animationMode !== "presentation"}
+          nodesDraggable={animationMode !== "presentation" && canvasMode === "select"}
           nodesFocusable={animationMode !== "presentation"}
           elementsSelectable={animationMode !== "presentation"}
+          panOnDrag={canvasMode === "move"}
+          selectionOnDrag={canvasMode === "select"}
+          selectionMode={SelectionMode.Partial}
           onNodeClick={(_, node) => {
             if (animationMode === "presentation") return;
             if (node.data.shape === "comment" && node.data.commentId) {
@@ -3297,7 +3491,7 @@ const persistPageIndex = (
               item.id === node.id ? { ...item, data: { ...item.data, editing: true } } : item,
             ));
           }}
-           className={commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""}
+           className={`${commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""} ${canvasMode === "move" ? "canvas-move-mode" : "canvas-select-mode"}`}
           fitView
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.18}
@@ -3332,6 +3526,17 @@ const persistPageIndex = (
 
       <aside className={`tools-panel ${(creatorOpen || legendCreatorOpen || textOpen || animationOpen) ? "is-open" : ""}`} aria-label="Diagram tools">
         <div className="tools-panel-tabs">
+          <button
+            className={`tools-panel-tab canvas-mode-toggle ${canvasMode === "select" ? "active" : ""}`}
+            type="button"
+            onClick={() => setCanvasMode((mode) => mode === "select" ? "move" : "select")}
+            aria-pressed={canvasMode === "select"}
+            aria-label={canvasMode === "select" ? "Select mode. Click to switch to move mode" : "Move mode. Click to switch to select mode"}
+            title={canvasMode === "select" ? "Select mode: click to switch to Move mode" : "Move mode: click to switch to Select mode"}
+          >
+            {canvasMode === "select" ? <MousePointer2 size={18} /> : <Hand size={18} />}
+            <span>{canvasMode === "select" ? "Select mode" : "Move mode"}</span>
+          </button>
           <button
             className={`tools-panel-tab ${creatorOpen ? "active" : ""}`}
             onClick={() => {
@@ -3423,6 +3628,7 @@ const persistPageIndex = (
           <div className="tools-panel-body">
             {creatorOpen && (
               <form
+                className="node-creator-form"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="create-node-title"
@@ -3459,50 +3665,46 @@ const persistPageIndex = (
                   </label>
                   <fieldset>
                     <legend>Shape</legend>
-                    <div className="option-grid shape-grid">
-                      {shapeOptions.map((option) => (
-                        <button
-                          type="button"
-                          key={option.value}
-                          className={nodeDraft.shape === option.value ? "active" : ""}
-                          onClick={() =>
-                            setNodeDraft({
-                              ...nodeDraft,
-                              shape: option.value,
-                              icon:
-                                option.value === "decision"
-                                  ? "decision"
-                                  : option.value === "database"
-                                    ? "database"
-                                    : option.value === "cloud"
-                                      ? "memory"
-                                      : option.value === "terminal"
-                                        ? "play"
-                                        : "server",
-                            })
-                          }
-                        >
-                          {option.value === "database" ? (
-                            <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
-                              <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
-                              <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
-                              <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
-                              <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
-                            </svg>
-                          ) : option.value === "cloud" ? (
-                            <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
-                              <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
-                            </svg>
-                          ) : option.value === "decision" ? (
-                            <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
-                              <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
-                            </svg>
-                          ) : (
-                            <i className={`shape-preview shape-preview-${option.value}`} />
-                          )}
-                          {option.label}
-                        </button>
-                      ))}
+                    <div className="shape-drawer">
+                      {shapeDrawerSections.map((section) => {
+                        const isOpen = openShapeSections[section.id];
+                        return (
+                          <section className="shape-drawer-section" key={section.id}>
+                            <button
+                              className="shape-drawer-heading"
+                              type="button"
+                              onClick={() => setOpenShapeSections((current) => ({ ...current, [section.id]: !current[section.id] }))}
+                              aria-expanded={isOpen}
+                            >
+                              <span>{section.label}</span>
+                              <ChevronDown size={15} />
+                            </button>
+                            {isOpen ? (
+                              <div className="shape-drawer-grid">
+                                {section.shapes.map((shape) => {
+                                  const option = shapeOptions.find((item) => item.value === shape)!;
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={shape}
+                                      title={option.label}
+                                      aria-label={option.label}
+                                      className={`shape-drawer-option shape-${shape} ${nodeDraft.shape === shape ? "active" : ""}`}
+                                      onClick={() => setNodeDraft({
+                                        ...nodeDraft,
+                                        shape,
+                                        icon: defaultIconForShape(shape),
+                                      })}
+                                    >
+                                      <ShapeOutlinePreview shape={shape} className="shape-outline-preview" />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                          </section>
+                        );
+                      })}
                     </div>
                   </fieldset>
                   <fieldset>
@@ -3540,15 +3742,18 @@ const persistPageIndex = (
                       )}
                     </div>
                   </fieldset>
+                </div>
+                <footer className="node-creator-footer">
                   <button className="create-node-submit" type="submit" disabled={!nodeDraft.label.trim()}>
                     <Plus size={16} />
                     Add to current view
                   </button>
-                </div>
+                </footer>
               </form>
             )}
             {legendCreatorOpen && (
               <form
+                className="legend-creator-form"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="create-legend-title"
@@ -3618,10 +3823,22 @@ const persistPageIndex = (
                   </div>
                   <fieldset>
                     <legend>Select components inside this legend</legend>
+                    <div className="legend-member-filter" role="group" aria-label="Filter components by shape">
+                      <span>Filter by shape</span>
+                      <div className="legend-shape-filter-options">
+                        <button type="button" className={legendShapeFilter === "all" ? "active" : ""} onClick={() => setLegendShapeFilter("all")}>All</button>
+                        {Array.from(new Set(componentNodes.map((node) => node.data.shape))).map((shape) => (
+                          <button type="button" key={shape} title={shape.replace("-", " ")} aria-label={shape.replace("-", " ")} className={legendShapeFilter === shape ? "active" : ""} onClick={() => setLegendShapeFilter(shape)}>
+                            <ShapeOutlinePreview shape={shape} className="legend-shape-filter-icon" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="legend-member-list legend-member-create-list">
-                      {componentNodes.length ? (
-                        componentNodes.map((node) => {
+                      {componentNodes.filter((node) => legendShapeFilter === "all" || node.data.shape === legendShapeFilter).length ? (
+                        componentNodes.filter((node) => legendShapeFilter === "all" || node.data.shape === legendShapeFilter).map((node) => {
                           const checked = legendDraft.nodeIds.includes(node.id);
+                          const ShapeIcon = iconMap[node.data.icon] ?? Server;
                           return (
                             <label key={node.id} className="legend-member-option">
                               <input
@@ -3636,12 +3853,18 @@ const persistPageIndex = (
                                   })
                                 }
                               />
-                              <span>{node.data.label}</span>
+                              <span className="legend-member-preview" data-shape={node.data.shape} style={{ "--preview-color": node.data.legendColor ?? (node.data.tone === "violet" ? "#8b5cf6" : node.data.tone === "amber" ? "#f59e0b" : node.data.tone === "emerald" ? "#10b981" : "#0ea5c6") } as CSSProperties}>
+                                <ShapeIcon size={15} aria-hidden="true" />
+                              </span>
+                              <span className="legend-member-name">
+                                <strong>{node.data.label}</strong>
+                                <small>{node.data.shape.replace("-", " ")}</small>
+                              </span>
                             </label>
                           );
                         })
                       ) : (
-                        <p className="legend-empty-state">Add components before creating a legend area.</p>
+                        <p className="legend-empty-state">No components match this shape filter.</p>
                       )}
                     </div>
                   </fieldset>
@@ -4259,30 +4482,14 @@ const persistPageIndex = (
               <legend>Shape</legend>
               <div className="option-grid shape-grid">
                 {shapeOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    className={selectedNode.data.shape === option.value ? "active" : ""}
+                    <button
+                      key={option.value}
+                      title={option.label}
+                      aria-label={option.label}
+                      className={selectedNode.data.shape === option.value ? "active" : ""}
                     onClick={() => updateSelected({ shape: option.value })}
                   >
-                    {option.value === "database" ? (
-                      <svg className="shape-preview shape-preview-database" width="18" height="14" viewBox="0 0 18 14">
-                        <path fill="currentColor" opacity="0.5" d="M3 10 L3 12 A2.5 1.5 0 0 0 15 12 L15 10 A2.5 1.5 0 0 1 3 10 Z" />
-                        <path fill="currentColor" opacity="0.7" d="M3 7 L3 9 A2.5 1.5 0 0 0 15 9 L15 7 A2.5 1.5 0 0 1 3 7 Z" />
-                        <path fill="currentColor" d="M3 4 L3 6 A2.5 1.5 0 0 0 15 6 L15 4 A2.5 1.5 0 0 1 3 4 Z" />
-                        <ellipse fill="currentColor" cx="9" cy="4" rx="6" ry="1.5" />
-                      </svg>
-                    ) : option.value === "cloud" ? (
-                      <svg className="shape-preview shape-preview-cloud" width="21" height="14" viewBox="0 0 21 14">
-                        <path fill="#fff" stroke="currentColor" strokeWidth="1.1" d="M3 12 C1 12 1 9.5 1 8 C1 6 2.5 5 3.5 5 C3.5 4 4.5 2 6.5 2 C8 2 9 3 9.5 3.5 C10.5 2.5 12 2 14 2 C16 2 17 3 17.5 4 C18.5 4 20 5 20 7 C20 10 19 12 17 12 Z" />
-                      </svg>
-                    ) : option.value === "decision" ? (
-                      <svg className="shape-preview shape-preview-decision" width="22" height="18" viewBox="0 0 22 18">
-                        <path d="M11 1 L21 9 L11 17 L1 9 Z" fill="#fff" stroke="currentColor" strokeWidth="1.5" />
-                      </svg>
-                    ) : (
-                      <i className={`shape-preview shape-preview-${option.value}`} />
-                    )}
-                    {option.label}
+                    <ShapeOutlinePreview shape={option.value} className="shape-outline-preview" />
                   </button>
                 ))}
               </div>
