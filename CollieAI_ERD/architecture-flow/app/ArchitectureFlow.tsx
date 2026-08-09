@@ -90,7 +90,7 @@ Type,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DashboardHome from "./DashboardHome";
 
 type NodeShape =
@@ -128,6 +128,8 @@ type DiagramComment = {
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
 type EdgeBend = { x: number; y: number };
 type ConnectorLineStyle = "solid" | "dashed" | "flow-dot";
+type ErdCardinality = "default" | "one" | "zero-or-one" | "many" | "one-or-many" | "zero-or-many";
+type ErdColumn = { id: string; name: string };
 type DiagramHistoryEntry = {
   id: string;
   timestamp: string;
@@ -185,7 +187,15 @@ type ArchitectureNodeData = {
   fillOpacity?: number;
   outlineColor?: string;
   outlineStyle?: "solid" | "dashed" | "small-dashed";
+  erdColumns?: Array<ErdColumn | string>;
+  erdExpanded?: boolean;
+  onErdExpandedChange?: (expanded: boolean) => void;
 };
+
+const normalizeErdColumns = (columns?: Array<ErdColumn | string>): ErdColumn[] =>
+  (columns ?? []).map((column, index) => typeof column === "string"
+    ? { id: `legacy-column-${index}`, name: column }
+    : column);
 
 type LegendKeyEntry = {
   id: string;
@@ -436,6 +446,9 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
     );
   }
 
+  const erdColumns = normalizeErdColumns(data.erdColumns);
+  const namedErdColumns = erdColumns.filter((column) => column.name.trim());
+
   return (
       <div
         className={`architecture-node shape-${data.shape} tone-${data.tone} ${
@@ -458,7 +471,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         } as CSSProperties
       }
     >
-      {data.shape !== "legend-key" && data.shape !== "legend" && (
+      {data.shape !== "legend-key" && data.shape !== "legend" && data.shape !== "database" && (
         <NodeResizer
           minWidth={80}
           minHeight={40}
@@ -483,6 +496,18 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
                   {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
                 </>
               )
+            ) : data.shape === "database" ? (
+              <>
+                {namedErdColumns.map((column, index) => {
+                  const top = data.erdExpanded ? 52 + index * 28 + 14 : 26;
+                  return (
+                    <Fragment key={column.id}>
+                      <Handle className="side-handle erd-column-handle" type="source" position={Position.Left} id={`erd-left-${column.id}`} style={{ left: 0, top }} />
+                      <Handle className="side-handle erd-column-handle" type="source" position={Position.Right} id={`erd-right-${column.id}`} style={{ left: "100%", right: "auto", top }} />
+                    </Fragment>
+                  );
+                })}
+              </>
             ) : data.shape === "decision"
         ? (() => {
             // Diamond corners in % (matches SVG viewBox 230×126)
@@ -532,14 +557,6 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           <path fill="url(#cloudFill)" d="M34 100 C12 100 4 84 4 66 C4 44 16 30 34 28 C36 14 52 4 72 4 C94 4 108 16 114 28 C124 12 144 4 168 4 C198 4 218 20 226 36 C250 34 286 46 286 74 C286 96 264 100 244 100 Z" />
         </svg>
       ) : null}
-      {data.shape === "database" ? (
-        <svg className="database-art" viewBox="0 0 270 80" preserveAspectRatio="none" aria-hidden="true">
-          <path className="db-body" d="M27 48 L27 66 A108 8 0 0 0 243 66 L243 48 A108 8 0 0 1 27 48 Z" />
-          <path className="db-body" d="M27 28 L27 46 A108 8 0 0 0 243 46 L243 28 A108 8 0 0 1 27 28 Z" />
-          <path className="db-body" d="M27 8 L27 26 A108 8 0 0 0 243 26 L243 8 A108 8 0 0 1 27 8 Z" />
-          <ellipse className="db-top" cx="135" cy="8" rx="108" ry="8" />
-        </svg>
-      ) : null}
       {data.shape === "decision" ? (
         <svg className="decision-art" viewBox="0 0 230 126" preserveAspectRatio="none" aria-hidden="true">
           <path d="M115 2 L228 63 L115 124 L2 63 Z" />
@@ -550,24 +567,49 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           <path d="M48 2 H142 L188 75 L142 148 H48 L2 75 Z" />
         </svg>
       ) : null}
-      <div className="node-inner">
-        {data.shape !== "database" && data.shape !== "decision" && !data.hideIcon ? (
-          <span className="node-icon" aria-hidden="true">
-            {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
-          </span>
-        ) : null}
-        <div className="node-copy">
-          <strong>{data.label}</strong>
-          {data.description ? <span>{data.description}</span> : null}
+      {data.shape === "database" ? (
+        <div className="erd-table-card">
+          <header>
+            <span className="erd-table-icon" aria-hidden="true"><Database size={16} /></span>
+            <strong>{data.label}</strong>
+            <button
+              type="button"
+              className="nodrag nopan"
+              disabled={!namedErdColumns.length}
+              onClick={(event) => {
+                event.stopPropagation();
+                data.onErdExpandedChange?.(!data.erdExpanded);
+              }}
+            >
+              {data.erdExpanded && namedErdColumns.length ? "Hide" : "Details"}
+            </button>
+          </header>
+          {data.erdExpanded && namedErdColumns.length ? (
+            <div className="erd-column-list">
+              {namedErdColumns.map((column) => <div key={column.id}>{column.name}</div>)}
+            </div>
+          ) : null}
         </div>
-      </div>
-            {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
+      ) : (
+        <div className="node-inner">
+          {data.shape !== "decision" && !data.hideIcon ? (
+            <span className="node-icon" aria-hidden="true">
+              {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
+            </span>
+          ) : null}
+          <div className="node-copy">
+            <strong>{data.label}</strong>
+            {data.description ? <span>{data.description}</span> : null}
+          </div>
+        </div>
+      )}
+            {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
         <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
       ))}
-      {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
+      {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
         <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
       ))}
-      {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
+      {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
         <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
       ))}
     </div>
@@ -622,6 +664,8 @@ function FlowingConnectorEdge({
     onLabelPositionChange?: (position?: EdgeBend) => void;
     _flowDuration?: number;
     lineStyle?: ConnectorLineStyle;
+    sourceCardinality?: ErdCardinality;
+    targetCardinality?: ErdCardinality;
   };
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
   // Keep one editable elbow control, like a classic orthogonal diagram line.
@@ -676,6 +720,46 @@ function FlowingConnectorEdge({
   };
   const jointControl = joint ?? { x: mx, y: my };
   const labelPosition = edgeData.labelPosition ?? { x: mx, y: my };
+  const renderCardinalityMarker = (
+    key: string,
+    x: number,
+    y: number,
+    position: Position,
+    cardinality: ErdCardinality,
+  ) => {
+    const rotation = position === Position.Left ? 180 : position === Position.Top ? -90 : position === Position.Bottom ? 90 : 0;
+    const hasCircle = cardinality === "zero-or-one" || cardinality === "zero-or-many";
+    const hasBar = cardinality === "one" || cardinality === "zero-or-one" || cardinality === "one-or-many";
+    const hasCrowFoot = cardinality === "many" || cardinality === "one-or-many" || cardinality === "zero-or-many";
+    // Local x=0 is the table edge and positive x points out along the
+    // relationship. Keep the fork arms nearest the table so the crow's foot
+    // always opens toward its entity after the group is rotated for each side.
+    const barX = hasCrowFoot ? 24 : 8;
+    const circleX = hasCrowFoot ? 24 : 19;
+    const crowVertexX = 17;
+    const crowArmX = 6;
+    return (
+      <g
+        key={key}
+        className="erd-cardinality-marker"
+        transform={`translate(${x} ${y}) rotate(${rotation})`}
+        style={{
+          stroke: typeof style?.stroke === "string" ? style.stroke : "#64748b",
+          strokeWidth: typeof style?.strokeWidth === "number" ? style.strokeWidth : 1.7,
+        }}
+        aria-hidden="true"
+      >
+        {hasCircle ? <circle cx={circleX} cy="0" r="5.5" /> : null}
+        {hasBar ? <line x1={barX} y1="-7" x2={barX} y2="7" /> : null}
+        {hasCrowFoot ? (
+          <>
+            <line x1={crowVertexX} y1="0" x2={crowArmX} y2="-8" />
+            <line x1={crowVertexX} y1="0" x2={crowArmX} y2="8" />
+          </>
+        ) : null}
+      </g>
+    );
+  };
   const dragLabel = (event: ReactPointerEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -739,6 +823,12 @@ function FlowingConnectorEdge({
         interactionWidth={24}
       />
       <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
+      {edgeData.sourceCardinality && edgeData.sourceCardinality !== "default"
+        ? renderCardinalityMarker("source-cardinality", sourceX, sourceY, sourcePosition, edgeData.sourceCardinality)
+        : null}
+      {edgeData.targetCardinality && edgeData.targetCardinality !== "default"
+        ? renderCardinalityMarker("target-cardinality", targetX, targetY, targetPosition, edgeData.targetCardinality)
+        : null}
       {label ? (
         <foreignObject
           className="edge-label-foreign-object"
@@ -1331,6 +1421,17 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // be pushed back to the cloud and re-corrupt the workspace.
   const cloudHydratedRef = useRef(false);
   const commentMarkers = (items: DiagramComment[]) => items.map(commentNode);
+  const erdLayoutSignature = nodes
+    .filter((node) => node.data.shape === "database")
+    .map((node) => `${node.id}:${node.data.erdExpanded ? 1 : 0}:${normalizeErdColumns(node.data.erdColumns).map((column) => `${column.id}=${column.name}`).join(",")}`)
+    .join("|");
+
+  useEffect(() => {
+    const erdNodeIds = nodes.filter((node) => node.data.shape === "database").map((node) => node.id);
+    if (!erdNodeIds.length) return;
+    const frame = requestAnimationFrame(() => updateNodeInternals(erdNodeIds));
+    return () => cancelAnimationFrame(frame);
+  }, [erdLayoutSignature, updateNodeInternals]);
 
   useEffect(() => {
     skipAnnotationSaveRef.current = true;
@@ -1668,6 +1769,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
+  const selectedEdgeSourceNode = selectedEdge ? nodes.find((node) => node.id === selectedEdge.source) : null;
+  const selectedEdgeTargetNode = selectedEdge ? nodes.find((node) => node.id === selectedEdge.target) : null;
+  const selectedEdgeIsErd = selectedEdgeSourceNode?.data.shape === "database" && selectedEdgeTargetNode?.data.shape === "database";
   const selectedEdgeLineStyle: ConnectorLineStyle =
     ((selectedEdge?.data as { lineStyle?: ConnectorLineStyle } | undefined)?.lineStyle) ??
     (selectedEdge?.animated ? "dashed" : "solid");
@@ -1766,7 +1870,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   };
 
   const onConnect = useCallback(
-    (connection: Connection) =>
+    (connection: Connection) => {
+      const isErdRelationship = nodes.find((node) => node.id === connection.source)?.data.shape === "database"
+        && nodes.find((node) => node.id === connection.target)?.data.shape === "database";
       setEdges((current) =>
         addEdge(
           {
@@ -1781,18 +1887,27 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
             labelBgStyle: { fill: "#ffffff", fillOpacity: 1, stroke: "#ffffff", strokeWidth: 4 },
             labelBgPadding: [6, 4],
             labelBgBorderRadius: 5,
+            data: isErdRelationship
+              ? { sourceCardinality: "one" satisfies ErdCardinality, targetCardinality: "many" satisfies ErdCardinality }
+              : undefined,
           },
           current,
         ),
-      ),
-    [setEdges],
+      );
+    },
+    [nodes, setEdges],
   );
 
   const isValidConnection = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.sourceHandle) return true;
       return !edges.some(
-        (e) => e.source === connection.source && e.sourceHandle === connection.sourceHandle,
+        (edgeItem) =>
+          (edgeItem.source === connection.source && edgeItem.sourceHandle === connection.sourceHandle)
+          || (edgeItem.target === connection.source && edgeItem.targetHandle === connection.sourceHandle)
+          || (Boolean(connection.target && connection.targetHandle)
+            && ((edgeItem.source === connection.target && edgeItem.sourceHandle === connection.targetHandle)
+              || (edgeItem.target === connection.target && edgeItem.targetHandle === connection.targetHandle))),
       );
     },
     [edges],
@@ -3546,6 +3661,28 @@ const persistPageIndex = (
   const renderedNodes = useMemo(() => {
     const hasAnimationState = animActiveIds.size > 0 || animCompletedIds.size > 0;
     return nodes.map((node) => {
+      if (node.data.shape === "database") {
+        const columnCount = node.data.erdExpanded
+          ? normalizeErdColumns(node.data.erdColumns).filter((column) => column.name.trim()).length
+          : 0;
+        const height = 52 + columnCount * 28;
+        const state = hasAnimationState
+          ? (animActiveIds.has(node.id) ? "active" : animCompletedIds.has(node.id) ? "completed" : "inactive")
+          : node.data._animState;
+        return {
+          ...node,
+          width: 270,
+          height,
+          style: { ...node.style, width: 270, height },
+          data: {
+            ...node.data,
+            _animState: state,
+            onErdExpandedChange: (expanded: boolean) => setNodes((items) => items.map((item) =>
+              item.id === node.id ? { ...item, data: { ...item.data, erdExpanded: expanded } } : item,
+            )),
+          },
+        };
+      }
       if (node.data.shape === "text") {
         return {
           ...node,
@@ -3563,15 +3700,26 @@ const persistPageIndex = (
     });
   }, [animActiveIds, animCompletedIds, nodes, setNodes]);
 
-  const renderedEdges = useMemo(() => edges.map((edgeItem) => ({
-    ...edgeItem,
-    selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
-    data: {
-      ...edgeItem.data,
-      onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
-      onLabelPositionChange: (position?: EdgeBend) => updateEdgeLabelPosition(edgeItem.id, position),
-    },
-  })), [edges, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition]);
+  const renderedEdges = useMemo(() => edges.map((edgeItem) => {
+    const isErdRelationship = nodes.find((node) => node.id === edgeItem.source)?.data.shape === "database"
+      && nodes.find((node) => node.id === edgeItem.target)?.data.shape === "database";
+    const edgeData = edgeItem.data as { sourceCardinality?: ErdCardinality; targetCardinality?: ErdCardinality } | undefined;
+    const targetCardinality = isErdRelationship ? (edgeData?.targetCardinality ?? "many") : "default";
+    return {
+      ...edgeItem,
+      markerEnd: isErdRelationship && targetCardinality !== "default" ? undefined : edgeItem.markerEnd,
+      selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
+      data: {
+        ...edgeItem.data,
+        ...(isErdRelationship ? {
+          sourceCardinality: edgeData?.sourceCardinality ?? "one",
+          targetCardinality,
+        } : {}),
+        onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
+        onLabelPositionChange: (position?: EdgeBend) => updateEdgeLabelPosition(edgeItem.id, position),
+      },
+    };
+  }), [edges, nodes, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition]);
   const activeAnnotationConfig = annotationTool === "eraser" ? null : annotationConfig[annotationTool];
 
   return (
@@ -4313,12 +4461,14 @@ const persistPageIndex = (
                                       key={shape}
                                       title={option.label}
                                       aria-label={option.label}
-                                      className={`shape-drawer-option shape-${shape} ${selectedCreatorOption === `shape:${section.id}:${shape}` ? "active" : ""}`}
+                                      className={`shape-drawer-option ${selectedCreatorOption === `shape:${section.id}:${shape}` ? "active" : ""}`}
                                       aria-pressed={selectedCreatorOption === `shape:${section.id}:${shape}`}
                                       onClick={() => {
                                         setSelectedCreatorOption(`shape:${section.id}:${shape}`);
                                         setNodeDraft((current) => ({
                                           ...current,
+                                          label: shape === "database" && current.label === "New Service" ? "New Table" : current.label,
+                                          description: shape === "database" ? "" : current.description,
                                           shape,
                                           icon: defaultIconForShape(shape),
                                           serviceLogo: undefined,
@@ -5034,20 +5184,22 @@ const persistPageIndex = (
         ) : selectedNode ? (
           <div className="inspector-body">
             <label>
-              <span>Title</span>
+              <span>{selectedNode.data.shape === "database" ? "Table name" : "Title"}</span>
               <input
                 value={selectedNode.data.label}
                 onChange={(event) => updateSelected({ label: event.target.value })}
               />
             </label>
-            <label>
-              <span>Description</span>
-              <textarea
-                rows={3}
-                value={selectedNode.data.description ?? ""}
-                onChange={(event) => updateSelected({ description: event.target.value })}
-              />
-            </label>
+            {selectedNode.data.shape !== "database" ? (
+              <label>
+                <span>Description</span>
+                <textarea
+                  rows={3}
+                  value={selectedNode.data.description ?? ""}
+                  onChange={(event) => updateSelected({ description: event.target.value })}
+                />
+              </label>
+            ) : null}
             <div className="editor-section-heading section-type-heading"><span>02</span><div><strong>Typography</strong><small>Text scale and consistency</small></div></div>
             <fieldset className="component-type-controls inspector-control-card">
               <legend>Text size</legend>
@@ -5118,50 +5270,159 @@ const persistPageIndex = (
                 <i aria-hidden="true" />
               </label>
             </fieldset>
-            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>Shape and icon selection</small></div></div>
-            <fieldset className="component-shape-controls inspector-control-card">
-              <legend>Shape</legend>
-              <div className="option-grid shape-grid">
-                {shapeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      title={option.label}
-                      aria-label={option.label}
-                      className={selectedNode.data.shape === option.value ? "active" : ""}
-                    onClick={() => updateSelected({ shape: option.value })}
+            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedNode.data.shape === "database" ? "Table columns and details" : selectedNode.data.shape === "service" ? "Service selection" : "Shape and icon selection"}</small></div></div>
+            {selectedNode.data.shape === "database" ? (
+              <fieldset className="component-erd-controls inspector-control-card">
+                <legend>ERD table</legend>
+                <div className="erd-columns-control">
+                  <span>Columns</span>
+                  <div className="erd-column-editor-list">
+                    {normalizeErdColumns(selectedNode.data.erdColumns).map((column, index, columns) => (
+                      <label key={column.id}>
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        <input
+                          value={column.name}
+                          placeholder="column_name or id (PK)"
+                          onChange={(event) => updateSelected({
+                            erdColumns: columns.map((item) => item.id === column.id ? { ...item, name: event.target.value } : item),
+                          })}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="add-erd-column"
+                    disabled={normalizeErdColumns(selectedNode.data.erdColumns).some((column) => !column.name.trim())}
+                    onClick={() => updateSelected({
+                      erdColumns: [
+                        ...normalizeErdColumns(selectedNode.data.erdColumns),
+                        { id: `erd-column-${Date.now()}`, name: "" },
+                      ],
+                    })}
                   >
-                    <ShapeOutlinePreview shape={option.value} className="shape-outline-preview" />
+                    <Plus size={14} /> Add column
                   </button>
-                ))}
-              </div>
-            </fieldset>
-            <fieldset className="component-icon-controls inspector-control-card">
-              <legend>Icon</legend>
-              <div className="option-grid icon-grid">
-                <button
-                  title="No icon"
-                  aria-label="No icon"
-                  className={selectedNode.data.hideIcon ? "active icon-none-option" : "icon-none-option"}
-                  onClick={() => updateSelected({ hideIcon: true })}
-                >
-                  <X size={18} />
-                </button>
-                {iconOptions.map((option) => {
-                  const Icon = iconMap[option.value];
-                  return (
+                  <small>Add and name one column at a time. Connector points appear after a column has a name.</small>
+                </div>
+                <label className="description-toggle inspector-apply-toggle">
+                  <span>
+                    <strong>Show column details</strong>
+                    <small>Expand this table on the canvas.</small>
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(selectedNode.data.erdExpanded && normalizeErdColumns(selectedNode.data.erdColumns).some((column) => column.name.trim()))}
+                    disabled={!normalizeErdColumns(selectedNode.data.erdColumns).some((column) => column.name.trim())}
+                    onChange={(event) => updateSelected({ erdExpanded: event.target.checked })}
+                  />
+                  <i aria-hidden="true" />
+                </label>
+              </fieldset>
+            ) : selectedNode.data.shape === "service" ? (
+              <fieldset className="component-service-controls inspector-control-card">
+                <legend>Service</legend>
+                <div className="service-preset-grid">
+                  {servicePresets.map((service) => {
+                    const isActive = service.logo
+                      ? selectedNode.data.serviceLogo === service.logo
+                      : selectedNode.data.serviceSymbol === service.kind;
+                    return (
+                      <button
+                        type="button"
+                        key={service.label}
+                        title={service.label}
+                        aria-label={`Use ${service.label} service preset`}
+                        aria-pressed={isActive}
+                        className={isActive ? "active" : ""}
+                        onClick={() => updateSelected({
+                          label: service.label,
+                          shape: "service",
+                          icon: service.icon,
+                          tone: service.tone,
+                          serviceLogo: service.logo,
+                          serviceSymbol: service.kind,
+                          hideIcon: false,
+                          legendColor: undefined,
+                        })}
+                      >
+                        {service.logo ? (
+                          <img className="service-preset-logo" src={service.logo} alt="" />
+                        ) : service.kind === "mobile" ? (
+                          <Smartphone className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "user" ? (
+                          <UserRound className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "computer" ? (
+                          <Monitor className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "server" ? (
+                          <Server className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "security" ? (
+                          <LockKeyhole className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "cloud" ? (
+                          <Cloud className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "domain" ? (
+                          <Globe2 className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "auth" ? (
+                          <UserRoundCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "protection" ? (
+                          <ShieldCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "ai" ? (
+                          <BrainCircuit className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : (
+                          <Database className="service-preset-symbol" size={20} aria-hidden="true" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            ) : (
+              <>
+                <fieldset className="component-shape-controls inspector-control-card">
+                  <legend>Shape</legend>
+                  <div className="option-grid shape-grid">
+                    {shapeOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        title={option.label}
+                        aria-label={option.label}
+                        className={selectedNode.data.shape === option.value ? "active" : ""}
+                        onClick={() => updateSelected({ shape: option.value })}
+                      >
+                        <ShapeOutlinePreview shape={option.value} className="shape-outline-preview" />
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <fieldset className="component-icon-controls inspector-control-card">
+                  <legend>Icon</legend>
+                  <div className="option-grid icon-grid">
                     <button
-                      key={option.value}
-                      title={option.label}
-                      aria-label={option.label}
-                      className={!selectedNode.data.hideIcon && selectedNode.data.icon === option.value ? "active" : ""}
-                      onClick={() => updateSelected({ icon: option.value, hideIcon: false })}
+                      title="No icon"
+                      aria-label="No icon"
+                      className={selectedNode.data.hideIcon ? "active icon-none-option" : "icon-none-option"}
+                      onClick={() => updateSelected({ hideIcon: true })}
                     >
-                      <Icon size={18} />
+                      <X size={18} />
                     </button>
-                  );
-                })}
-              </div>
-            </fieldset>
+                    {iconOptions.map((option) => {
+                      const Icon = iconMap[option.value];
+                      return (
+                        <button
+                          key={option.value}
+                          title={option.label}
+                          aria-label={option.label}
+                          className={!selectedNode.data.hideIcon && selectedNode.data.icon === option.value ? "active" : ""}
+                          onClick={() => updateSelected({ icon: option.value, hideIcon: false })}
+                        >
+                          <Icon size={18} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              </>
+            )}
             <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
             <fieldset className="component-accent-controls inspector-control-card">
               <legend>Accent and icon color</legend>
@@ -5281,6 +5542,46 @@ const persistPageIndex = (
               </div>
               <small>Applies to this connection label only.</small>
             </label>
+            {selectedEdgeIsErd ? (
+              <fieldset className="erd-relationship-controls inspector-control-card">
+                <legend>ERD relationship</legend>
+                <div className="erd-cardinality-grid">
+                  <label>
+                    <span>{selectedEdgeSourceNode?.data.label ?? "Source"} end</span>
+                    <select
+                      value={((selectedEdge.data as { sourceCardinality?: ErdCardinality } | undefined)?.sourceCardinality) ?? "one"}
+                      onChange={(event) => updateSelectedEdge({
+                        data: { ...selectedEdge.data, sourceCardinality: event.target.value as ErdCardinality },
+                      })}
+                    >
+                      <option value="default">Default</option>
+                      <option value="one">One (1)</option>
+                      <option value="zero-or-one">Zero or one (0..1)</option>
+                      <option value="many">Many (*)</option>
+                      <option value="one-or-many">One or many (1..*)</option>
+                      <option value="zero-or-many">Zero or many (0..*)</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>{selectedEdgeTargetNode?.data.label ?? "Target"} end</span>
+                    <select
+                      value={((selectedEdge.data as { targetCardinality?: ErdCardinality } | undefined)?.targetCardinality) ?? "many"}
+                      onChange={(event) => updateSelectedEdge({
+                        data: { ...selectedEdge.data, targetCardinality: event.target.value as ErdCardinality },
+                      })}
+                    >
+                      <option value="default">Default arrow</option>
+                      <option value="one">One (1)</option>
+                      <option value="zero-or-one">Zero or one (0..1)</option>
+                      <option value="many">Many (*)</option>
+                      <option value="one-or-many">One or many (1..*)</option>
+                      <option value="zero-or-many">Zero or many (0..*)</option>
+                    </select>
+                  </label>
+                </div>
+                <small>Each selector controls the notation shown at that end of the relationship.</small>
+              </fieldset>
+            ) : null}
             <fieldset>
               <legend>Line style</legend>
               <div className="line-style-grid">
