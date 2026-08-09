@@ -24,6 +24,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
+  ViewportPortal,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -48,12 +49,14 @@ import {
   HardDrive,
   History as HistoryIcon,
   LayoutDashboard,
+  LockKeyhole,
   List,
   LoaderCircle,
   MessageCircle,
   Send,
   Maximize2,
   MessageSquareText,
+  Monitor,
   MousePointer2,
   Network,
   Hand,
@@ -69,6 +72,7 @@ import {
   SkipForward,
   Sparkles,
   Square,
+  Smartphone,
   Trash2,
   UserRound,
   Workflow,
@@ -116,6 +120,7 @@ type DiagramComment = {
 };
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
 type EdgeBend = { x: number; y: number };
+type ConnectorLineStyle = "solid" | "dashed" | "flow-dot";
 type DiagramHistoryEntry = {
   id: string;
   timestamp: string;
@@ -166,6 +171,8 @@ type ArchitectureNodeData = {
   onEditingChange?: (editing: boolean) => void;
   onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
   commentId?: string;
+  serviceLogo?: string;
+  serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security";
 };
 
 type LegendKeyEntry = {
@@ -184,6 +191,12 @@ type LegendDraft = {
 
 type ArchitectureNode = Node<ArchitectureNodeData, "architecture">;
 type CanvasSnapshot = { nodes: ArchitectureNode[]; edges: Edge[] };
+type AlignmentGuide = {
+  axis: "x" | "y";
+  position: number;
+  start: number;
+  end: number;
+};
 
 type AnimationStep = {
   id: string;
@@ -225,6 +238,10 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
 function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
   const animState = data._animState;
+  const isServiceNode = Boolean(data.serviceLogo || data.serviceSymbol);
+  const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
+  const connectorStops = isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
+  const serviceTileSize = Math.min((width ?? 112) * 0.96, (height ?? 142) - 32);
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
     const opacity = data.legendOpacity ?? 0.12;
@@ -393,14 +410,15 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   }
 
   return (
-    <div
-      className={`architecture-node shape-${data.shape} tone-${data.tone} ${
-        selected ? "is-selected" : ""
-      } ${animState ? `anim-${animState}` : ""}`}
+      <div
+        className={`architecture-node shape-${data.shape} tone-${data.tone} ${
+          selected ? "is-selected" : ""
+      } ${isServiceNode ? "service-node" : ""} ${animState ? `anim-${animState}` : ""}`}
       style={
         {
           "--node-title-size": `${data.titleSize ?? 13}px`,
           "--node-description-size": `${data.descriptionSize ?? 10}px`,
+          "--service-icon-size": `${serviceIconSize}px`,
         } as CSSProperties
       }
     >
@@ -413,7 +431,23 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           handleStyle={{ width: 10, height: 10, borderRadius: 3 }}
         />
       )}
-            {data.shape === "decision"
+            {isServiceNode ? (
+              data.shape === "service" ? (
+                <div className="service-connector-frame" aria-hidden="true">
+                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%`, top: 0 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%`, top: "100%", bottom: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ left: 0, top: `${pct}%` }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ left: "100%", top: `${pct}%`, right: "auto" }} />)}
+                </div>
+              ) : (
+                <>
+                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: 0 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: serviceTileSize, bottom: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
+                </>
+              )
+            ) : data.shape === "decision"
         ? (() => {
             // Diamond corners in % (matches SVG viewBox 230×126)
             const corners = [
@@ -448,7 +482,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
               <Handle key="diamond-left" className="side-handle diamond-tip-handle" type="source" position={Position.Left} id="left" style={{ top: "50%" }} />,
             ];
           })()
-        : [10, 30, 50, 70, 90].map((pct, i) => (
+        : connectorStops.map((pct, i) => (
             <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
           ))}
       {data.shape === "cloud" ? (
@@ -475,10 +509,15 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           <path d="M115 2 L228 63 L115 124 L2 63 Z" />
         </svg>
       ) : null}
+      {data.shape === "hexagon" && (data.serviceLogo || data.serviceSymbol) ? (
+        <svg className="service-hexagon-art" viewBox="0 0 190 150" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M48 2 H142 L188 75 L142 148 H48 L2 75 Z" />
+        </svg>
+      ) : null}
       <div className="node-inner">
         {data.shape !== "database" && data.shape !== "decision" ? (
           <span className="node-icon" aria-hidden="true">
-            <Icon size={17} strokeWidth={2.2} />
+            {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
           </span>
         ) : null}
         <div className="node-copy">
@@ -486,13 +525,13 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           {data.description ? <span>{data.description}</span> : null}
         </div>
       </div>
-            {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+            {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
         <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
       ))}
-      {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+      {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
         <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
       ))}
-      {data.shape !== "decision" && [10, 30, 50, 70, 90].map((pct, i) => (
+      {!isServiceNode && data.shape !== "decision" && connectorStops.map((pct, i) => (
         <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
       ))}
     </div>
@@ -508,6 +547,16 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "terminal") return { width: 250, height: 62 };
   if (shape === "text") return { width: 200, height: 40 };
   return { width: 270, height: 78 };
+};
+
+const nodeSize = (node: ArchitectureNode) => {
+  const fallback = defaultShapeSize(node.data.shape);
+  const styleWidth = Number.parseFloat(String(node.style?.width ?? ""));
+  const styleHeight = Number.parseFloat(String(node.style?.height ?? ""));
+  return {
+    width: node.measured?.width ?? node.width ?? (Number.isFinite(styleWidth) ? styleWidth : fallback.width),
+    height: node.measured?.height ?? node.height ?? (Number.isFinite(styleHeight) ? styleHeight : fallback.height),
+  };
 };
 
 function FlowingConnectorEdge({
@@ -533,6 +582,7 @@ function FlowingConnectorEdge({
     joints?: EdgeBend[];
     onJointsChange?: (joints: EdgeBend[]) => void;
     _flowDuration?: number;
+    lineStyle?: ConnectorLineStyle;
   };
   // Keep one editable elbow control, like a classic orthogonal diagram line.
   const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
@@ -610,6 +660,11 @@ function FlowingConnectorEdge({
           aria-hidden="true"
         />
       ) : null}
+      {edgeData.lineStyle === "flow-dot" ? (
+        <circle className="connector-flow-dot" r={3.5} aria-hidden="true">
+          <animateMotion key={d} dur="2.35s" repeatCount="indefinite" path={d} />
+        </circle>
+      ) : null}
       {selected ? (
         <circle
           className="edge-bend-control"
@@ -638,11 +693,13 @@ const n = (
   shape: NodeShape,
   icon: NodeIcon,
   tone: NodeTone,
+  serviceLogo?: string,
+  serviceSymbol?: ArchitectureNodeData["serviceSymbol"],
 ): ArchitectureNode => ({
   id,
   type: "architecture",
   position: { x, y },
-  data: { label, description, shape, icon, tone },
+  data: { label, description, shape, icon, tone, serviceLogo, serviceSymbol },
 });
 
 const commentNode = (comment: DiagramComment): ArchitectureNode => ({
@@ -881,6 +938,18 @@ const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] 
 const defaultIconForShape = (shape: NodeShape): NodeIcon =>
   shape === "decision" ? "decision" : shape === "database" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
 
+const servicePresets: { label: string; logo?: string; kind?: NonNullable<ArchitectureNodeData["serviceSymbol"]>; icon: NodeIcon; tone: NodeTone }[] = [
+  { label: "Supabase", logo: "https://cdn.simpleicons.org/supabase/3FCF8E", icon: "database", tone: "emerald" },
+  { label: "Vercel", logo: "https://cdn.simpleicons.org/vercel/000000", icon: "app", tone: "slate" },
+  { label: "n8n", logo: "https://cdn.simpleicons.org/n8n/EA4B71", icon: "workflow", tone: "rose" },
+  { label: "Mobile", kind: "mobile", icon: "app", tone: "cyan" },
+  { label: "Pinecone", logo: "/pinecone.svg", kind: "vector", icon: "storage", tone: "violet" },
+  { label: "User", kind: "user", icon: "session", tone: "slate" },
+  { label: "Computer", kind: "computer", icon: "app", tone: "cyan" },
+  { label: "Server", kind: "server", icon: "server", tone: "slate" },
+  { label: "Security", kind: "security", icon: "alert", tone: "rose" },
+];
+
 function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className?: string }) {
   const svgProps = { className, viewBox: "0 0 32 26", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinejoin: "round" as const };
   if (shape === "circle") return <svg {...svgProps}><circle cx="16" cy="13" r="10" /></svg>;
@@ -1021,6 +1090,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [canvasMode, setCanvasMode] = useState<"select" | "move">("select");
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ basic: true, flowchart: true, erd: true });
   const [legendShapeFilter, setLegendShapeFilter] = useState<"all" | NodeShape>("all");
   const selectionClipboardRef = useRef<{ nodes: ArchitectureNode[]; edges: Edge[] } | null>(null);
@@ -1433,6 +1503,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const selectedLegend = selectedNode?.data.shape === "legend" ? selectedNode : null;
   const selectedLegendKey = selectedNode?.data.shape === "legend-key" ? selectedNode : null;
   const selectedEdge = edges.find((edgeItem) => edgeItem.id === selectedEdgeId) ?? null;
+  const selectedEdgeLineStyle: ConnectorLineStyle =
+    ((selectedEdge?.data as { lineStyle?: ConnectorLineStyle } | undefined)?.lineStyle) ??
+    (selectedEdge?.animated ? "dashed" : "solid");
   const historyGroups = historyEntries.reduce<{ key: string; label: string; entries: DiagramHistoryEntry[] }[]>(
     (groups, entry) => {
       const date = new Date(entry.timestamp);
@@ -1596,13 +1669,14 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     );
   };
 
-  const setEdgeStyle = (dashed: boolean) => {
+  const setEdgeStyle = (lineStyle: ConnectorLineStyle) => {
     if (!selectedEdge) return;
     updateSelectedEdge({
-      animated: dashed,
+      animated: lineStyle === "dashed",
+      data: { ...selectedEdge.data, lineStyle },
       style: {
         ...selectedEdge.style,
-        strokeDasharray: dashed ? "7 6" : undefined,
+        strokeDasharray: lineStyle === "dashed" ? "7 6" : undefined,
       },
     });
   };
@@ -2880,6 +2954,8 @@ const persistPageIndex = (
         nodeDraft.shape,
         nodeDraft.icon,
         nodeDraft.tone,
+        nodeDraft.serviceLogo,
+        nodeDraft.serviceSymbol,
       ),
     ]);
     setSelectedId(id);
@@ -3019,6 +3095,89 @@ const persistPageIndex = (
       return next;
     });
   };
+
+  const findAlignmentGuides = useCallback((draggedNode: ArchitectureNode) => {
+    if (["comment", "legend", "legend-key"].includes(draggedNode.data.shape)) return [];
+
+    const snapDistance = 6;
+    const draggedSize = nodeSize(draggedNode);
+    const draggedX = [
+      draggedNode.position.x,
+      draggedNode.position.x + draggedSize.width / 2,
+      draggedNode.position.x + draggedSize.width,
+    ];
+    const draggedY = [
+      draggedNode.position.y,
+      draggedNode.position.y + draggedSize.height / 2,
+      draggedNode.position.y + draggedSize.height,
+    ];
+    let closestX: { distance: number; position: number; node: ArchitectureNode } | null = null;
+    let closestY: { distance: number; position: number; node: ArchitectureNode } | null = null;
+
+    for (const candidate of nodes) {
+      if (
+        candidate.id === draggedNode.id ||
+        candidate.selected ||
+        ["comment", "legend", "legend-key"].includes(candidate.data.shape)
+      ) continue;
+
+      const candidateSize = nodeSize(candidate);
+      const candidateX = [
+        candidate.position.x,
+        candidate.position.x + candidateSize.width / 2,
+        candidate.position.x + candidateSize.width,
+      ];
+      const candidateY = [
+        candidate.position.y,
+        candidate.position.y + candidateSize.height / 2,
+        candidate.position.y + candidateSize.height,
+      ];
+
+      for (const source of draggedX) {
+        for (const target of candidateX) {
+          const distance = Math.abs(source - target);
+          if (distance <= snapDistance && (!closestX || distance < closestX.distance)) {
+            closestX = { distance, position: target, node: candidate };
+          }
+        }
+      }
+      for (const source of draggedY) {
+        for (const target of candidateY) {
+          const distance = Math.abs(source - target);
+          if (distance <= snapDistance && (!closestY || distance < closestY.distance)) {
+            closestY = { distance, position: target, node: candidate };
+          }
+        }
+      }
+    }
+
+    const guides: AlignmentGuide[] = [];
+    if (closestX) {
+      const targetSize = nodeSize(closestX.node);
+      guides.push({
+        axis: "x",
+        position: closestX.position,
+        start: Math.min(draggedNode.position.y, closestX.node.position.y) - 24,
+        end: Math.max(
+          draggedNode.position.y + draggedSize.height,
+          closestX.node.position.y + targetSize.height,
+        ) + 24,
+      });
+    }
+    if (closestY) {
+      const targetSize = nodeSize(closestY.node);
+      guides.push({
+        axis: "y",
+        position: closestY.position,
+        start: Math.min(draggedNode.position.x, closestY.node.position.x) - 24,
+        end: Math.max(
+          draggedNode.position.x + draggedSize.width,
+          closestY.node.position.x + targetSize.width,
+        ) + 24,
+      });
+    }
+    return guides;
+  }, [nodes]);
 
   const addLegendArea = () => {
     if (!legendDraft.label.trim() || legendDraft.nodeIds.length === 0) return;
@@ -3416,8 +3575,14 @@ const persistPageIndex = (
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onNodesChange={animationMode === "presentation" ? () => {} : onNodesChange}
-          onNodeDrag={(_, node) => updateDraggedCommentPosition(node)}
-          onNodeDragStop={(_, node) => updateDraggedCommentPosition(node, true)}
+          onNodeDrag={(_, node) => {
+            updateDraggedCommentPosition(node);
+            setAlignmentGuides(findAlignmentGuides(node));
+          }}
+          onNodeDragStop={(_, node) => {
+            updateDraggedCommentPosition(node, true);
+            setAlignmentGuides([]);
+          }}
           onMove={scheduleOpenCommentPopupPositionUpdate}
           onNodesDelete={(deletedNodes) => {
             if (animationMode === "presentation") return;
@@ -3501,6 +3666,18 @@ const persistPageIndex = (
           proOptions={{ hideAttribution: true }}
         >
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.2} color="#cbd5e1" />
+          <ViewportPortal>
+            {alignmentGuides.map((guide) => (
+              <div
+                aria-hidden="true"
+                className={`alignment-guide alignment-guide-${guide.axis === "x" ? "vertical" : "horizontal"}`}
+                key={guide.axis}
+                style={guide.axis === "x"
+                  ? { left: guide.position, top: guide.start, height: guide.end - guide.start }
+                  : { left: guide.start, top: guide.position, width: guide.end - guide.start }}
+              />
+            ))}
+          </ViewportPortal>
           <MiniMap
             position="bottom-left"
             pannable
@@ -3663,6 +3840,43 @@ const persistPageIndex = (
                       onChange={(event) => setNodeDraft({ ...nodeDraft, description: event.target.value })}
                     />
                   </label>
+                  <fieldset className="service-presets">
+                    <legend>Services</legend>
+                    <div className="service-preset-grid">
+                      {servicePresets.map((service) => (
+                        <button
+                          type="button"
+                          key={service.label}
+                          title={service.label}
+                          aria-label={`Use ${service.label} service preset`}
+                          onClick={() => setNodeDraft((current) => ({
+                            ...current,
+                            label: current.label === "New Service" ? service.label : current.label,
+                            shape: "service",
+                            tone: service.tone,
+                            serviceLogo: service.logo,
+                            serviceSymbol: service.kind,
+                          }))}
+                        >
+                          {service.logo ? (
+                            <img className="service-preset-logo" src={service.logo} alt="" />
+                          ) : service.kind === "mobile" ? (
+                            <Smartphone className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "user" ? (
+                            <UserRound className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "computer" ? (
+                            <Monitor className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "server" ? (
+                            <Server className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "security" ? (
+                            <LockKeyhole className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : (
+                            <Database className="service-preset-symbol" size={20} aria-hidden="true" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
                   <fieldset>
                     <legend>Shape</legend>
                     <div className="shape-drawer">
@@ -3694,6 +3908,8 @@ const persistPageIndex = (
                                         ...nodeDraft,
                                         shape,
                                         icon: defaultIconForShape(shape),
+                                        serviceLogo: undefined,
+                                        serviceSymbol: undefined,
                                       })}
                                     >
                                       <ShapeOutlinePreview shape={shape} className="shape-outline-preview" />
@@ -4580,18 +4796,25 @@ const persistPageIndex = (
               <legend>Line style</legend>
               <div className="line-style-grid">
                 <button
-                  className={!selectedEdge.animated ? "active" : ""}
-                  onClick={() => setEdgeStyle(false)}
+                  className={selectedEdgeLineStyle === "solid" ? "active" : ""}
+                  onClick={() => setEdgeStyle("solid")}
                 >
                   <i className="line-sample solid" />
                   Solid
                 </button>
                 <button
-                  className={selectedEdge.animated ? "active" : ""}
-                  onClick={() => setEdgeStyle(true)}
+                  className={selectedEdgeLineStyle === "dashed" ? "active" : ""}
+                  onClick={() => setEdgeStyle("dashed")}
                 >
                   <i className="line-sample dashed" />
                   Dashed + moving
+                </button>
+                <button
+                  className={selectedEdgeLineStyle === "flow-dot" ? "active" : ""}
+                  onClick={() => setEdgeStyle("flow-dot")}
+                >
+                  <i className="line-sample flow-dot" />
+                  Solid + moving dot
                 </button>
               </div>
             </fieldset>
