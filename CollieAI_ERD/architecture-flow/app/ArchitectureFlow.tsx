@@ -39,6 +39,7 @@ import {
   ChevronDown,
   CircleHelp,
   Cloud,
+  Globe2,
   Copy,
   Database,
   Download,
@@ -50,6 +51,7 @@ import {
   History as HistoryIcon,
   LayoutDashboard,
   LockKeyhole,
+  ShieldCheck,
   List,
   LoaderCircle,
   MessageCircle,
@@ -61,6 +63,7 @@ import {
   Network,
   Hand,
   Pause,
+  Pencil,
   Play,
   Plus,
   RefreshCcw,
@@ -72,9 +75,12 @@ import {
   SkipForward,
   Sparkles,
   Square,
+  Highlighter,
+  Eraser,
   Smartphone,
   Trash2,
   UserRound,
+  UserRoundCheck,
   Workflow,
   X,
 Type,
@@ -93,6 +99,7 @@ type NodeShape =
   | "database"
   | "cloud"
   | "terminal"
+  | "predefined-process"
   | "circle"
   | "pentagon"
   | "callout"
@@ -148,7 +155,7 @@ type NodeIcon =
   | "sparkles"
   | "user"
   | "check";
-type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose";
+type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose" | "black";
 
 type ArchitectureNodeData = {
   label: string;
@@ -172,7 +179,12 @@ type ArchitectureNodeData = {
   onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
   commentId?: string;
   serviceLogo?: string;
-  serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security";
+  serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security" | "cloud" | "domain" | "auth" | "protection" | "ai";
+  hideIcon?: boolean;
+  fillColor?: string;
+  fillOpacity?: number;
+  outlineColor?: string;
+  outlineStyle?: "solid" | "dashed" | "small-dashed";
 };
 
 type LegendKeyEntry = {
@@ -197,6 +209,21 @@ type AlignmentGuide = {
   start: number;
   end: number;
 };
+type AnnotationTool = "pen" | "highlighter" | "eraser";
+type AnnotationStroke = {
+  id: string;
+  tool: Exclude<AnnotationTool, "eraser">;
+  points: { x: number; y: number }[];
+  color: string;
+  thickness: number;
+  opacity: number;
+};
+type AnnotationConfig = { color: string; thickness: number; opacity: number };
+const ANNOTATION_COLORS = [
+  "#ffffff", "#94a3b8", "#111827", "#38bdf8", "#f59e0b", "#fde68a",
+  "#facc15", "#34d399", "#7dd3fc", "#f0abfc", "#ec4899", "#f43f5e",
+  "#8b5cf6", "#0ea5e9", "#f97316", "#eab308", "#10b981", "#d946ef",
+];
 
 type AnimationStep = {
   id: string;
@@ -413,12 +440,21 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
       <div
         className={`architecture-node shape-${data.shape} tone-${data.tone} ${
           selected ? "is-selected" : ""
-      } ${isServiceNode ? "service-node" : ""} ${animState ? `anim-${animState}` : ""}`}
+      } ${isServiceNode ? "service-node" : ""} ${data.fillColor || data.outlineColor || data.outlineStyle ? "has-component-style" : ""} ${animState ? `anim-${animState}` : ""}`}
       style={
         {
           "--node-title-size": `${data.titleSize ?? 13}px`,
           "--node-description-size": `${data.descriptionSize ?? 10}px`,
           "--service-icon-size": `${serviceIconSize}px`,
+          "--shape-fill": `color-mix(in srgb, ${data.fillColor ?? "#ffffff"} ${data.fillOpacity ?? 100}%, transparent)`,
+          "--shape-outline": data.outlineColor ?? data.legendColor ?? "var(--node)",
+          "--shape-border-style": data.outlineStyle === "small-dashed" ? "dotted" : (data.outlineStyle ?? "solid"),
+          "--shape-dasharray": data.outlineStyle === "dashed" ? "10 7" : data.outlineStyle === "small-dashed" ? "3 4" : "none",
+          ...(data.legendColor ? {
+            "--node": data.legendColor,
+            "--node-soft": `color-mix(in srgb, ${data.legendColor} 11%, white)`,
+            "--node-line": `color-mix(in srgb, ${data.legendColor} 45%, white)`,
+          } : {}),
         } as CSSProperties
       }
     >
@@ -515,9 +551,9 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         </svg>
       ) : null}
       <div className="node-inner">
-        {data.shape !== "database" && data.shape !== "decision" ? (
+        {data.shape !== "database" && data.shape !== "decision" && !data.hideIcon ? (
           <span className="node-icon" aria-hidden="true">
-            {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
+            {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
           </span>
         ) : null}
         <div className="node-copy">
@@ -545,6 +581,7 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "cloud") return { width: 290, height: 118 };
   if (shape === "database") return { width: 270, height: 78 };
   if (shape === "terminal") return { width: 250, height: 62 };
+  if (shape === "predefined-process") return { width: 260, height: 92 };
   if (shape === "text") return { width: 200, height: 40 };
   return { width: 270, height: 78 };
 };
@@ -581,9 +618,12 @@ function FlowingConnectorEdge({
     bend?: EdgeBend;
     joints?: EdgeBend[];
     onJointsChange?: (joints: EdgeBend[]) => void;
+    labelPosition?: EdgeBend;
+    onLabelPositionChange?: (position?: EdgeBend) => void;
     _flowDuration?: number;
     lineStyle?: ConnectorLineStyle;
   };
+  const pathMeasureRef = useRef<SVGPathElement | null>(null);
   // Keep one editable elbow control, like a classic orthogonal diagram line.
   const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
   const connectorLength = Math.hypot(targetX - sourceX, targetY - sourceY);
@@ -635,6 +675,60 @@ function FlowingConnectorEdge({
     window.addEventListener("pointerup", stop, { once: true });
   };
   const jointControl = joint ?? { x: mx, y: my };
+  const labelPosition = edgeData.labelPosition ?? { x: mx, y: my };
+  const dragLabel = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!edgeData.onLabelPositionChange) return;
+    const move = (moveEvent: PointerEvent) => {
+      const path = pathMeasureRef.current;
+      const svg = path?.ownerSVGElement;
+      const matrix = svg?.getScreenCTM();
+      if (!path || !svg || !matrix) return;
+      const pointer = svg.createSVGPoint();
+      pointer.x = moveEvent.clientX;
+      pointer.y = moveEvent.clientY;
+      const flowPoint = pointer.matrixTransform(matrix.inverse());
+      const totalLength = path.getTotalLength();
+      let bestLength = 0;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      const samples = 72;
+      for (let index = 0; index <= samples; index += 1) {
+        const length = totalLength * index / samples;
+        const point = path.getPointAtLength(length);
+        const distance = Math.hypot(point.x - flowPoint.x, point.y - flowPoint.y);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestLength = length;
+        }
+      }
+      let range = totalLength / samples;
+      for (let pass = 0; pass < 6; pass += 1) {
+        const candidates = [
+          Math.max(0, bestLength - range),
+          bestLength,
+          Math.min(totalLength, bestLength + range),
+        ];
+        for (const length of candidates) {
+          const point = path.getPointAtLength(length);
+          const distance = Math.hypot(point.x - flowPoint.x, point.y - flowPoint.y);
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            bestLength = length;
+          }
+        }
+        range /= 2;
+      }
+      const closest = path.getPointAtLength(bestLength);
+      edgeData.onLabelPositionChange?.({ x: closest.x, y: closest.y });
+    };
+    const stop = () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", stop);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", stop, { once: true });
+  };
   return (
     <>
       <BaseEdge
@@ -642,15 +736,39 @@ function FlowingConnectorEdge({
       path={d}
       markerEnd={markerEnd}
       style={style}
-      label={label}
-      labelX={mx}
-      labelY={my}
-      labelStyle={labelStyle}
-      labelBgStyle={labelBgStyle}
-      labelBgPadding={labelBgPadding}
-      labelBgBorderRadius={labelBgBorderRadius}
         interactionWidth={24}
       />
+      <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
+      {label ? (
+        <foreignObject
+          className="edge-label-foreign-object"
+          x={labelPosition.x - 160}
+          y={labelPosition.y - 50}
+          width={320}
+          height={100}
+          requiredExtensions="http://www.w3.org/1999/xhtml"
+        >
+          <div className="edge-label-drag-region">
+            <div
+              className="edge-label-draggable nodrag nopan"
+              onPointerDown={dragLabel}
+              onDoubleClick={(event) => { event.stopPropagation(); edgeData.onLabelPositionChange?.(); }}
+              title="Drag to reposition · Double-click to reset"
+              style={{
+                color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
+                fontSize: labelStyle?.fontSize,
+                fontWeight: labelStyle?.fontWeight,
+                background: typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff",
+                opacity: typeof labelBgStyle?.fillOpacity === "number" ? labelBgStyle.fillOpacity : 1,
+                borderRadius: labelBgBorderRadius,
+                padding: `${labelBgPadding?.[1] ?? 4}px ${labelBgPadding?.[0] ?? 6}px`,
+              }}
+            >
+              {label}
+            </div>
+          </div>
+        </foreignObject>
+      ) : null}
       {edgeData._flowDuration ? (
         <path
           d={d}
@@ -927,11 +1045,12 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "database", label: "Database" },
   { value: "cloud", label: "Cloud" },
   { value: "terminal", label: "Start / End" },
+  { value: "predefined-process", label: "Predefined Process" },
 ];
 
 const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] = [
   { id: "basic", label: "Shapes", shapes: ["service", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
-  { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "decision", "cloud"] },
+  { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "predefined-process", "decision", "cloud"] },
   { id: "erd", label: "ERD", shapes: ["database"] },
 ];
 
@@ -948,6 +1067,11 @@ const servicePresets: { label: string; logo?: string; kind?: NonNullable<Archite
   { label: "Computer", kind: "computer", icon: "app", tone: "cyan" },
   { label: "Server", kind: "server", icon: "server", tone: "slate" },
   { label: "Security", kind: "security", icon: "alert", tone: "rose" },
+  { label: "Cloud", kind: "cloud", icon: "memory", tone: "cyan" },
+  { label: "Domain / DNS", kind: "domain", icon: "network", tone: "violet" },
+  { label: "Authentication", kind: "auth", icon: "session", tone: "emerald" },
+  { label: "Protection", kind: "protection", icon: "alert", tone: "slate" },
+  { label: "AI / Model", kind: "ai", icon: "brain", tone: "violet" },
 ];
 
 function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className?: string }) {
@@ -963,6 +1087,7 @@ function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className
   if (shape === "document") return <svg {...svgProps}><path d="M3 3h26v17l-5-3-5 5-5-5-5 3-6-3Z" /></svg>;
   if (shape === "decision") return <svg {...svgProps}><path d="m16 1 15 12-15 12L1 13Z" /></svg>;
   if (shape === "terminal") return <svg {...svgProps}><rect x="2" y="5" width="28" height="16" rx="8" /></svg>;
+  if (shape === "predefined-process") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="2" /><path d="M7 4v18M25 4v18" /></svg>;
   if (shape === "database") return <svg {...svgProps}><ellipse cx="16" cy="5" rx="11" ry="3" /><path d="M5 5v16c0 1.7 4.9 3 11 3s11-1.3 11-3V5" /><path d="M5 13c0 1.7 4.9 3 11 3s11-1.3 11-3" /></svg>;
   if (shape === "cloud") return <svg {...svgProps}><path d="M7 22h17a6 6 0 0 0 .7-12A8 8 0 0 0 9.5 8 6 6 0 0 0 7 22Z" /></svg>;
   return <svg {...svgProps}><rect x="3" y="4" width="26" height="18" rx="2" /></svg>;
@@ -1026,6 +1151,10 @@ const commentsStorageKey = (workspaceId: string, pageId: string) =>
   workspaceId === "collie"
     ? `collieai-comments-${pageId}`
     : `collieai-comments-${workspaceId}-${pageId}`;
+const annotationsStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-annotations-${pageId}`
+    : `collieai-annotations-${workspaceId}-${pageId}`;
 const MAX_HISTORY_ENTRIES = 40;
 const MAX_DAILY_HISTORY_ENTRIES = 180;
 
@@ -1091,7 +1220,21 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [canvasMode, setCanvasMode] = useState<"select" | "move">("select");
   const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
-  const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ basic: true, flowchart: true, erd: true });
+  const [drawPresentationOpen, setDrawPresentationOpen] = useState(false);
+  const [presentationInteraction, setPresentationInteraction] = useState<"draw" | "comment" | "move" | "select">("draw");
+  const [drawToolboxOpen, setDrawToolboxOpen] = useState(false);
+  const [annotationTool, setAnnotationTool] = useState<AnnotationTool>("pen");
+  const [annotationStrokes, setAnnotationStrokes] = useState<AnnotationStroke[]>([]);
+  const [annotationConfig, setAnnotationConfig] = useState<Record<"pen" | "highlighter", AnnotationConfig>>({
+    pen: { color: "#111827", thickness: 4, opacity: 1 },
+    highlighter: { color: "#fde68a", thickness: 20, opacity: .42 },
+  });
+  const [eraserThickness, setEraserThickness] = useState(28);
+  const [stopPresentationConfirm, setStopPresentationConfirm] = useState(false);
+  const architectureShellRef = useRef<HTMLElement | null>(null);
+  const activeAnnotationStrokeRef = useRef<string | null>(null);
+  const skipAnnotationSaveRef = useRef(false);
+  const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ services: false, basic: true, flowchart: true, erd: true, icons: false });
   const [legendShapeFilter, setLegendShapeFilter] = useState<"all" | NodeShape>("all");
   const selectionClipboardRef = useRef<{ nodes: ArchitectureNode[]; edges: Edge[] } | null>(null);
   const undoHistoryRef = useRef<CanvasSnapshot[]>([]);
@@ -1148,6 +1291,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [deleteIntent, setDeleteIntent] = useState<DeleteIntent | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [nodeDraft, setNodeDraft] = useState<ArchitectureNodeData>(createNodeDraft);
+  const [selectedCreatorOption, setSelectedCreatorOption] = useState<string | null>(null);
   const [applyTitleSizeToAll, setApplyTitleSizeToAll] = useState(false);
   const [applyDescriptionSizeToAll, setApplyDescriptionSizeToAll] = useState(false);
   const [legendDraft, setLegendDraft] = useState<LegendDraft>(createLegendDraft);
@@ -1187,6 +1331,27 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // be pushed back to the cloud and re-corrupt the workspace.
   const cloudHydratedRef = useRef(false);
   const commentMarkers = (items: DiagramComment[]) => items.map(commentNode);
+
+  useEffect(() => {
+    skipAnnotationSaveRef.current = true;
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(annotationsStorageKey(workspaceId.current, activePageId)) ?? "[]");
+      setAnnotationStrokes(Array.isArray(stored) ? stored : []);
+    } catch {
+      setAnnotationStrokes([]);
+    }
+  }, [activePageId]);
+
+  useEffect(() => {
+    if (skipAnnotationSaveRef.current) {
+      skipAnnotationSaveRef.current = false;
+      return;
+    }
+    window.localStorage.setItem(
+      annotationsStorageKey(workspaceId.current, activePageId),
+      JSON.stringify(annotationStrokes),
+    );
+  }, [activePageId, annotationStrokes]);
 
   const createCanvasSnapshot = useCallback((): CanvasSnapshot => {
     // Selection is UI state, not a diagram edit. Removing it also prevents a
@@ -1653,6 +1818,20 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
             ? { ...edgeItem, data: { ...edgeItem.data, joints } }
             : edgeItem,
         ),
+      );
+    },
+    [setEdges],
+  );
+
+  const updateEdgeLabelPosition = useCallback(
+    (edgeId: string, position?: EdgeBend) => {
+      setEdges((current) =>
+        current.map((edgeItem) => {
+          if (edgeItem.id !== edgeId) return edgeItem;
+          if (position) return { ...edgeItem, data: { ...edgeItem.data, labelPosition: position } };
+          const { labelPosition: _labelPosition, ...remainingData } = edgeItem.data ?? {};
+          return { ...edgeItem, data: remainingData };
+        }),
       );
     },
     [setEdges],
@@ -2300,6 +2479,119 @@ const persistPageIndex = (
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
     };
   }, []);
+
+  const startDrawPresentation = async () => {
+    if (animationMode === "presentation") stopPlayback();
+    setSelectedId(null);
+    setSelectedEdgeId(null);
+    setInspectorOpen(false);
+    setPagesOpen(false);
+    setHistoryOpen(false);
+    setCreatorOpen(false);
+    setLegendCreatorOpen(false);
+    setTextOpen(false);
+    setAnimationOpen(false);
+    setDrawToolboxOpen(false);
+    setPresentationInteraction("draw");
+    setCommentPlacementMode(false);
+    setDrawPresentationOpen(true);
+    try {
+      await architectureShellRef.current?.requestFullscreen?.();
+    } catch {
+      // The CSS presentation layout still provides a focused canvas when the
+      // browser or embedding host does not grant the fullscreen request.
+    }
+    window.setTimeout(() => fitView({ padding: .08, duration: 350 }), 80);
+  };
+
+  const finishDrawPresentation = async (keepAnnotations: boolean) => {
+    if (!keepAnnotations) setAnnotationStrokes([]);
+    activeAnnotationStrokeRef.current = null;
+    setStopPresentationConfirm(false);
+    setDrawToolboxOpen(false);
+    setCommentPlacementMode(false);
+    setDrawPresentationOpen(false);
+    if (document.fullscreenElement) {
+      try { await document.exitFullscreen(); } catch { /* The browser may already be exiting fullscreen. */ }
+    }
+    window.setTimeout(() => fitView({ padding: .08, duration: 300 }), 80);
+  };
+
+  useEffect(() => {
+    const onFullscreenChange = () => {
+      if (drawPresentationOpen && !document.fullscreenElement && !stopPresentationConfirm) {
+        setDrawPresentationOpen(false);
+        setDrawToolboxOpen(false);
+        setCommentPlacementMode(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, [drawPresentationOpen, stopPresentationConfirm]);
+
+  const annotationPoint = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return {
+      x: (event.clientX - rect.left) / Math.max(1, rect.width) * 1000,
+      y: (event.clientY - rect.top) / Math.max(1, rect.height) * 1000,
+    };
+  };
+
+  const eraseAnnotationAt = (point: { x: number; y: number }) => {
+    const threshold = Math.max(8, eraserThickness * 1.8);
+    setAnnotationStrokes((current) => current.filter((stroke) => {
+      for (let index = 1; index < stroke.points.length; index += 1) {
+        const a = stroke.points[index - 1];
+        const b = stroke.points[index];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const amount = lengthSquared ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared)) : 0;
+        if (Math.hypot(point.x - (a.x + dx * amount), point.y - (a.y + dy * amount)) <= threshold) return false;
+      }
+      return true;
+    }));
+  };
+
+  const startAnnotationStroke = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (!drawPresentationOpen || presentationInteraction !== "draw") return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = annotationPoint(event);
+    if (annotationTool === "eraser") {
+      eraseAnnotationAt(point);
+      activeAnnotationStrokeRef.current = "eraser";
+      return;
+    }
+    const id = `annotation-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const config = annotationConfig[annotationTool];
+    activeAnnotationStrokeRef.current = id;
+    setAnnotationStrokes((current) => [...current, {
+      id,
+      tool: annotationTool,
+      points: [point],
+      color: config.color,
+      thickness: config.thickness,
+      opacity: config.opacity,
+    }]);
+  };
+
+  const continueAnnotationStroke = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const activeId = activeAnnotationStrokeRef.current;
+    if (!activeId) return;
+    const point = annotationPoint(event);
+    if (activeId === "eraser") {
+      eraseAnnotationAt(point);
+      return;
+    }
+    setAnnotationStrokes((current) => current.map((stroke) =>
+      stroke.id === activeId ? { ...stroke, points: [...stroke.points, point] } : stroke,
+    ));
+  };
+
+  const stopAnnotationStroke = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    activeAnnotationStrokeRef.current = null;
+  };
 
   const tryAddElementToSequence = useCallback((elementId: string) => {
     if (!activeSequence || animationMode !== "editing") return;
@@ -2963,6 +3255,7 @@ const persistPageIndex = (
     setInspectorOpen(false);
     setCreatorOpen(false);
     setNodeDraft(createNodeDraft());
+    setSelectedCreatorOption(null);
     setInspectorOpen(true);
   };
 
@@ -3273,11 +3566,16 @@ const persistPageIndex = (
   const renderedEdges = useMemo(() => edges.map((edgeItem) => ({
     ...edgeItem,
     selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
-    data: { ...edgeItem.data, onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints) },
-  })), [edges, selectedEdgeId, updateEdgeJoints]);
+    data: {
+      ...edgeItem.data,
+      onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
+      onLabelPositionChange: (position?: EdgeBend) => updateEdgeLabelPosition(edgeItem.id, position),
+    },
+  })), [edges, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition]);
+  const activeAnnotationConfig = annotationTool === "eraser" ? null : annotationConfig[annotationTool];
 
   return (
-    <main className="architecture-shell">
+    <main ref={architectureShellRef} className={`architecture-shell ${drawPresentationOpen ? "draw-presentation-mode" : ""}`}>
       <header className="topbar">
         <div className="brand">
           <button className="brand-mark" onClick={onGoHome} title="Back to home" aria-label="Back to home"><Network size={19} /></button>
@@ -3333,6 +3631,9 @@ const persistPageIndex = (
           <strong>{pages.find((page) => page.id === activePageId)?.name || "Untitled architecture"}</strong>
         </div>
         <div className="tool-navbar-actions">
+          <button className="button secondary present-button" onClick={() => void startDrawPresentation()} title="Present fullscreen with drawing tools">
+            <Play size={15} /> <span className="button-label">Present</span>
+          </button>
           <button
             className="button secondary"
             onClick={applySmartLandscapeLayout}
@@ -3597,11 +3898,11 @@ const persistPageIndex = (
           onConnect={animationMode === "presentation" ? () => {} : onConnect}
           connectionMode={ConnectionMode.Loose}
           isValidConnection={isValidConnection}
-          nodesDraggable={animationMode !== "presentation" && canvasMode === "select"}
-          nodesFocusable={animationMode !== "presentation"}
-          elementsSelectable={animationMode !== "presentation"}
-          panOnDrag={canvasMode === "move"}
-          selectionOnDrag={canvasMode === "select"}
+          nodesDraggable={animationMode !== "presentation" && (!drawPresentationOpen ? canvasMode === "select" : presentationInteraction === "select")}
+          nodesFocusable={animationMode !== "presentation" && (!drawPresentationOpen || presentationInteraction === "select")}
+          elementsSelectable={animationMode !== "presentation" && (!drawPresentationOpen || presentationInteraction === "select")}
+          panOnDrag={!drawPresentationOpen ? canvasMode === "move" : presentationInteraction === "move"}
+          selectionOnDrag={!drawPresentationOpen ? canvasMode === "select" : presentationInteraction === "select"}
           selectionMode={SelectionMode.Partial}
           onNodeClick={(_, node) => {
             if (animationMode === "presentation") return;
@@ -3656,7 +3957,7 @@ const persistPageIndex = (
               item.id === node.id ? { ...item, data: { ...item.data, editing: true } } : item,
             ));
           }}
-           className={`${commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""} ${canvasMode === "move" ? "canvas-move-mode" : "canvas-select-mode"}`}
+           className={`${commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""} ${drawPresentationOpen ? `presentation-${presentationInteraction}-mode` : canvasMode === "move" ? "canvas-move-mode" : "canvas-select-mode"}`}
           fitView
           fitViewOptions={{ padding: 0.08 }}
           minZoom={0.18}
@@ -3686,8 +3987,13 @@ const persistPageIndex = (
               const data = node.data as ArchitectureNodeData;
               if (data.shape === "legend") return data.legendColor ?? "#0ea5c6";
               if (data.shape === "legend-key") return "#334155";
+              if (data.legendColor) return data.legendColor;
               const tone = data.tone;
-              return tone === "violet" ? "#8b5cf6" : tone === "amber" ? "#f59e0b" : "#21b6d7";
+              const toneColors: Record<NodeTone, string> = {
+                cyan: "#21b6d7", violet: "#8b5cf6", amber: "#f59e0b",
+                emerald: "#22a56f", slate: "#64748b", rose: "#e35d7c", black: "#111827",
+              };
+              return toneColors[tone];
             }}
             maskColor="rgba(241,245,249,.72)"
           />
@@ -3699,6 +4005,82 @@ const persistPageIndex = (
             <span><i className="legend-swatch emerald" /> Outcomes</span>
           </Panel>
         </ReactFlow>
+        {(drawPresentationOpen || annotationStrokes.length > 0) ? (
+          <svg
+            className={`presentation-annotation-layer ${drawPresentationOpen && presentationInteraction === "draw" ? "is-drawing" : ""}`}
+            viewBox="0 0 1000 1000"
+            preserveAspectRatio="none"
+            onPointerDown={startAnnotationStroke}
+            onPointerMove={continueAnnotationStroke}
+            onPointerUp={stopAnnotationStroke}
+            onPointerCancel={stopAnnotationStroke}
+          >
+            {annotationStrokes.map((stroke) => (
+              <polyline
+                key={stroke.id}
+                points={stroke.points.map((point) => `${point.x},${point.y}`).join(" ")}
+                fill="none"
+                stroke={stroke.color}
+                strokeWidth={stroke.thickness}
+                strokeOpacity={stroke.opacity}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+                style={stroke.tool === "highlighter" ? { mixBlendMode: "multiply" } : undefined}
+              />
+            ))}
+          </svg>
+        ) : null}
+        {drawPresentationOpen ? (
+          <>
+            <nav className="presentation-mode-toolbar" aria-label="Presentation tools">
+              <button className={presentationInteraction === "draw" ? "active" : ""} onClick={() => { setCommentPlacementMode(false); setPresentationInteraction("draw"); setDrawToolboxOpen((open) => presentationInteraction === "draw" ? !open : true); }} title="Draw"><Pencil size={19} /><span>Draw</span></button>
+              <button className={presentationInteraction === "comment" ? "active" : ""} onClick={() => { setPresentationInteraction("comment"); setDrawToolboxOpen(false); setCommentPlacementMode(true); }} title="Comment"><MessageCircle size={19} /><span>Comment</span></button>
+              <button className={presentationInteraction === "move" ? "active" : ""} onClick={() => { setPresentationInteraction("move"); setDrawToolboxOpen(false); setCommentPlacementMode(false); }} title="Move"><Hand size={19} /><span>Move</span></button>
+              <button className={presentationInteraction === "select" ? "active" : ""} onClick={() => { setPresentationInteraction("select"); setDrawToolboxOpen(false); setCommentPlacementMode(false); }} title="Select"><MousePointer2 size={19} /><span>Select</span></button>
+            </nav>
+            {drawToolboxOpen && presentationInteraction === "draw" ? (
+              <aside className="annotation-toolbox" aria-label="Drawing tools">
+                <div className="annotation-tool-list">
+                  <button className={annotationTool === "pen" ? "active" : ""} onClick={() => setAnnotationTool("pen")} title="Pen"><Pencil size={19} /></button>
+                  <button className={annotationTool === "highlighter" ? "active" : ""} onClick={() => setAnnotationTool("highlighter")} title="Highlighter"><Highlighter size={19} /></button>
+                  <button className={annotationTool === "eraser" ? "active" : ""} onClick={() => setAnnotationTool("eraser")} title="Eraser"><Eraser size={19} /></button>
+                </div>
+                <div className="annotation-settings">
+                  <header><strong>{annotationTool === "pen" ? "Pen" : annotationTool === "highlighter" ? "Highlighter" : "Eraser"}</strong><button onClick={() => setDrawToolboxOpen(false)} aria-label="Close drawing tools"><X size={16} /></button></header>
+                  <label>
+                    <span>Thickness <b>{annotationTool === "eraser" ? eraserThickness : activeAnnotationConfig?.thickness}</b></span>
+                    <input type="range" min={annotationTool === "pen" ? 1 : 6} max={annotationTool === "eraser" ? 60 : 40} value={annotationTool === "eraser" ? eraserThickness : activeAnnotationConfig?.thickness} onChange={(event) => {
+                      const value = Number(event.target.value);
+                      if (annotationTool === "eraser") setEraserThickness(value);
+                      else setAnnotationConfig((current) => ({ ...current, [annotationTool]: { ...current[annotationTool], thickness: value } }));
+                    }} />
+                  </label>
+                  {activeAnnotationConfig ? (
+                    <>
+                      <label>
+                        <span>Opacity <b>{Math.round(activeAnnotationConfig.opacity * 100)}%</b></span>
+                        <input type="range" min="10" max="100" value={Math.round(activeAnnotationConfig.opacity * 100)} onChange={(event) => setAnnotationConfig((current) => ({ ...current, [annotationTool]: { ...current[annotationTool], opacity: Number(event.target.value) / 100 } }))} />
+                      </label>
+                      <fieldset><legend>{annotationTool === "highlighter" ? "Highlight color" : "Color"}</legend><div className="annotation-color-grid">{ANNOTATION_COLORS.map((color) => <button key={color} className={activeAnnotationConfig.color === color ? "active" : ""} style={{ background: color }} onClick={() => setAnnotationConfig((current) => ({ ...current, [annotationTool]: { ...current[annotationTool], color } }))} aria-label={`Use ${color}`} />)}</div></fieldset>
+                      <label className="annotation-custom-color"><span>Custom color</span><input type="color" value={activeAnnotationConfig.color} onChange={(event) => setAnnotationConfig((current) => ({ ...current, [annotationTool]: { ...current[annotationTool], color: event.target.value } }))} /></label>
+                    </>
+                  ) : <p className="eraser-help">Drag across any annotation to erase the complete stroke.</p>}
+                </div>
+              </aside>
+            ) : null}
+            <div className="presentation-stop-controls"><button onClick={() => setStopPresentationConfirm(true)}><Square size={14} /> Stop</button></div>
+          </>
+        ) : null}
+        {stopPresentationConfirm ? (
+          <div className="annotation-stop-backdrop">
+            <section className="annotation-stop-dialog" role="dialog" aria-modal="true" aria-labelledby="annotation-stop-title">
+              <CircleHelp size={20} />
+              <div><strong id="annotation-stop-title">Keep your presentation annotations?</strong><p>Choose Yes to keep the drawing on the canvas, or No to discard everything drawn during this presentation.</p></div>
+              <footer><button onClick={() => void finishDrawPresentation(false)}>No, discard</button><button className="keep" onClick={() => void finishDrawPresentation(true)}>Yes, keep</button></footer>
+            </section>
+          </div>
+        ) : null}
       </section>
 
       <aside className={`tools-panel ${(creatorOpen || legendCreatorOpen || textOpen || animationOpen) ? "is-open" : ""}`} aria-label="Diagram tools">
@@ -3720,6 +4102,11 @@ const persistPageIndex = (
               if (creatorOpen) {
                 setCreatorOpen(false);
               } else {
+                // Every creator session starts without a palette selection. The
+                // draft has a default service shape, but that default is not a
+                // user choice and must not make any repeated shape tile active.
+                setNodeDraft(createNodeDraft());
+                setSelectedCreatorOption(null);
                 setCreatorOpen(true);
                 setLegendCreatorOpen(false);
                 setTextOpen(false);
@@ -3840,23 +4227,37 @@ const persistPageIndex = (
                       onChange={(event) => setNodeDraft({ ...nodeDraft, description: event.target.value })}
                     />
                   </label>
-                  <fieldset className="service-presets">
-                    <legend>Services</legend>
-                    <div className="service-preset-grid">
-                      {servicePresets.map((service) => (
-                        <button
+                  <section className="service-presets creator-drawer">
+                    <button className="shape-drawer-heading" type="button" onClick={() => setOpenShapeSections((current) => ({ ...current, services: !current.services }))} aria-expanded={openShapeSections.services}>
+                      <span>Services</span><ChevronDown size={15} />
+                    </button>
+                    {openShapeSections.services ? <div className="service-preset-grid">
+                      {servicePresets.map((service) => {
+                        const optionId = `service:${service.label}`;
+                        const previousServiceLabel = selectedCreatorOption?.startsWith("service:")
+                          ? selectedCreatorOption.slice("service:".length)
+                          : null;
+                        return <button
                           type="button"
                           key={service.label}
                           title={service.label}
                           aria-label={`Use ${service.label} service preset`}
-                          onClick={() => setNodeDraft((current) => ({
-                            ...current,
-                            label: current.label === "New Service" ? service.label : current.label,
-                            shape: "service",
-                            tone: service.tone,
-                            serviceLogo: service.logo,
-                            serviceSymbol: service.kind,
-                          }))}
+                          aria-pressed={selectedCreatorOption === optionId}
+                          className={selectedCreatorOption === optionId ? "active" : ""}
+                          onClick={() => {
+                            setSelectedCreatorOption(optionId);
+                            setNodeDraft((current) => ({
+                              ...current,
+                              label: current.label === "New Service" || current.label === previousServiceLabel ? service.label : current.label,
+                              shape: "service",
+                              icon: service.icon,
+                              tone: service.tone,
+                              serviceLogo: service.logo,
+                              serviceSymbol: service.kind,
+                              hideIcon: false,
+                              legendColor: undefined,
+                            }));
+                          }}
                         >
                           {service.logo ? (
                             <img className="service-preset-logo" src={service.logo} alt="" />
@@ -3870,15 +4271,24 @@ const persistPageIndex = (
                             <Server className="service-preset-symbol" size={20} aria-hidden="true" />
                           ) : service.kind === "security" ? (
                             <LockKeyhole className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "cloud" ? (
+                            <Cloud className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "domain" ? (
+                            <Globe2 className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "auth" ? (
+                            <UserRoundCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "protection" ? (
+                            <ShieldCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "ai" ? (
+                            <BrainCircuit className="service-preset-symbol" size={20} aria-hidden="true" />
                           ) : (
                             <Database className="service-preset-symbol" size={20} aria-hidden="true" />
                           )}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                  <fieldset>
-                    <legend>Shape</legend>
+                        </button>;
+                      })}
+                    </div> : null}
+                  </section>
+                  <div className="shape-picker-fieldset">
                     <div className="shape-drawer">
                       {shapeDrawerSections.map((section) => {
                         const isOpen = openShapeSections[section.id];
@@ -3903,14 +4313,19 @@ const persistPageIndex = (
                                       key={shape}
                                       title={option.label}
                                       aria-label={option.label}
-                                      className={`shape-drawer-option shape-${shape} ${nodeDraft.shape === shape ? "active" : ""}`}
-                                      onClick={() => setNodeDraft({
-                                        ...nodeDraft,
-                                        shape,
-                                        icon: defaultIconForShape(shape),
-                                        serviceLogo: undefined,
-                                        serviceSymbol: undefined,
-                                      })}
+                                      className={`shape-drawer-option shape-${shape} ${selectedCreatorOption === `shape:${section.id}:${shape}` ? "active" : ""}`}
+                                      aria-pressed={selectedCreatorOption === `shape:${section.id}:${shape}`}
+                                      onClick={() => {
+                                        setSelectedCreatorOption(`shape:${section.id}:${shape}`);
+                                        setNodeDraft((current) => ({
+                                          ...current,
+                                          shape,
+                                          icon: defaultIconForShape(shape),
+                                          serviceLogo: undefined,
+                                          serviceSymbol: undefined,
+                                          hideIcon: false,
+                                        }));
+                                      }}
                                     >
                                       <ShapeOutlinePreview shape={shape} className="shape-outline-preview" />
                                     </button>
@@ -3922,10 +4337,13 @@ const persistPageIndex = (
                         );
                       })}
                     </div>
-                  </fieldset>
-                  <fieldset>
-                    <legend>Icon</legend>
-                    <div className="option-grid icon-grid">
+                  </div>
+                  <section className="icon-picker-drawer creator-drawer">
+                    <button className="shape-drawer-heading" type="button" onClick={() => setOpenShapeSections((current) => ({ ...current, icons: !current.icons }))} aria-expanded={openShapeSections.icons}>
+                      <span>Icon</span><small>{nodeDraft.hideIcon ? "None" : iconOptions.find((option) => option.value === nodeDraft.icon)?.label}</small><ChevronDown size={15} />
+                    </button>
+                    {openShapeSections.icons ? <div className="option-grid icon-grid">
+                      <button type="button" className={nodeDraft.hideIcon ? "active icon-none-option" : "icon-none-option"} title="No icon" aria-label="No icon" onClick={() => setNodeDraft({ ...nodeDraft, hideIcon: true })}><X size={18} /></button>
                       {iconOptions.map((option) => {
                         const Icon = iconMap[option.value];
                         return (
@@ -3933,29 +4351,33 @@ const persistPageIndex = (
                             type="button"
                             key={option.value}
                             title={option.label}
-                            className={nodeDraft.icon === option.value ? "active" : ""}
-                            onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value })}
+                            className={!nodeDraft.hideIcon && nodeDraft.icon === option.value ? "active" : ""}
+                            onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value, hideIcon: false })}
                           >
                             <Icon size={18} />
                           </button>
                         );
                       })}
-                    </div>
-                  </fieldset>
+                    </div> : null}
+                  </section>
                   <fieldset>
                     <legend>Color</legend>
                     <div className="tone-row">
-                      {(["cyan", "violet", "amber", "emerald", "slate", "rose"] as NodeTone[]).map(
+                      {(["cyan", "violet", "amber", "emerald", "slate", "rose", "black"] as NodeTone[]).map(
                         (tone) => (
                           <button
                             type="button"
                             key={tone}
-                            className={`tone-button ${tone} ${nodeDraft.tone === tone ? "active" : ""}`}
+                            className={`tone-button ${tone} ${!nodeDraft.legendColor && nodeDraft.tone === tone ? "active" : ""}`}
                             aria-label={`${tone} color`}
-                            onClick={() => setNodeDraft({ ...nodeDraft, tone })}
+                            onClick={() => setNodeDraft({ ...nodeDraft, tone, legendColor: undefined })}
                           />
                         ),
                       )}
+                      <label className={`tone-custom-button ${nodeDraft.legendColor ? "active" : ""}`} title="Custom color">
+                        <input type="color" value={nodeDraft.legendColor ?? "#0ea5c6"} onChange={(event) => setNodeDraft({ ...nodeDraft, legendColor: event.target.value })} />
+                        <Plus size={14} />
+                      </label>
                     </div>
                   </fieldset>
                 </div>
@@ -4500,8 +4922,9 @@ const persistPageIndex = (
           </button>
         </div>
         {selectedLegendKey ? (
-          <div className="inspector-body">
-            <label>
+          <div className="inspector-body component-inspector-body">
+            <div className="editor-section-heading section-content-heading"><span>01</span><div><strong>Content</strong><small>Name and supporting text</small></div></div>
+            <label className="component-title-control">
               <span>Legend title</span>
               <input
                 value={selectedLegendKey.data.label}
@@ -4527,7 +4950,7 @@ const persistPageIndex = (
           </div>
         ) : selectedLegend ? (
           <div className="inspector-body">
-            <label>
+            <label className="component-description-control">
               <span>Legend label</span>
               <input
                 value={selectedLegend.data.label}
@@ -4625,7 +5048,8 @@ const persistPageIndex = (
                 onChange={(event) => updateSelected({ description: event.target.value })}
               />
             </label>
-            <fieldset>
+            <div className="editor-section-heading section-type-heading"><span>02</span><div><strong>Typography</strong><small>Text scale and consistency</small></div></div>
+            <fieldset className="component-type-controls inspector-control-card">
               <legend>Text size</legend>
               <label className="line-label-size">
                 <span>Title size</span>
@@ -4694,7 +5118,8 @@ const persistPageIndex = (
                 <i aria-hidden="true" />
               </label>
             </fieldset>
-            <fieldset>
+            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>Shape and icon selection</small></div></div>
+            <fieldset className="component-shape-controls inspector-control-card">
               <legend>Shape</legend>
               <div className="option-grid shape-grid">
                 {shapeOptions.map((option) => (
@@ -4710,9 +5135,17 @@ const persistPageIndex = (
                 ))}
               </div>
             </fieldset>
-            <fieldset>
+            <fieldset className="component-icon-controls inspector-control-card">
               <legend>Icon</legend>
               <div className="option-grid icon-grid">
+                <button
+                  title="No icon"
+                  aria-label="No icon"
+                  className={selectedNode.data.hideIcon ? "active icon-none-option" : "icon-none-option"}
+                  onClick={() => updateSelected({ hideIcon: true })}
+                >
+                  <X size={18} />
+                </button>
                 {iconOptions.map((option) => {
                   const Icon = iconMap[option.value];
                   return (
@@ -4720,8 +5153,8 @@ const persistPageIndex = (
                       key={option.value}
                       title={option.label}
                       aria-label={option.label}
-                      className={selectedNode.data.icon === option.value ? "active" : ""}
-                      onClick={() => updateSelected({ icon: option.value })}
+                      className={!selectedNode.data.hideIcon && selectedNode.data.icon === option.value ? "active" : ""}
+                      onClick={() => updateSelected({ icon: option.value, hideIcon: false })}
                     >
                       <Icon size={18} />
                     </button>
@@ -4729,21 +5162,77 @@ const persistPageIndex = (
                 })}
               </div>
             </fieldset>
-            <fieldset>
-              <legend>Color</legend>
+            <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
+            <fieldset className="component-accent-controls inspector-control-card">
+              <legend>Accent and icon color</legend>
               <div className="tone-row">
-                {(["cyan", "violet", "amber", "emerald", "slate", "rose"] as NodeTone[]).map(
+                {(["cyan", "violet", "amber", "emerald", "slate", "rose", "black"] as NodeTone[]).map(
                   (tone) => (
                     <button
                       key={tone}
                       className={`tone-button ${tone} ${
-                        selectedNode.data.tone === tone ? "active" : ""
+                        !selectedNode.data.legendColor && selectedNode.data.tone === tone ? "active" : ""
                       }`}
                       aria-label={`${tone} color`}
-                      onClick={() => updateSelected({ tone })}
+                      onClick={() => updateSelected({ tone, legendColor: undefined })}
                     />
                   ),
                 )}
+                <label className={`tone-custom-button ${selectedNode.data.legendColor ? "active" : ""}`} title="Custom color">
+                  <input
+                    type="color"
+                    value={selectedNode.data.legendColor ?? "#0ea5c6"}
+                    onChange={(event) => updateSelected({ legendColor: event.target.value })}
+                  />
+                  <Plus size={14} />
+                </label>
+              </div>
+            </fieldset>
+            <fieldset className="component-appearance-controls inspector-control-card">
+              <legend>Surface</legend>
+              <div className="appearance-color-row">
+                <label>
+                  <span>Fill</span>
+                  <input
+                    type="color"
+                    value={selectedNode.data.fillColor ?? "#ffffff"}
+                    onChange={(event) => updateSelected({ fillColor: event.target.value })}
+                  />
+                </label>
+                <label>
+                  <span>Outline</span>
+                  <input
+                    type="color"
+                    value={selectedNode.data.outlineColor ?? selectedNode.data.legendColor ?? "#0ea5c6"}
+                    onChange={(event) => updateSelected({ outlineColor: event.target.value })}
+                  />
+                </label>
+              </div>
+              <label className="fill-opacity-control">
+                <span>Fill opacity</span>
+                <div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={selectedNode.data.fillOpacity ?? 100}
+                    onChange={(event) => updateSelected({ fillOpacity: Number(event.target.value) })}
+                  />
+                  <output>{selectedNode.data.fillOpacity ?? 100}%</output>
+                </div>
+              </label>
+              <div className="outline-style-options" role="group" aria-label="Outline style">
+                {(["solid", "dashed", "small-dashed"] as const).map((style) => (
+                  <button
+                    key={style}
+                    className={(selectedNode.data.outlineStyle ?? "solid") === style ? "active" : ""}
+                    onClick={() => updateSelected({ outlineStyle: style })}
+                  >
+                    <i className={`outline-sample ${style}`} aria-hidden="true" />
+                    <span>{style === "small-dashed" ? "Small dash" : style[0].toUpperCase() + style.slice(1)}</span>
+                  </button>
+                ))}
               </div>
             </fieldset>
             <div className="inspector-tip">
