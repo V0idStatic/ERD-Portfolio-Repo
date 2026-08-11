@@ -113,6 +113,8 @@ type NodeShape =
   | "star"
   | "parallelogram"
   | "document"
+  | "header-card"
+  | "side-panel"
   | "legend"
   | "legend-key"
   | "text"
@@ -163,7 +165,7 @@ type NodeIcon =
   | "check";
 type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose" | "black";
 type ComponentCategory = "service" | "shape" | "flowchart" | "erd";
-type ComponentTextTarget = "title" | "description";
+type ComponentTextTarget = "title" | "description" | "header";
 type ComponentTextStyle = Pick<CSSProperties, "color" | "fontFamily" | "fontStyle" | "fontWeight" | "textAlign" | "textDecoration">;
 
 type ArchitectureNodeData = {
@@ -171,6 +173,7 @@ type ArchitectureNodeData = {
   description?: string;
   titleSize?: number;
   descriptionSize?: number;
+  headerSize?: number;
   shape: NodeShape;
   icon: NodeIcon;
   tone: NodeTone;
@@ -186,6 +189,11 @@ type ArchitectureNodeData = {
   fontFamily?: CSSProperties["fontFamily"];
   titleTextStyle?: ComponentTextStyle;
   descriptionTextStyle?: ComponentTextStyle;
+  headerText?: string;
+  headerTextStyle?: ComponentTextStyle;
+  headerColor?: string;
+  leftPanelColor?: string;
+  rightPanelColor?: string;
   editingTextTarget?: ComponentTextTarget;
   showTitle?: boolean;
   showDescription?: boolean;
@@ -294,6 +302,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   const isServiceNode = Boolean(data.serviceLogo || data.serviceSymbol);
   const titleTextStyle = data.titleTextStyle ?? {};
   const descriptionTextStyle = data.descriptionTextStyle ?? {};
+  const headerTextStyle = data.headerTextStyle ?? {};
   const showTitle = data.showTitle !== false;
   const showDescription = data.showDescription !== false;
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
@@ -612,6 +621,14 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           ) : null}
         </div>
       ) : (
+        <>
+        {data.shape === "header-card" ? <div
+          className="segmented-header node-editable-text"
+          style={{ backgroundColor: data.headerColor ?? "#f59e0b" }}
+          onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("header"); }}
+          title="Double-click to edit header text"
+        ><span style={{ ...headerTextStyle, fontSize: `${data.headerSize ?? 11}px` }}>{data.headerText ?? "Header"}</span></div> : null}
+        {data.shape === "side-panel" ? <div className="segmented-side segmented-side-left" style={{ backgroundColor: data.leftPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
         <div className="node-inner">
           {(componentCategory === "service" || componentCategory === "flowchart") && data.shape !== "decision" && !data.hideIcon ? (
             <span className="node-icon" aria-hidden="true">
@@ -633,6 +650,8 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             >{data.description}</span> : null}
           </div>
         </div>
+        {data.shape === "side-panel" ? <div className="segmented-side segmented-side-right" style={{ backgroundColor: data.rightPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
+        </>
       )}
             {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
         <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
@@ -655,6 +674,8 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "database") return { width: 270, height: 78 };
   if (shape === "terminal") return { width: 250, height: 62 };
   if (shape === "predefined-process") return { width: 260, height: 92 };
+  if (shape === "header-card") return { width: 270, height: 130 };
+  if (shape === "side-panel") return { width: 310, height: 130 };
   if (shape === "text") return { width: 200, height: 40 };
   return { width: 270, height: 78 };
 };
@@ -1163,6 +1184,8 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "star", label: "Star" },
   { value: "parallelogram", label: "Parallelogram" },
   { value: "document", label: "Document" },
+  { value: "header-card", label: "Header Card" },
+  { value: "side-panel", label: "Side Panel" },
   { value: "decision", label: "Diamond" },
   { value: "database", label: "Database" },
   { value: "cloud", label: "Cloud" },
@@ -1171,7 +1194,7 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
 ];
 
 const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] = [
-  { id: "basic", label: "Shapes", shapes: ["service", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
+  { id: "basic", label: "Shapes", shapes: ["service", "header-card", "side-panel", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
   { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "predefined-process", "decision", "cloud"] },
   { id: "erd", label: "ERD", shapes: ["database"] },
 ];
@@ -1221,6 +1244,8 @@ function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className
   if (shape === "star") return <svg {...svgProps}><path d="m16 2 3.7 7.5 8.3 1.2-6 5.8 1.4 8.2-7.4-3.9-7.4 3.9 1.4-8.2-6-5.8 8.3-1.2Z" /></svg>;
   if (shape === "parallelogram") return <svg {...svgProps}><path d="M8 3h21l-5 20H3Z" /></svg>;
   if (shape === "document") return <svg {...svgProps}><path d="M3 3h26v17l-5-3-5 5-5-5-5 3-6-3Z" /></svg>;
+  if (shape === "header-card") return <svg {...svgProps}><rect x="3" y="3" width="26" height="21" rx="1" /><path d="M3 9h26" /></svg>;
+  if (shape === "side-panel") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="1" /><path d="M8 4v18M24 4v18" /></svg>;
   if (shape === "decision") return <svg {...svgProps}><path d="m16 1 15 12-15 12L1 13Z" /></svg>;
   if (shape === "terminal") return <svg {...svgProps}><rect x="2" y="5" width="28" height="16" rx="8" /></svg>;
   if (shape === "predefined-process") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="2" /><path d="M7 4v18M25 4v18" /></svg>;
@@ -1786,7 +1811,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const selectedTextTarget = selectedNode?.data.editingTextTarget;
   const selectedTextStyle = selectedTextTarget === "description"
     ? (selectedNode?.data.descriptionTextStyle ?? {})
-    : (selectedNode?.data.titleTextStyle ?? {});
+    : selectedTextTarget === "header"
+      ? (selectedNode?.data.headerTextStyle ?? {})
+      : (selectedNode?.data.titleTextStyle ?? {});
   const activeCommentThread = commentThread
     ? comments.find((comment) => comment.id === commentThread.id) ?? null
     : null;
@@ -1878,10 +1905,12 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     if (!selectedTextTarget) return;
     updateSelected(selectedTextTarget === "title"
       ? { titleTextStyle: { ...selectedTextStyle, ...patch } }
-      : { descriptionTextStyle: { ...selectedTextStyle, ...patch } });
+      : selectedTextTarget === "header"
+        ? { headerTextStyle: { ...selectedTextStyle, ...patch } }
+        : { descriptionTextStyle: { ...selectedTextStyle, ...patch } });
   };
 
-  const updateTextSize = (key: "titleSize" | "descriptionSize", value: number, applyToAll: boolean) => {
+  const updateTextSize = (key: "titleSize" | "descriptionSize" | "headerSize", value: number, applyToAll: boolean) => {
     if (!selectedId) return;
     const affectedNodeIds: string[] = [];
     setNodes((current) =>
@@ -1896,6 +1925,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
           1,
           (nextData.titleSize ?? 13) / 13,
           (nextData.descriptionSize ?? 10) / 10,
+          (nextData.headerSize ?? 11) / 11,
         );
         const shapeScale = 1 + (textScale - 1) * 0.55;
         const requiredWidth = Math.ceil(base.width * shapeScale);
@@ -1937,7 +1967,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       const nextData = { ...node.data, autoGrowWithText: enabled };
       if (!enabled) return { ...node, data: nextData };
       const base = defaultShapeSize(node.data.shape);
-      const textScale = Math.max(1, (nextData.titleSize ?? 13) / 13, (nextData.descriptionSize ?? 10) / 10);
+      const textScale = Math.max(1, (nextData.titleSize ?? 13) / 13, (nextData.descriptionSize ?? 10) / 10, (nextData.headerSize ?? 11) / 11);
       const shapeScale = 1 + (textScale - 1) * 0.55;
       const width = Math.ceil(base.width * shapeScale);
       const height = Math.ceil(base.height * shapeScale);
@@ -5283,6 +5313,7 @@ const persistPageIndex = (
               <div className="text-target-tabs" role="tablist" aria-label="Text to edit">
                 <button type="button" role="tab" aria-selected={selectedTextTarget === "title"} className={selectedTextTarget === "title" ? "active" : ""} onClick={() => updateSelected({ editingTextTarget: "title" })}>Title</button>
                 {selectedNode.data.shape !== "database" ? <button type="button" role="tab" aria-selected={selectedTextTarget === "description"} className={selectedTextTarget === "description" ? "active" : ""} onClick={() => updateSelected({ editingTextTarget: "description" })}>Description</button> : null}
+                {selectedNode.data.shape === "header-card" ? <button type="button" role="tab" aria-selected={selectedTextTarget === "header"} className={selectedTextTarget === "header" ? "active" : ""} onClick={() => updateSelected({ editingTextTarget: "header" })}>Header</button> : null}
               </div>
               <fieldset className="component-text-controls inspector-control-card">
                 <legend>{selectedTextTarget === "title" ? "Title" : "Description"} text</legend>
@@ -5290,9 +5321,9 @@ const persistPageIndex = (
                   <label className="description-toggle inspector-apply-toggle"><span><strong>Show title</strong><small>Reserve space for the node title.</small></span><input type="checkbox" checked={selectedNode.data.showTitle !== false} onChange={(event) => updateSelected({ showTitle: event.target.checked })} /><i aria-hidden="true" /></label>
                   <label className="description-toggle inspector-apply-toggle"><span><strong>Show description</strong><small>Reserve space for supporting text.</small></span><input type="checkbox" checked={selectedNode.data.showDescription !== false} onChange={(event) => updateSelected({ showDescription: event.target.checked })} /><i aria-hidden="true" /></label>
                 </div>
-                {selectedTextTarget === "title" ? <label><span>Text</span><input autoFocus value={selectedNode.data.label} onChange={(event) => updateSelected({ label: event.target.value })} /></label> : <label><span>Text</span><textarea rows={3} value={selectedNode.data.description ?? ""} onChange={(event) => updateSelected({ description: event.target.value })} /></label>}
+                {selectedTextTarget === "title" ? <label><span>Text</span><input autoFocus value={selectedNode.data.label} onChange={(event) => updateSelected({ label: event.target.value })} /></label> : selectedTextTarget === "header" ? <label><span>Text</span><input autoFocus value={selectedNode.data.headerText ?? "Header"} onChange={(event) => updateSelected({ headerText: event.target.value })} /></label> : <label><span>Text</span><textarea rows={3} value={selectedNode.data.description ?? ""} onChange={(event) => updateSelected({ description: event.target.value })} /></label>}
                 <label><span>Font</span><select value={selectedTextStyle.fontFamily ?? ""} onChange={(event) => updateSelectedTextStyle({ fontFamily: event.target.value || undefined })}><option value="">System</option><option value="Inter, Arial, sans-serif">Inter</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', Times, serif">Times New Roman</option><option value="'Courier New', monospace">Courier New</option></select></label>
-                <label className="line-label-size"><span>Font size</span><div><input type="range" min={selectedTextTarget === "title" ? "8" : "7"} max={selectedTextTarget === "title" ? "42" : "32"} value={selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : (selectedNode.data.descriptionSize ?? 10)} onChange={(event) => updateTextSize(selectedTextTarget === "title" ? "titleSize" : "descriptionSize", Number(event.target.value), false)} /><output>{selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : (selectedNode.data.descriptionSize ?? 10)}px</output></div></label>
+                <label className="line-label-size"><span>Font size</span><div><input type="range" min={selectedTextTarget === "title" ? "8" : "7"} max={selectedTextTarget === "title" ? "42" : "32"} value={selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)} onChange={(event) => updateTextSize(selectedTextTarget === "title" ? "titleSize" : selectedTextTarget === "header" ? "headerSize" : "descriptionSize", Number(event.target.value), false)} /><output>{selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)}px</output></div></label>
                 <label className="description-toggle inspector-apply-toggle"><span><strong>Grow box with text</strong><small>Increase the node size as its text gets larger.</small></span><input type="checkbox" checked={Boolean(selectedNode.data.autoGrowWithText)} onChange={(event) => updateAutoGrowWithText(event.target.checked)} /><i aria-hidden="true" /></label>
                 <div className="text-style-actions" role="group" aria-label="Text style">
                   <button type="button" title="Bold" className={selectedTextStyle.fontWeight === 700 ? "active" : ""} onClick={() => updateSelectedTextStyle({ fontWeight: selectedTextStyle.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
@@ -5302,7 +5333,7 @@ const persistPageIndex = (
                     const AlignmentIcon = alignment === "left" ? AlignLeft : alignment === "center" ? AlignCenter : alignment === "right" ? AlignRight : AlignJustify;
                     return <button type="button" key={alignment} title={`Align ${alignment}`} aria-label={`Align ${alignment}`} className={(selectedTextStyle.textAlign ?? "left") === alignment ? "active" : ""} onClick={() => updateSelectedTextStyle({ textAlign: alignment })}><AlignmentIcon size={17} /></button>;
                   })}
-                  <label className="text-color-picker" title="Text color" style={{ "--text-color": selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589") } as CSSProperties}><span>A</span><input type="color" value={selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589")} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
+                  <label className="text-color-picker" title="Text color" style={{ "--text-color": selectedTextStyle.color ?? (selectedTextTarget === "header" ? "#ffffff" : selectedTextTarget === "title" ? "#152337" : "#667589") } as CSSProperties}><span>A</span><input type="color" value={selectedTextStyle.color ?? (selectedTextTarget === "header" ? "#ffffff" : selectedTextTarget === "title" ? "#152337" : "#667589")} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
                 </div>
               </fieldset>
               <button type="button" className="close-text-editor" onClick={() => updateSelected({ editingTextTarget: undefined })}>Done editing text</button>
@@ -5468,6 +5499,20 @@ const persistPageIndex = (
                 </fieldset> : null}
               </>
             )}
+            {selectedNode.data.shape === "header-card" ? <fieldset className="component-segment-controls inspector-control-card">
+              <legend>Header area</legend>
+              <label><span>Header text</span><input value={selectedNode.data.headerText ?? "Header"} onChange={(event) => updateSelected({ headerText: event.target.value })} /></label>
+              <label className="segment-color-control"><span>Header color</span><input type="color" value={selectedNode.data.headerColor ?? "#f59e0b"} onChange={(event) => updateSelected({ headerColor: event.target.value })} /></label>
+              <small>Double-click the header on the canvas to format its text separately.</small>
+            </fieldset> : null}
+            {selectedNode.data.shape === "side-panel" ? <fieldset className="component-segment-controls inspector-control-card">
+              <legend>Side areas</legend>
+              <div className="appearance-color-row">
+                <label><span>Left</span><input type="color" value={selectedNode.data.leftPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ leftPanelColor: event.target.value })} /></label>
+                <label><span>Right</span><input type="color" value={selectedNode.data.rightPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ rightPanelColor: event.target.value })} /></label>
+              </div>
+              <small>The side areas are color-only. Title and description stay in the larger center.</small>
+            </fieldset> : null}
             <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
             <fieldset className="component-accent-controls inspector-control-card">
               <legend>Accent and icon color</legend>
