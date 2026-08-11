@@ -159,6 +159,8 @@ type NodeIcon =
   | "check";
 type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose" | "black";
 type ComponentCategory = "service" | "shape" | "flowchart" | "erd";
+type ComponentTextTarget = "title" | "description";
+type ComponentTextStyle = Pick<CSSProperties, "color" | "fontFamily" | "fontStyle" | "fontWeight" | "textAlign" | "textDecoration">;
 
 type ArchitectureNodeData = {
   label: string;
@@ -178,9 +180,13 @@ type ArchitectureNodeData = {
   fontWeight?: CSSProperties["fontWeight"];
   fontStyle?: CSSProperties["fontStyle"];
   fontFamily?: CSSProperties["fontFamily"];
+  titleTextStyle?: ComponentTextStyle;
+  descriptionTextStyle?: ComponentTextStyle;
+  editingTextTarget?: ComponentTextTarget;
   onLabelChange?: (value: string) => void;
   onEditingChange?: (editing: boolean) => void;
   onTextStyleChange?: (patch: Partial<ArchitectureNodeData>) => void;
+  onTextEditingChange?: (target: ComponentTextTarget) => void;
   commentId?: string;
   serviceLogo?: string;
   serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security" | "cloud" | "domain" | "auth" | "protection" | "ai";
@@ -279,6 +285,8 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   const animState = data._animState;
   const componentCategory = componentCategoryFor(data);
   const isServiceNode = Boolean(data.serviceLogo || data.serviceSymbol);
+  const titleTextStyle = data.titleTextStyle ?? {};
+  const descriptionTextStyle = data.descriptionTextStyle ?? {};
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
   const connectorStops = isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
   const serviceTileSize = Math.min((width ?? 112) * 0.96, (height ?? 142) - 32);
@@ -473,6 +481,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           } : {}),
         } as CSSProperties
       }
+      onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("title"); }}
     >
       {data.shape !== "legend-key" && data.shape !== "legend" && data.shape !== "database" && (
         <NodeResizer
@@ -601,8 +610,18 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             </span>
           ) : null}
           <div className="node-copy">
-            <strong>{data.label}</strong>
-            {data.description ? <span>{data.description}</span> : null}
+            <strong
+              className="node-editable-text"
+              style={titleTextStyle}
+              onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("title"); }}
+              title="Double-click to edit title style"
+            >{data.label}</strong>
+            {data.description ? <span
+              className="node-editable-text"
+              style={descriptionTextStyle}
+              onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("description"); }}
+              title="Double-click to edit description style"
+            >{data.description}</span> : null}
           </div>
         </div>
       )}
@@ -1544,7 +1563,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         const selectedIds = new Set(selectedNodes.map((node) => node.id));
         selectionClipboardRef.current = {
           nodes: selectedNodes.map((node) => {
-            const { onLabelChange, onEditingChange, onTextStyleChange, ...data } = node.data;
+            const { onLabelChange, onEditingChange, onTextStyleChange, onTextEditingChange, ...data } = node.data;
             return { ...node, data: { ...data }, selected: false };
           }),
           edges: edges.filter((edgeItem) => selectedIds.has(edgeItem.source) && selectedIds.has(edgeItem.target))
@@ -1755,6 +1774,10 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
   const selectedComponentCategory = selectedNode ? componentCategoryFor(selectedNode.data) : null;
+  const selectedTextTarget = selectedNode?.data.editingTextTarget;
+  const selectedTextStyle = selectedTextTarget === "description"
+    ? (selectedNode?.data.descriptionTextStyle ?? {})
+    : (selectedNode?.data.titleTextStyle ?? {});
   const activeCommentThread = commentThread
     ? comments.find((comment) => comment.id === commentThread.id) ?? null
     : null;
@@ -1841,6 +1864,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     },
     [selectedId, setNodes],
   );
+
+  const updateSelectedTextStyle = (patch: Partial<ComponentTextStyle>) => {
+    if (!selectedTextTarget) return;
+    updateSelected(selectedTextTarget === "title"
+      ? { titleTextStyle: { ...selectedTextStyle, ...patch } }
+      : { descriptionTextStyle: { ...selectedTextStyle, ...patch } });
+  };
 
   const updateTextSize = (key: "titleSize" | "descriptionSize", value: number, applyToAll: boolean) => {
     if (!selectedId) return;
@@ -3716,11 +3746,26 @@ const persistPageIndex = (
           },
         };
       }
-      if (!hasAnimationState) return node;
+      const nodeWithTextEditor = {
+        ...node,
+        data: {
+          ...node.data,
+          onTextEditingChange: (target: ComponentTextTarget) => {
+            setSelectedId(node.id);
+            setSelectedEdgeId(null);
+            setInspectorOpen(true);
+            setNodes((items) => items.map((item) => item.id === node.id
+              ? { ...item, data: { ...item.data, editingTextTarget: target } }
+              : item,
+            ));
+          },
+        },
+      };
+      if (!hasAnimationState) return nodeWithTextEditor;
       const state = animActiveIds.has(node.id) ? "active" : animCompletedIds.has(node.id) ? "completed" : "inactive";
-      return { ...node, data: { ...node.data, _animState: state } };
+      return { ...nodeWithTextEditor, data: { ...nodeWithTextEditor.data, _animState: state } };
     });
-  }, [animActiveIds, animCompletedIds, nodes, setNodes]);
+  }, [animActiveIds, animCompletedIds, nodes, setNodes, setSelectedEdgeId, setSelectedId]);
 
   const renderedEdges = useMemo(() => edges.map((edgeItem) => {
     const isErdRelationship = nodes.find((node) => node.id === edgeItem.source)?.data.shape === "database"
@@ -5207,93 +5252,27 @@ const persistPageIndex = (
           </div>
         ) : selectedNode ? (
           <div className="inspector-body">
-            <label>
-              <span>{selectedNode.data.shape === "database" ? "Table name" : "Title"}</span>
-              <input
-                value={selectedNode.data.label}
-                onChange={(event) => updateSelected({ label: event.target.value })}
-              />
-            </label>
-            {selectedNode.data.shape !== "database" ? (
-              <label>
-                <span>Description</span>
-                <textarea
-                  rows={3}
-                  value={selectedNode.data.description ?? ""}
-                  onChange={(event) => updateSelected({ description: event.target.value })}
-                />
-              </label>
-            ) : null}
-            <div className="editor-section-heading section-type-heading"><span>02</span><div><strong>Typography</strong><small>Text scale and consistency</small></div></div>
-            <fieldset className="component-type-controls inspector-control-card">
-              <legend>Text size</legend>
-              <label className="line-label-size">
-                <span>Title size</span>
-                <div>
-                  <input
-                    type="range"
-                    min="8"
-                    max="42"
-                    step="1"
-                    value={selectedNode.data.titleSize ?? 13}
-                    onChange={(event) =>
-                      updateTextSize("titleSize", Number(event.target.value), applyTitleSizeToAll)
-                    }
-                  />
-                  <output>{selectedNode.data.titleSize ?? 13}px</output>
+            {selectedTextTarget ? <>
+              <div className="editor-section-heading section-type-heading"><span>01</span><div><strong>Text</strong><small>Editing this {selectedTextTarget}</small></div></div>
+              <div className="text-target-tabs" role="tablist" aria-label="Text to edit">
+                <button type="button" role="tab" aria-selected={selectedTextTarget === "title"} className={selectedTextTarget === "title" ? "active" : ""} onClick={() => updateSelected({ editingTextTarget: "title" })}>Title</button>
+                {selectedNode.data.shape !== "database" ? <button type="button" role="tab" aria-selected={selectedTextTarget === "description"} className={selectedTextTarget === "description" ? "active" : ""} onClick={() => updateSelected({ editingTextTarget: "description" })}>Description</button> : null}
+              </div>
+              <fieldset className="component-text-controls inspector-control-card">
+                <legend>{selectedTextTarget === "title" ? "Title" : "Description"} text</legend>
+                {selectedTextTarget === "title" ? <label><span>Text</span><input autoFocus value={selectedNode.data.label} onChange={(event) => updateSelected({ label: event.target.value })} /></label> : <label><span>Text</span><textarea rows={3} value={selectedNode.data.description ?? ""} onChange={(event) => updateSelected({ description: event.target.value })} /></label>}
+                <label><span>Font</span><select value={selectedTextStyle.fontFamily ?? ""} onChange={(event) => updateSelectedTextStyle({ fontFamily: event.target.value || undefined })}><option value="">System</option><option value="Inter, Arial, sans-serif">Inter</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', Times, serif">Times New Roman</option><option value="'Courier New', monospace">Courier New</option></select></label>
+                <label className="line-label-size"><span>Font size</span><div><input type="range" min={selectedTextTarget === "title" ? "8" : "7"} max={selectedTextTarget === "title" ? "42" : "32"} value={selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : (selectedNode.data.descriptionSize ?? 10)} onChange={(event) => updateTextSize(selectedTextTarget === "title" ? "titleSize" : "descriptionSize", Number(event.target.value), false)} /><output>{selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : (selectedNode.data.descriptionSize ?? 10)}px</output></div></label>
+                <div className="text-style-actions" role="group" aria-label="Text style">
+                  <button type="button" title="Bold" className={selectedTextStyle.fontWeight === 700 ? "active" : ""} onClick={() => updateSelectedTextStyle({ fontWeight: selectedTextStyle.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
+                  <button type="button" title="Italic" className={selectedTextStyle.fontStyle === "italic" ? "active" : ""} onClick={() => updateSelectedTextStyle({ fontStyle: selectedTextStyle.fontStyle === "italic" ? "normal" : "italic" })}><em>I</em></button>
+                  <button type="button" title="Underline" className={selectedTextStyle.textDecoration === "underline" ? "active" : ""} onClick={() => updateSelectedTextStyle({ textDecoration: selectedTextStyle.textDecoration === "underline" ? "none" : "underline" })}><u>U</u></button>
+                  {(["left", "center", "right"] as const).map((alignment) => <button type="button" key={alignment} title={`Align ${alignment}`} className={selectedTextStyle.textAlign === alignment ? "active" : ""} onClick={() => updateSelectedTextStyle({ textAlign: alignment })}>{alignment[0].toUpperCase()}</button>)}
+                  <label className="text-color-picker" title="Text color" style={{ "--text-color": selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589") } as CSSProperties}><span>A</span><input type="color" value={selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589")} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
                 </div>
-              </label>
-              <label className="description-toggle inspector-apply-toggle">
-                <span>
-                  <strong>Apply title size to all</strong>
-                  <small>Changes every component title.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={applyTitleSizeToAll}
-                  onChange={(event) => {
-                    setApplyTitleSizeToAll(event.target.checked);
-                    if (event.target.checked) {
-                      updateTextSize("titleSize", selectedNode.data.titleSize ?? 13, true);
-                    }
-                  }}
-                />
-                <i aria-hidden="true" />
-              </label>
-              <label className="line-label-size">
-                <span>Description size</span>
-                <div>
-                  <input
-                    type="range"
-                    min="7"
-                    max="32"
-                    step="1"
-                    value={selectedNode.data.descriptionSize ?? 10}
-                    onChange={(event) =>
-                      updateTextSize("descriptionSize", Number(event.target.value), applyDescriptionSizeToAll)
-                    }
-                  />
-                  <output>{selectedNode.data.descriptionSize ?? 10}px</output>
-                </div>
-              </label>
-              <label className="description-toggle inspector-apply-toggle">
-                <span>
-                  <strong>Apply description size to all</strong>
-                  <small>Changes every component description.</small>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={applyDescriptionSizeToAll}
-                  onChange={(event) => {
-                    setApplyDescriptionSizeToAll(event.target.checked);
-                    if (event.target.checked) {
-                      updateTextSize("descriptionSize", selectedNode.data.descriptionSize ?? 10, true);
-                    }
-                  }}
-                />
-                <i aria-hidden="true" />
-              </label>
-            </fieldset>
+              </fieldset>
+              <button type="button" className="close-text-editor" onClick={() => updateSelected({ editingTextTarget: undefined })}>Done editing text</button>
+            </> : <div className="inspector-tip"><Type size={16} /> Double-click a component to edit its title, or double-click its description to customize that text.</div>}
             <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedComponentCategory === "erd" ? "Table columns and details" : selectedComponentCategory === "service" ? "Service selection" : selectedComponentCategory === "flowchart" ? "Flowchart symbol and icon" : "Shape selection"}</small></div></div>
             {selectedComponentCategory === "erd" ? (
               <fieldset className="component-erd-controls inspector-control-card">
