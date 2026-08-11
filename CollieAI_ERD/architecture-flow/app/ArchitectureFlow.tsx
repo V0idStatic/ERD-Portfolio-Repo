@@ -721,6 +721,7 @@ function FlowingConnectorEdge({
     lineStyle?: ConnectorLineStyle;
     sourceCardinality?: ErdCardinality;
     targetCardinality?: ErdCardinality;
+    labelBackground?: boolean;
   };
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
   // Keep one editable elbow control, like a classic orthogonal diagram line.
@@ -903,8 +904,8 @@ function FlowingConnectorEdge({
                 color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
                 fontSize: labelStyle?.fontSize,
                 fontWeight: labelStyle?.fontWeight,
-                background: typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff",
-                opacity: typeof labelBgStyle?.fillOpacity === "number" ? labelBgStyle.fillOpacity : 1,
+                background: edgeData.labelBackground === false ? "transparent" : (typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff"),
+                opacity: 1,
                 borderRadius: labelBgBorderRadius,
                 padding: `${labelBgPadding?.[1] ?? 4}px ${labelBgPadding?.[0] ?? 6}px`,
               }}
@@ -5633,6 +5634,27 @@ const persistPageIndex = (
               </div>
               <small>Applies to this connection label only.</small>
             </label>
+            <fieldset className="line-label-background inspector-control-card">
+              <legend>Label background</legend>
+              <label className="description-toggle inspector-apply-toggle">
+                <span><strong>Show background</strong><small>Add a color behind this label.</small></span>
+                <input
+                  type="checkbox"
+                  checked={((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true)}
+                  onChange={(event) => updateSelectedEdge({ data: { ...selectedEdge.data, labelBackground: event.target.checked } })}
+                />
+                <i aria-hidden="true" />
+              </label>
+              <label className="line-label-background-color">
+                <span>Background color</span>
+                <input
+                  type="color"
+                  disabled={((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true) === false}
+                  value={typeof selectedEdge.labelBgStyle?.fill === "string" ? selectedEdge.labelBgStyle.fill : "#ffffff"}
+                  onChange={(event) => updateSelectedEdge({ labelBgStyle: { ...selectedEdge.labelBgStyle, fill: event.target.value, fillOpacity: 1 } })}
+                />
+              </label>
+            </fieldset>
             {selectedEdgeIsErd ? (
               <fieldset className="erd-relationship-controls inspector-control-card">
                 <legend>ERD relationship</legend>
