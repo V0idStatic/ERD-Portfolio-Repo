@@ -781,7 +781,7 @@ function FlowingConnectorEdge({
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
   const labelFontSize = typeof labelStyle?.fontSize === "number" ? labelStyle.fontSize : 12;
   const labelMaskWidth = Math.min(310, Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10));
-  const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
+  const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number; isVertical: boolean } | null>(null);
   useLayoutEffect(() => {
     if (!label || !pathMeasureRef.current) {
       setLabelGap(null);
@@ -803,12 +803,21 @@ function FlowingConnectorEdge({
     }
     const gapLength = Math.min(totalLength * 0.9, labelMaskWidth + 10);
     const gapStart = Math.max(0, Math.min(totalLength - gapLength, nearestLength - gapLength / 2));
+    const tangentStep = Math.min(4, totalLength / 64);
+    const pointBefore = path.getPointAtLength(Math.max(0, nearestLength - tangentStep));
+    const pointAfter = path.getPointAtLength(Math.min(totalLength, nearestLength + tangentStep));
     const next = {
       before: gapStart / totalLength * 1000,
       gap: gapLength / totalLength * 1000,
       after: Math.max(0, (totalLength - gapStart - gapLength) / totalLength * 1000),
+      isVertical: Math.abs(pointAfter.y - pointBefore.y) > Math.abs(pointAfter.x - pointBefore.x),
     };
-    setLabelGap((current) => current && Math.abs(current.before - next.before) < 0.1 && Math.abs(current.gap - next.gap) < 0.1 ? current : next);
+    setLabelGap((current) => current
+      && current.isVertical === next.isVertical
+      && Math.abs(current.before - next.before) < 0.1
+      && Math.abs(current.gap - next.gap) < 0.1
+      ? current
+      : next);
   }, [d, label, labelMaskWidth, labelPosition.x, labelPosition.y]);
   const edgePathStyle = labelGap ? {
     ...style,
@@ -947,6 +956,7 @@ function FlowingConnectorEdge({
                 borderRadius: labelBgBorderRadius,
                 padding: `${labelBgPadding?.[1] ?? 4}px ${labelBgPadding?.[0] ?? 6}px`,
                 boxShadow: "none",
+                transform: labelGap?.isVertical ? "rotate(-90deg)" : undefined,
               }}
             >
               {label}
