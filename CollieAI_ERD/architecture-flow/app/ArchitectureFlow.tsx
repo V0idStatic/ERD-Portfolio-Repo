@@ -782,7 +782,7 @@ function FlowingConnectorEdge({
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
   const labelPaddingY = labelBgPadding?.[1] ?? 4;
   const labelFontSize = typeof labelStyle?.fontSize === "number" ? labelStyle.fontSize : 12;
-  const labelMaskWidth = Math.min(310, Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10));
+  const labelMaskWidth = Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10);
   const labelMaskHeight = Math.max(22, labelFontSize * 1.2 + labelPaddingY * 2);
   const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
   useLayoutEffect(() => {
@@ -3375,7 +3375,7 @@ const persistPageIndex = (
 
           const { page, renderScale, translateX, translateY } = getDocsLayout(
             docsExportMode,
-            0.32,
+            1,
           );
           prepareExportSafeSvgPaint(viewport);
           const renderedCanvas = await toCanvas(viewport, {
