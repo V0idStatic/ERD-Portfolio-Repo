@@ -783,7 +783,7 @@ function FlowingConnectorEdge({
   const labelMaskWidth = Math.min(310, Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10));
   const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
   useLayoutEffect(() => {
-    if (!label || !labelBackgroundEnabled || !pathMeasureRef.current) {
+    if (!label || !pathMeasureRef.current) {
       setLabelGap(null);
       return;
     }
@@ -809,7 +809,7 @@ function FlowingConnectorEdge({
       after: Math.max(0, (totalLength - gapStart - gapLength) / totalLength * 1000),
     };
     setLabelGap((current) => current && Math.abs(current.before - next.before) < 0.1 && Math.abs(current.gap - next.gap) < 0.1 ? current : next);
-  }, [d, label, labelBackgroundEnabled, labelMaskWidth, labelPosition.x, labelPosition.y]);
+  }, [d, label, labelMaskWidth, labelPosition.x, labelPosition.y]);
   const edgePathStyle = labelGap ? {
     ...style,
     strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000`,
@@ -958,7 +958,6 @@ function FlowingConnectorEdge({
         <path
           d={d}
           className="connector-water-pulse"
-          pathLength={1}
           pathLength={1000}
           style={{ animationDuration: `${edgeData._flowDuration}ms`, ...(labelGap ? { strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000` } : {}) }}
           aria-hidden="true"
