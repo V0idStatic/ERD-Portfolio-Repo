@@ -158,6 +158,7 @@ type NodeIcon =
   | "user"
   | "check";
 type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose" | "black";
+type ComponentCategory = "service" | "shape" | "flowchart" | "erd";
 
 type ArchitectureNodeData = {
   label: string;
@@ -167,6 +168,7 @@ type ArchitectureNodeData = {
   shape: NodeShape;
   icon: NodeIcon;
   tone: NodeTone;
+  componentCategory?: ComponentCategory;
   legendColor?: string;
   legendOpacity?: number;
   legendNodeIds?: string[];
@@ -903,11 +905,12 @@ const n = (
   tone: NodeTone,
   serviceLogo?: string,
   serviceSymbol?: ArchitectureNodeData["serviceSymbol"],
+  componentCategory?: ComponentCategory,
 ): ArchitectureNode => ({
   id,
   type: "architecture",
   position: { x, y },
-  data: { label, description, shape, icon, tone, serviceLogo, serviceSymbol },
+  data: { label, description, shape, icon, tone, serviceLogo, serviceSymbol, componentCategory },
 });
 
 const commentNode = (comment: DiagramComment): ArchitectureNode => ({
@@ -1144,6 +1147,20 @@ const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] 
   { id: "erd", label: "ERD", shapes: ["database"] },
 ];
 
+const shapesByCategory: Record<Exclude<ComponentCategory, "service">, NodeShape[]> = {
+  shape: shapeDrawerSections.find((section) => section.id === "basic")!.shapes,
+  flowchart: shapeDrawerSections.find((section) => section.id === "flowchart")!.shapes,
+  erd: shapeDrawerSections.find((section) => section.id === "erd")!.shapes,
+};
+
+const componentCategoryFor = (data: ArchitectureNodeData): ComponentCategory => {
+  if (data.componentCategory) return data.componentCategory;
+  if (data.serviceLogo || data.serviceSymbol) return "service";
+  if (data.shape === "database") return "erd";
+  if (["decision", "cloud", "terminal", "predefined-process"].includes(data.shape)) return "flowchart";
+  return "shape";
+};
+
 const defaultIconForShape = (shape: NodeShape): NodeIcon =>
   shape === "decision" ? "decision" : shape === "database" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
 
@@ -1202,6 +1219,8 @@ const createNodeDraft = (): ArchitectureNodeData => ({
   shape: "service",
   icon: "server",
   tone: "cyan",
+  componentCategory: "shape",
+  hideIcon: true,
 });
 
 const createLegendDraft = (): LegendDraft => ({
@@ -1734,6 +1753,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   }, [setEdges, setNodes]);
 
   const selectedNode = nodes.find((node) => node.id === selectedId) ?? null;
+  const selectedComponentCategory = selectedNode ? componentCategoryFor(selectedNode.data) : null;
   const activeCommentThread = commentThread
     ? comments.find((comment) => comment.id === commentThread.id) ?? null
     : null;
@@ -3363,6 +3383,7 @@ const persistPageIndex = (
         nodeDraft.tone,
         nodeDraft.serviceLogo,
         nodeDraft.serviceSymbol,
+        nodeDraft.componentCategory,
       ),
     ]);
     setSelectedId(id);
@@ -4402,6 +4423,7 @@ const persistPageIndex = (
                               tone: service.tone,
                               serviceLogo: service.logo,
                               serviceSymbol: service.kind,
+                              componentCategory: "service",
                               hideIcon: false,
                               legendColor: undefined,
                             }));
@@ -4473,7 +4495,8 @@ const persistPageIndex = (
                                           icon: defaultIconForShape(shape),
                                           serviceLogo: undefined,
                                           serviceSymbol: undefined,
-                                          hideIcon: false,
+                                          componentCategory: section.id === "erd" ? "erd" : section.id === "flowchart" ? "flowchart" : "shape",
+                                          hideIcon: section.id !== "flowchart",
                                         }));
                                       }}
                                     >
@@ -4488,7 +4511,7 @@ const persistPageIndex = (
                       })}
                     </div>
                   </div>
-                  <section className="icon-picker-drawer creator-drawer">
+                  {nodeDraft.componentCategory === "flowchart" ? <section className="icon-picker-drawer creator-drawer">
                     <button className="shape-drawer-heading" type="button" onClick={() => setOpenShapeSections((current) => ({ ...current, icons: !current.icons }))} aria-expanded={openShapeSections.icons}>
                       <span>Icon</span><small>{nodeDraft.hideIcon ? "None" : iconOptions.find((option) => option.value === nodeDraft.icon)?.label}</small><ChevronDown size={15} />
                     </button>
@@ -4509,7 +4532,7 @@ const persistPageIndex = (
                         );
                       })}
                     </div> : null}
-                  </section>
+                  </section> : null}
                   <fieldset>
                     <legend>Color</legend>
                     <div className="tone-row">
@@ -5270,8 +5293,8 @@ const persistPageIndex = (
                 <i aria-hidden="true" />
               </label>
             </fieldset>
-            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedNode.data.shape === "database" ? "Table columns and details" : selectedNode.data.shape === "service" ? "Service selection" : "Shape and icon selection"}</small></div></div>
-            {selectedNode.data.shape === "database" ? (
+            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedComponentCategory === "erd" ? "Table columns and details" : selectedComponentCategory === "service" ? "Service selection" : selectedComponentCategory === "flowchart" ? "Flowchart symbol and icon" : "Shape selection"}</small></div></div>
+            {selectedComponentCategory === "erd" ? (
               <fieldset className="component-erd-controls inspector-control-card">
                 <legend>ERD table</legend>
                 <div className="erd-columns-control">
@@ -5319,7 +5342,7 @@ const persistPageIndex = (
                   <i aria-hidden="true" />
                 </label>
               </fieldset>
-            ) : selectedNode.data.shape === "service" ? (
+            ) : selectedComponentCategory === "service" ? (
               <fieldset className="component-service-controls inspector-control-card">
                 <legend>Service</legend>
                 <div className="service-preset-grid">
@@ -5342,6 +5365,7 @@ const persistPageIndex = (
                           tone: service.tone,
                           serviceLogo: service.logo,
                           serviceSymbol: service.kind,
+                          componentCategory: "service",
                           hideIcon: false,
                           legendColor: undefined,
                         })}
@@ -5381,20 +5405,27 @@ const persistPageIndex = (
                 <fieldset className="component-shape-controls inspector-control-card">
                   <legend>Shape</legend>
                   <div className="option-grid shape-grid">
-                    {shapeOptions.map((option) => (
+                    {shapeOptions.filter((option) => shapesByCategory[selectedComponentCategory === "flowchart" ? "flowchart" : "shape"].includes(option.value)).map((option) => (
                       <button
                         key={option.value}
                         title={option.label}
                         aria-label={option.label}
                         className={selectedNode.data.shape === option.value ? "active" : ""}
-                        onClick={() => updateSelected({ shape: option.value })}
+                        onClick={() => updateSelected({
+                          shape: option.value,
+                          icon: defaultIconForShape(option.value),
+                          serviceLogo: undefined,
+                          serviceSymbol: undefined,
+                          componentCategory: selectedComponentCategory === "flowchart" ? "flowchart" : "shape",
+                          hideIcon: selectedComponentCategory !== "flowchart",
+                        })}
                       >
                         <ShapeOutlinePreview shape={option.value} className="shape-outline-preview" />
                       </button>
                     ))}
                   </div>
                 </fieldset>
-                <fieldset className="component-icon-controls inspector-control-card">
+                {selectedComponentCategory === "flowchart" ? <fieldset className="component-icon-controls inspector-control-card">
                   <legend>Icon</legend>
                   <div className="option-grid icon-grid">
                     <button
@@ -5420,7 +5451,7 @@ const persistPageIndex = (
                       );
                     })}
                   </div>
-                </fieldset>
+                </fieldset> : null}
               </>
             )}
             <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
