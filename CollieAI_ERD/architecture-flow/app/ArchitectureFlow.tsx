@@ -306,7 +306,10 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   const showTitle = data.showTitle !== false;
   const showDescription = data.showDescription !== false;
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
-  const connectorStops = isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
+  const connectorStops = data.shape === "side-panel"
+    ? [6.25, 18.75, 31.25, 43.75, 56.25, 68.75, 81.25, 93.75]
+    : isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
+  const connectorCenterIndex = Math.floor((connectorStops.length - 1) / 2);
   const serviceTileSize = Math.min((width ?? 112) * 0.96, (height ?? 142) - 32);
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
@@ -513,17 +516,17 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             {isServiceNode ? (
               data.shape === "service" ? (
                 <div className="service-connector-frame" aria-hidden="true">
-                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%`, top: 0 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%`, top: "100%", bottom: "auto" }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ left: 0, top: `${pct}%` }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ left: "100%", top: `${pct}%`, right: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `${pct}%`, top: 0 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%`, top: "100%", bottom: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ left: 0, top: `${pct}%` }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ left: "100%", top: `${pct}%`, right: "auto" }} />)}
                 </div>
               ) : (
                 <>
-                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: 0 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: serviceTileSize, bottom: "auto" }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: 0 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: serviceTileSize, bottom: "auto" }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100 }} />)}
+                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
                 </>
               )
             ) : data.shape === "database" ? (
@@ -574,7 +577,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             ];
           })()
         : connectorStops.map((pct, i) => (
-            <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === 2 ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
+            <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
           ))}
       {data.shape === "cloud" ? (
         <svg className="cloud-art" viewBox="0 0 290 116" preserveAspectRatio="none" aria-hidden="true">
@@ -654,13 +657,13 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         </>
       )}
             {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === 2 ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
+        <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
       ))}
       {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === 2 ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
+        <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
       ))}
       {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === 2 ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
+        <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
       ))}
     </div>
   );
