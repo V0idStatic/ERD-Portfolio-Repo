@@ -9,6 +9,7 @@ import {
   ConnectionMode,
   Controls,
   Edge,
+  EdgeLabelRenderer,
   EdgeProps,
   getSmoothStepPath,
   getNodesBounds,
@@ -93,7 +94,7 @@ Type,
   ZoomOut,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
-import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
+import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DashboardHome from "./DashboardHome";
 
@@ -934,15 +935,13 @@ function FlowingConnectorEdge({
         ? renderCardinalityMarker("target-cardinality", targetX, targetY, targetPosition, edgeData.targetCardinality)
         : null}
       {label ? (
-        <foreignObject
-          className="edge-label-foreign-object"
-          x={labelPosition.x - 160}
-          y={labelPosition.y - 50}
-          width={320}
-          height={100}
-          requiredExtensions="http://www.w3.org/1999/xhtml"
-        >
-          <div className="edge-label-drag-region">
+        <EdgeLabelRenderer>
+          <div
+            className="edge-label-portal nodrag nopan"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
+            }}
+          >
             <div
               className="edge-label-draggable nodrag nopan"
               onPointerDown={dragLabel}
@@ -952,7 +951,7 @@ function FlowingConnectorEdge({
                 color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
                 fontSize: labelStyle?.fontSize,
                 fontWeight: labelStyle?.fontWeight,
-                background: labelBackgroundEnabled ? labelBackgroundColor : "transparent",
+                background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-cutout, #f6f8fb)",
                 opacity: 1,
                 borderRadius: labelBgBorderRadius,
                 padding: `${labelPaddingY}px ${labelPaddingX}px`,
@@ -962,7 +961,7 @@ function FlowingConnectorEdge({
               {label}
             </div>
           </div>
-        </foreignObject>
+        </EdgeLabelRenderer>
       ) : null}
       {edgeData._flowDuration ? (
         <path
@@ -3085,6 +3084,7 @@ const persistPageIndex = (
     // canvas typography and connector labels untouched; only visibility
     // classes are applied when the user explicitly hides text.
     viewport.classList.add("docs-export-snapshot");
+    viewport.style.setProperty("--edge-label-cutout", mode === "readable" ? "#ffffff" : "#f6f8fb");
     if (!docsShowTitles) viewport.classList.add("docs-hide-titles");
     if (!docsShowDescriptions) viewport.classList.add("docs-hide-descriptions");
   };
@@ -3115,6 +3115,7 @@ const persistPageIndex = (
     );
     viewport.style.removeProperty("--docs-title-scale");
     viewport.style.removeProperty("--docs-description-scale");
+    viewport.style.removeProperty("--edge-label-cutout");
     viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
       if ("exportOriginalFontSize" in label.dataset) {
         label.style.fontSize = label.dataset.exportOriginalFontSize ?? "";
@@ -3171,6 +3172,24 @@ const persistPageIndex = (
     const cropPadding = mode === "readable" ? 140 : 115;
     const cropWidth = bounds.width + cropPadding * 2;
     const cropHeight = bounds.height + cropPadding * 2;
+    const originX = bounds.x - cropPadding;
+    const originY = bounds.y - cropPadding;
+    if (mode === "full-design") {
+      const page = {
+        width: Math.max(1, Math.round(cropWidth * outputScale)),
+        height: Math.max(1, Math.round(cropHeight * outputScale)),
+        name: "original-layout",
+      };
+      const renderScale = outputScale * manualZoom;
+      const contentWidth = cropWidth * renderScale;
+      const contentHeight = cropHeight * renderScale;
+      return {
+        page,
+        renderScale,
+        translateX: (page.width - contentWidth) / 2 - originX * renderScale,
+        translateY: (page.height - contentHeight) / 2 - originY * renderScale,
+      };
+    }
     const pageMargin = 55 * outputScale;
     const portrait = {
       width: Math.round(2550 * outputScale),
@@ -3191,8 +3210,6 @@ const persistPageIndex = (
     const renderScale = fitScale(page) * manualZoom;
     const contentWidth = cropWidth * renderScale;
     const contentHeight = cropHeight * renderScale;
-    const originX = bounds.x - cropPadding;
-    const originY = bounds.y - cropPadding;
     return {
       page,
       renderScale,
@@ -3210,6 +3227,42 @@ const persistPageIndex = (
   const fitDocsPreview = () => {
     setDocsInspectZoom(1);
     setDocsPreviewPan({ x: 0, y: 0 });
+  };
+
+  const startDocsPreviewDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!docsPreviewReady) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    docsPreviewDrag.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      panX: docsPreviewPan.x,
+      panY: docsPreviewPan.y,
+    };
+  };
+
+  const moveDocsPreviewDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = docsPreviewDrag.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    setDocsPreviewPan({
+      x: drag.panX + event.clientX - drag.startX,
+      y: drag.panY + event.clientY - drag.startY,
+    });
+  };
+
+  const stopDocsPreviewDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (docsPreviewDrag.current?.pointerId !== event.pointerId) return;
+    docsPreviewDrag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const zoomDocsPreview = (event: ReactWheelEvent<HTMLDivElement>) => {
+    if (!docsPreviewReady) return;
+    event.preventDefault();
+    changeDocsInspectZoom(event.deltaY < 0 ? 0.2 : -0.2);
   };
 
   const exportDocsPng = async (mode: DocsExportMode) => {
@@ -5896,10 +5949,31 @@ const persistPageIndex = (
                     </div>
                     <div className="docs-preview-toolbar">
                       <small>Export {Math.round(docsExportZoom * 100)}%</small>
+                      <button type="button" aria-label="Zoom preview out" onClick={() => changeDocsInspectZoom(-0.2)} disabled={!docsPreviewReady}>
+                        <ZoomOut size={13} />
+                      </button>
+                      <output aria-label="Preview zoom">{Math.round(docsInspectZoom * 100)}%</output>
+                      <button type="button" aria-label="Zoom preview in" onClick={() => changeDocsInspectZoom(0.2)} disabled={!docsPreviewReady}>
+                        <ZoomIn size={13} />
+                      </button>
+                      <button type="button" className="fit-preview" onClick={fitDocsPreview} disabled={!docsPreviewReady}>
+                        <Maximize2 size={12} /> Fit
+                      </button>
                     </div>
                   </div>
-                  <div className="docs-preview-stage">
-                    <div className={`docs-preview-image-shell ${docsPreviewReady ? "" : "is-empty"}`}>
+                  <div
+                    className={`docs-preview-stage ${docsPreviewReady ? "is-draggable" : ""}`}
+                    onPointerDown={startDocsPreviewDrag}
+                    onPointerMove={moveDocsPreviewDrag}
+                    onPointerUp={stopDocsPreviewDrag}
+                    onPointerCancel={stopDocsPreviewDrag}
+                    onLostPointerCapture={() => { docsPreviewDrag.current = null; }}
+                    onWheel={zoomDocsPreview}
+                  >
+                    <div
+                      className={`docs-preview-image-shell ${docsPreviewReady ? "" : "is-empty"}`}
+                      style={{ transform: `translate(${docsPreviewPan.x}px, ${docsPreviewPan.y}px) scale(${docsInspectZoom})` }}
+                    >
                       <canvas
                         ref={docsPreviewCanvasRef}
                         role="img"
