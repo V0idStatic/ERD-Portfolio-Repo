@@ -730,10 +730,11 @@ function FlowingConnectorEdge({
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
   // Keep one editable elbow control, like a classic orthogonal diagram line.
   const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
-  const connectorLength = Math.hypot(targetX - sourceX, targetY - sourceY);
+  // A connector only counts as straight when its endpoints are genuinely on
+  // the same axis. Small placement differences still need a usable elbow.
   const portsAreAligned =
-    Math.abs(targetX - sourceX) < 24 || Math.abs(targetY - sourceY) < 24;
-  const useDirectPath = portsAreAligned || connectorLength < 100;
+    Math.abs(targetX - sourceX) < 1 || Math.abs(targetY - sourceY) < 1;
+  const useDirectPath = portsAreAligned;
   const hasHorizontalHandles =
     (sourcePosition === Position.Left || sourcePosition === Position.Right)
     && (targetPosition === Position.Left || targetPosition === Position.Right);
