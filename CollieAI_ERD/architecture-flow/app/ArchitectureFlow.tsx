@@ -778,6 +778,15 @@ function FlowingConnectorEdge({
   const labelPosition = edgeData.labelPosition ?? { x: mx, y: my };
   const labelBackgroundEnabled = edgeData.labelBackground !== false;
   const labelBackgroundColor = typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff";
+  const labelPaddingX = labelBgPadding?.[0] ?? 6;
+  const labelPaddingY = labelBgPadding?.[1] ?? 4;
+  const labelFontSize = typeof labelStyle?.fontSize === "number" ? labelStyle.fontSize : 12;
+  const labelMaskId = `edge-label-mask-${id}`;
+  const labelMaskWidth = Math.min(310, Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10));
+  const labelMaskHeight = labelFontSize * 1.35 + labelPaddingY * 2 + 8;
+  const edgePathStyle = label && labelBackgroundEnabled
+    ? { ...style, mask: `url(#${labelMaskId})` }
+    : style;
   const renderCardinalityMarker = (
     key: string,
     x: number,
@@ -873,11 +882,24 @@ function FlowingConnectorEdge({
   };
   return (
     <>
+      {label && labelBackgroundEnabled ? <defs>
+        <mask id={labelMaskId} maskUnits="userSpaceOnUse">
+          <rect x="-100000" y="-100000" width="200000" height="200000" fill="#fff" />
+          <rect
+            x={labelPosition.x - labelMaskWidth / 2}
+            y={labelPosition.y - labelMaskHeight / 2}
+            width={labelMaskWidth}
+            height={labelMaskHeight}
+            rx={(labelBgBorderRadius ?? 5) + 3}
+            fill="#000"
+          />
+        </mask>
+      </defs> : null}
       <BaseEdge
       id={id}
       path={d}
       markerEnd={markerEnd}
-      style={style}
+      style={edgePathStyle}
         interactionWidth={24}
       />
       <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
@@ -910,7 +932,7 @@ function FlowingConnectorEdge({
                 opacity: 1,
                 borderRadius: labelBgBorderRadius,
                 padding: `${labelBgPadding?.[1] ?? 4}px ${labelBgPadding?.[0] ?? 6}px`,
-                boxShadow: labelBackgroundEnabled ? `0 0 0 3px ${labelBackgroundColor}` : "none",
+                boxShadow: "none",
               }}
             >
               {label}
@@ -923,7 +945,7 @@ function FlowingConnectorEdge({
           d={d}
           className="connector-water-pulse"
           pathLength={1}
-          style={{ animationDuration: `${edgeData._flowDuration}ms` }}
+          style={{ animationDuration: `${edgeData._flowDuration}ms`, ...(label && labelBackgroundEnabled ? { mask: `url(#${labelMaskId})` } : {}) }}
           aria-hidden="true"
         />
       ) : null}
