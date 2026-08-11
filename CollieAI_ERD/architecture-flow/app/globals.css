@@ -481,6 +481,10 @@ button { cursor: pointer; }
 .component-text-controls textarea,
 .component-text-controls select { width:100%; padding:9px 10px; border:1px solid #d6e0e8; border-radius:8px; color:#1e293b; background:#fff; font:12px/1.4 inherit; }
 .component-text-controls textarea { resize:vertical; }
+.header-editor-colors { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.header-editor-colors label { min-width:0; display:grid; grid-template-columns:1fr 38px; align-items:center; gap:7px; padding:8px; border:1px solid #dbe4ec; border-radius:8px; background:#fff; }
+.header-editor-colors span { color:#526276; font-size:9px; font-weight:750; line-height:1.2; }
+.header-editor-colors input[type="color"] { width:38px; height:32px; padding:3px; border:1px solid #d6e0e8; border-radius:6px; background:#fff; }
 .text-style-actions { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
 .text-style-actions > button,
 .text-color-picker { width:34px; height:32px; display:grid; place-items:center; border:1px solid #d8e3eb; border-radius:7px; color:#526276; background:#fff; font-size:13px; }
@@ -504,8 +508,6 @@ button { cursor: pointer; }
 .component-segment-controls > label > span { color:#526276; font-size:10px; font-weight:750; letter-spacing:.05em; text-transform:uppercase; }
 .component-segment-controls > label > input:not([type="color"]) { width:100%; padding:9px 10px; border:1px solid #d6e0e8; border-radius:8px; color:#1e293b; background:#fff; font-size:12px; }
 .component-segment-controls > small { color:#8290a1; font-size:9px; line-height:1.4; }
-.segment-color-control { grid-template-columns:1fr 42px; align-items:center; }
-.segment-color-control input[type="color"] { width:42px; height:34px; padding:3px; border:1px solid #d6e0e8; border-radius:7px; background:#fff; }
 .shape-legend {
   width:100%; height:100%; min-height:0; align-items:start; overflow:visible;
   border:2px dashed color-mix(in srgb,var(--legend-color) 72%,#64748b);

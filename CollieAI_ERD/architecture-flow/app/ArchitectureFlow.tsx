@@ -5323,6 +5323,10 @@ const persistPageIndex = (
                 </div>
                 {selectedTextTarget === "title" ? <label><span>Text</span><input autoFocus value={selectedNode.data.label} onChange={(event) => updateSelected({ label: event.target.value })} /></label> : selectedTextTarget === "header" ? <label><span>Text</span><input autoFocus value={selectedNode.data.headerText ?? "Header"} onChange={(event) => updateSelected({ headerText: event.target.value })} /></label> : <label><span>Text</span><textarea rows={3} value={selectedNode.data.description ?? ""} onChange={(event) => updateSelected({ description: event.target.value })} /></label>}
                 <label><span>Font</span><select value={selectedTextStyle.fontFamily ?? ""} onChange={(event) => updateSelectedTextStyle({ fontFamily: event.target.value || undefined })}><option value="">System</option><option value="Inter, Arial, sans-serif">Inter</option><option value="Arial, sans-serif">Arial</option><option value="Georgia, serif">Georgia</option><option value="'Times New Roman', Times, serif">Times New Roman</option><option value="'Courier New', monospace">Courier New</option></select></label>
+                {selectedTextTarget === "header" ? <div className="header-editor-colors">
+                  <label><span>Header background</span><input type="color" value={selectedNode.data.headerColor ?? "#f59e0b"} onChange={(event) => updateSelected({ headerColor: event.target.value })} /></label>
+                  <label><span>Header text</span><input type="color" value={selectedTextStyle.color ?? "#ffffff"} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
+                </div> : null}
                 <label className="line-label-size"><span>Font size</span><div><input type="range" min={selectedTextTarget === "title" ? "8" : "7"} max={selectedTextTarget === "title" ? "42" : "32"} value={selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)} onChange={(event) => updateTextSize(selectedTextTarget === "title" ? "titleSize" : selectedTextTarget === "header" ? "headerSize" : "descriptionSize", Number(event.target.value), false)} /><output>{selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)}px</output></div></label>
                 <label className="description-toggle inspector-apply-toggle"><span><strong>Grow box with text</strong><small>Increase the node size as its text gets larger.</small></span><input type="checkbox" checked={Boolean(selectedNode.data.autoGrowWithText)} onChange={(event) => updateAutoGrowWithText(event.target.checked)} /><i aria-hidden="true" /></label>
                 <div className="text-style-actions" role="group" aria-label="Text style">
@@ -5333,7 +5337,7 @@ const persistPageIndex = (
                     const AlignmentIcon = alignment === "left" ? AlignLeft : alignment === "center" ? AlignCenter : alignment === "right" ? AlignRight : AlignJustify;
                     return <button type="button" key={alignment} title={`Align ${alignment}`} aria-label={`Align ${alignment}`} className={(selectedTextStyle.textAlign ?? "left") === alignment ? "active" : ""} onClick={() => updateSelectedTextStyle({ textAlign: alignment })}><AlignmentIcon size={17} /></button>;
                   })}
-                  <label className="text-color-picker" title="Text color" style={{ "--text-color": selectedTextStyle.color ?? (selectedTextTarget === "header" ? "#ffffff" : selectedTextTarget === "title" ? "#152337" : "#667589") } as CSSProperties}><span>A</span><input type="color" value={selectedTextStyle.color ?? (selectedTextTarget === "header" ? "#ffffff" : selectedTextTarget === "title" ? "#152337" : "#667589")} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
+                  {selectedTextTarget !== "header" ? <label className="text-color-picker" title="Text color" style={{ "--text-color": selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589") } as CSSProperties}><span>A</span><input type="color" value={selectedTextStyle.color ?? (selectedTextTarget === "title" ? "#152337" : "#667589")} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label> : null}
                 </div>
               </fieldset>
               <button type="button" className="close-text-editor" onClick={() => updateSelected({ editingTextTarget: undefined })}>Done editing text</button>
@@ -5499,12 +5503,6 @@ const persistPageIndex = (
                 </fieldset> : null}
               </>
             )}
-            {selectedNode.data.shape === "header-card" ? <fieldset className="component-segment-controls inspector-control-card">
-              <legend>Header area</legend>
-              <label><span>Header text</span><input value={selectedNode.data.headerText ?? "Header"} onChange={(event) => updateSelected({ headerText: event.target.value })} /></label>
-              <label className="segment-color-control"><span>Header color</span><input type="color" value={selectedNode.data.headerColor ?? "#f59e0b"} onChange={(event) => updateSelected({ headerColor: event.target.value })} /></label>
-              <small>Double-click the header on the canvas to format its text separately.</small>
-            </fieldset> : null}
             {selectedNode.data.shape === "side-panel" ? <fieldset className="component-segment-controls inspector-control-card">
               <legend>Side areas</legend>
               <div className="appearance-color-row">
