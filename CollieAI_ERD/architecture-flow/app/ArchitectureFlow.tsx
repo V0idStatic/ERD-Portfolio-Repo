@@ -196,6 +196,7 @@ type ArchitectureNodeData = {
   headerColor?: string;
   leftPanelColor?: string;
   rightPanelColor?: string;
+  panelSide?: "left" | "right";
   editingTextTarget?: ComponentTextTarget;
   showTitle?: boolean;
   showDescription?: boolean;
@@ -485,7 +486,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
 
   return (
       <div
-        className={`architecture-node shape-${data.shape} tone-${data.tone} ${
+        className={`architecture-node shape-${data.shape} tone-${data.tone} ${data.shape === "left-panel" && data.panelSide === "right" ? "left-panel-on-right" : ""} ${
           selected ? "is-selected" : ""
       } ${isServiceNode ? "service-node" : ""} ${!showTitle && !showDescription ? "no-text" : ""} ${data.fillColor || data.outlineColor || data.outlineStyle ? "has-component-style" : ""} ${animState ? `anim-${animState}` : ""}`}
       style={
@@ -5620,9 +5621,10 @@ const persistPageIndex = (
             {selectedNode.data.shape === "side-panel" || selectedNode.data.shape === "left-panel" ? <fieldset className="component-segment-controls inspector-control-card">
               <legend>Side areas</legend>
               <div className="appearance-color-row">
-                <label><span>Left</span><input type="color" value={selectedNode.data.leftPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ leftPanelColor: event.target.value })} /></label>
+                <label><span>{selectedNode.data.shape === "left-panel" ? "Side" : "Left"}</span><input type="color" value={selectedNode.data.leftPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ leftPanelColor: event.target.value })} /></label>
                 {selectedNode.data.shape === "side-panel" ? <label><span>Right</span><input type="color" value={selectedNode.data.rightPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ rightPanelColor: event.target.value })} /></label> : null}
               </div>
+              {selectedNode.data.shape === "left-panel" ? <label className="inspector-select-label"><span>Side location</span><select value={selectedNode.data.panelSide ?? "left"} onChange={(event) => updateSelected({ panelSide: event.target.value as "left" | "right" })}><option value="left">Left</option><option value="right">Right</option></select></label> : null}
               <small>The side area is color-only. Title and description stay in the larger panel.</small>
             </fieldset> : null}
             <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
