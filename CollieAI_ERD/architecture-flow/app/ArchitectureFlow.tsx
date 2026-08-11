@@ -94,7 +94,7 @@ Type,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent } from "react";
-import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DashboardHome from "./DashboardHome";
 
 type NodeShape =
@@ -779,14 +779,41 @@ function FlowingConnectorEdge({
   const labelBackgroundEnabled = edgeData.labelBackground !== false;
   const labelBackgroundColor = typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff";
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
-  const labelPaddingY = labelBgPadding?.[1] ?? 4;
   const labelFontSize = typeof labelStyle?.fontSize === "number" ? labelStyle.fontSize : 12;
-  const labelMaskId = `edge-label-mask-${id}`;
   const labelMaskWidth = Math.min(310, Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10));
-  const labelMaskHeight = labelFontSize * 1.35 + labelPaddingY * 2 + 8;
-  const edgePathStyle = label && labelBackgroundEnabled
-    ? { ...style, mask: `url(#${labelMaskId})` }
-    : style;
+  const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!label || !labelBackgroundEnabled || !pathMeasureRef.current) {
+      setLabelGap(null);
+      return;
+    }
+    const path = pathMeasureRef.current;
+    const totalLength = path.getTotalLength();
+    if (!totalLength) return;
+    let nearestLength = 0;
+    let nearestDistance = Number.POSITIVE_INFINITY;
+    for (let index = 0; index <= 128; index += 1) {
+      const length = totalLength * index / 128;
+      const point = path.getPointAtLength(length);
+      const distance = Math.hypot(point.x - labelPosition.x, point.y - labelPosition.y);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestLength = length;
+      }
+    }
+    const gapLength = Math.min(totalLength * 0.9, labelMaskWidth + 10);
+    const gapStart = Math.max(0, Math.min(totalLength - gapLength, nearestLength - gapLength / 2));
+    const next = {
+      before: gapStart / totalLength * 1000,
+      gap: gapLength / totalLength * 1000,
+      after: Math.max(0, (totalLength - gapStart - gapLength) / totalLength * 1000),
+    };
+    setLabelGap((current) => current && Math.abs(current.before - next.before) < 0.1 && Math.abs(current.gap - next.gap) < 0.1 ? current : next);
+  }, [d, label, labelBackgroundEnabled, labelMaskWidth, labelPosition.x, labelPosition.y]);
+  const edgePathStyle = labelGap ? {
+    ...style,
+    strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000`,
+  } : style;
   const renderCardinalityMarker = (
     key: string,
     x: number,
@@ -882,26 +909,13 @@ function FlowingConnectorEdge({
   };
   return (
     <>
-      {label && labelBackgroundEnabled ? <defs>
-        <mask id={labelMaskId} maskUnits="userSpaceOnUse">
-          <rect x="-100000" y="-100000" width="200000" height="200000" fill="#fff" />
-          <rect
-            x={labelPosition.x - labelMaskWidth / 2}
-            y={labelPosition.y - labelMaskHeight / 2}
-            width={labelMaskWidth}
-            height={labelMaskHeight}
-            rx={(labelBgBorderRadius ?? 5) + 3}
-            fill="#000"
-          />
-        </mask>
-      </defs> : null}
       <BaseEdge
       id={id}
       path={d}
-      markerEnd={markerEnd}
-      style={edgePathStyle}
+      style={{ ...style, strokeOpacity: 0 }}
         interactionWidth={24}
       />
+      <path className="react-flow__edge-path edge-visible-path" d={d} fill="none" markerEnd={markerEnd} pathLength={1000} style={edgePathStyle} />
       <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
       {edgeData.sourceCardinality && edgeData.sourceCardinality !== "default"
         ? renderCardinalityMarker("source-cardinality", sourceX, sourceY, sourcePosition, edgeData.sourceCardinality)
@@ -945,7 +959,8 @@ function FlowingConnectorEdge({
           d={d}
           className="connector-water-pulse"
           pathLength={1}
-          style={{ animationDuration: `${edgeData._flowDuration}ms`, ...(label && labelBackgroundEnabled ? { mask: `url(#${labelMaskId})` } : {}) }}
+          pathLength={1000}
+          style={{ animationDuration: `${edgeData._flowDuration}ms`, ...(labelGap ? { strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000` } : {}) }}
           aria-hidden="true"
         />
       ) : null}
