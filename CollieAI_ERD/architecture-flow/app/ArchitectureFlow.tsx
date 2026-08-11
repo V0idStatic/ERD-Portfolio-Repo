@@ -1636,7 +1636,11 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       }
 
       if (key === "c") {
-        const selectedNodes = nodes.filter((node) => node.selected);
+        const marqueeSelectedNodes = nodes.filter((node) => node.selected);
+        const clickedNode = selectedId ? nodes.find((node) => node.id === selectedId) : null;
+        const selectedNodes = marqueeSelectedNodes.length
+          ? marqueeSelectedNodes
+          : clickedNode ? [clickedNode] : [];
         if (!selectedNodes.length) return;
         const selectedIds = new Set(selectedNodes.map((node) => node.id));
         selectionClipboardRef.current = {
@@ -1680,7 +1684,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [animationMode, edges, nodes, setEdges, setNodes]);
+  }, [animationMode, edges, nodes, selectedId, setEdges, setNodes]);
 
   useEffect(() => {
     setWorkflowTitle(window.localStorage.getItem(ACTIVE_WORKFLOW_NAME_KEY) || "Workflow");
