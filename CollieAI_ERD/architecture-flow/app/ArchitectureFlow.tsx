@@ -306,7 +306,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   const showTitle = data.showTitle !== false;
   const showDescription = data.showDescription !== false;
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
-  const connectorStops = data.shape === "side-panel"
+  const connectorStops = data.shape === "header-card"
     ? [6.25, 18.75, 31.25, 43.75, 56.25, 68.75, 81.25, 93.75]
     : isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
   const connectorCenterIndex = Math.floor((connectorStops.length - 1) / 2);
