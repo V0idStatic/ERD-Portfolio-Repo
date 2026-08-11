@@ -734,7 +734,29 @@ function FlowingConnectorEdge({
   const portsAreAligned =
     Math.abs(targetX - sourceX) < 24 || Math.abs(targetY - sourceY) < 24;
   const useDirectPath = portsAreAligned || connectorLength < 100;
-  const [d, mx, my] = joint
+  const hasHorizontalHandles =
+    (sourcePosition === Position.Left || sourcePosition === Position.Right)
+    && (targetPosition === Position.Left || targetPosition === Position.Right);
+  const hasVerticalHandles =
+    (sourcePosition === Position.Top || sourcePosition === Position.Bottom)
+    && (targetPosition === Position.Top || targetPosition === Position.Bottom);
+  const useHorizontalLane = !useDirectPath && hasHorizontalHandles;
+  const useVerticalLane = !useDirectPath && hasVerticalHandles;
+  const laneX = joint?.x ?? (sourceX + targetX) / 2;
+  const laneY = joint?.y ?? (sourceY + targetY) / 2;
+  const [d, mx, my] = useHorizontalLane
+    ? [
+        `M${sourceX},${sourceY} L${laneX},${sourceY} L${laneX},${targetY} L${targetX},${targetY}`,
+        laneX,
+        (sourceY + targetY) / 2,
+      ]
+    : useVerticalLane
+    ? [
+        `M${sourceX},${sourceY} L${sourceX},${laneY} L${targetX},${laneY} L${targetX},${targetY}`,
+        (sourceX + targetX) / 2,
+        laneY,
+      ]
+    : joint
     ? [
         `M${sourceX},${sourceY} L${sourceX},${joint.y} L${joint.x},${joint.y} L${joint.x},${targetY} L${targetX},${targetY}`,
         joint.x,
@@ -769,7 +791,14 @@ function FlowingConnectorEdge({
       return { x: converted.x, y: converted.y };
     };
     const move = (moveEvent: PointerEvent) => {
-      edgeData.onJointsChange?.([toFlowPoint(moveEvent.clientX, moveEvent.clientY)]);
+      const point = toFlowPoint(moveEvent.clientX, moveEvent.clientY);
+      edgeData.onJointsChange?.([
+        useHorizontalLane
+          ? { x: point.x, y: (sourceY + targetY) / 2 }
+          : useVerticalLane
+          ? { x: (sourceX + targetX) / 2, y: point.y }
+          : point,
+      ]);
     };
     const stop = () => {
       window.removeEventListener("pointermove", move);
