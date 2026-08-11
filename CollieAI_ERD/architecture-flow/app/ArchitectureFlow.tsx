@@ -277,6 +277,7 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
 function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
   const animState = data._animState;
+  const componentCategory = componentCategoryFor(data);
   const isServiceNode = Boolean(data.serviceLogo || data.serviceSymbol);
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
   const connectorStops = isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
@@ -594,7 +595,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         </div>
       ) : (
         <div className="node-inner">
-          {data.shape !== "decision" && !data.hideIcon ? (
+          {(componentCategory === "service" || componentCategory === "flowchart") && data.shape !== "decision" && !data.hideIcon ? (
             <span className="node-icon" aria-hidden="true">
               {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
             </span>
