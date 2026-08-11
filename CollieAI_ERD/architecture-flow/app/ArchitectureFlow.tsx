@@ -116,6 +116,7 @@ type NodeShape =
   | "document"
   | "header-card"
   | "side-panel"
+  | "left-panel"
   | "legend"
   | "legend-key"
   | "text"
@@ -632,7 +633,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("header"); }}
           title="Double-click to edit header text"
         ><span style={{ ...headerTextStyle, fontSize: `${data.headerSize ?? 11}px` }}>{data.headerText ?? "Header"}</span></div> : null}
-        {data.shape === "side-panel" ? <div className="segmented-side segmented-side-left" style={{ backgroundColor: data.leftPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
+        {data.shape === "side-panel" || data.shape === "left-panel" ? <div className="segmented-side segmented-side-left" style={{ backgroundColor: data.leftPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
         <div className="node-inner">
           {(componentCategory === "service" || componentCategory === "flowchart") && data.shape !== "decision" && !data.hideIcon ? (
             <span className="node-icon" aria-hidden="true">
@@ -680,6 +681,7 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "predefined-process") return { width: 260, height: 92 };
   if (shape === "header-card") return { width: 270, height: 130 };
   if (shape === "side-panel") return { width: 310, height: 130 };
+  if (shape === "left-panel") return { width: 270, height: 130 };
   if (shape === "text") return { width: 200, height: 40 };
   return { width: 270, height: 78 };
 };
@@ -1238,6 +1240,7 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "document", label: "Document" },
   { value: "header-card", label: "Header Card" },
   { value: "side-panel", label: "Side Panel" },
+  { value: "left-panel", label: "Left Panel" },
   { value: "decision", label: "Diamond" },
   { value: "database", label: "Database" },
   { value: "cloud", label: "Cloud" },
@@ -1246,7 +1249,7 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
 ];
 
 const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] = [
-  { id: "basic", label: "Shapes", shapes: ["service", "header-card", "side-panel", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
+  { id: "basic", label: "Shapes", shapes: ["service", "header-card", "side-panel", "left-panel", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
   { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "predefined-process", "decision", "cloud"] },
   { id: "erd", label: "ERD", shapes: ["database"] },
 ];
@@ -1298,6 +1301,7 @@ function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className
   if (shape === "document") return <svg {...svgProps}><path d="M3 3h26v17l-5-3-5 5-5-5-5 3-6-3Z" /></svg>;
   if (shape === "header-card") return <svg {...svgProps}><rect x="3" y="3" width="26" height="21" rx="1" /><path d="M3 9h26" /></svg>;
   if (shape === "side-panel") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="1" /><path d="M8 4v18M24 4v18" /></svg>;
+  if (shape === "left-panel") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="1" /><path d="M8 4v18" /></svg>;
   if (shape === "decision") return <svg {...svgProps}><path d="m16 1 15 12-15 12L1 13Z" /></svg>;
   if (shape === "terminal") return <svg {...svgProps}><rect x="2" y="5" width="28" height="16" rx="8" /></svg>;
   if (shape === "predefined-process") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="2" /><path d="M7 4v18M25 4v18" /></svg>;
@@ -5613,13 +5617,13 @@ const persistPageIndex = (
                 </fieldset> : null}
               </>
             )}
-            {selectedNode.data.shape === "side-panel" ? <fieldset className="component-segment-controls inspector-control-card">
+            {selectedNode.data.shape === "side-panel" || selectedNode.data.shape === "left-panel" ? <fieldset className="component-segment-controls inspector-control-card">
               <legend>Side areas</legend>
               <div className="appearance-color-row">
                 <label><span>Left</span><input type="color" value={selectedNode.data.leftPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ leftPanelColor: event.target.value })} /></label>
-                <label><span>Right</span><input type="color" value={selectedNode.data.rightPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ rightPanelColor: event.target.value })} /></label>
+                {selectedNode.data.shape === "side-panel" ? <label><span>Right</span><input type="color" value={selectedNode.data.rightPanelColor ?? "#dbeafe"} onChange={(event) => updateSelected({ rightPanelColor: event.target.value })} /></label> : null}
               </div>
-              <small>The side areas are color-only. Title and description stay in the larger center.</small>
+              <small>The side area is color-only. Title and description stay in the larger panel.</small>
             </fieldset> : null}
             <div className="editor-section-heading section-appearance-heading"><span>03</span><div><strong>Appearance</strong><small>Accent, fill, and outline</small></div></div>
             <fieldset className="component-accent-controls inspector-control-card">

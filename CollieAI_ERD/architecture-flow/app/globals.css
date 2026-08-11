@@ -406,6 +406,9 @@ button { cursor: pointer; }
 .shape-side-panel .segmented-side-left { grid-column:1; border-right:2px solid var(--shape-outline,var(--node)); }
 .shape-side-panel .node-inner { grid-column:2; height:100%; justify-content:center; padding:12px 14px; }
 .shape-side-panel .segmented-side-right { grid-column:3; border-left:2px solid var(--shape-outline,var(--node)); }
+.shape-left-panel { grid-template-columns:18% minmax(0,1fr); overflow:hidden; border:2px solid var(--shape-outline,var(--node)); border-radius:7px; }
+.shape-left-panel .segmented-side { grid-column:1; align-self:stretch; height:100%; border-right:2px solid var(--shape-outline,var(--node)); }
+.shape-left-panel .node-inner { grid-column:2; height:100%; justify-content:center; padding:12px 14px; }
 .shape-service.is-selected,
 .shape-terminal.is-selected { border-color:var(--node); }
 .shape-circle { border:2px solid var(--node); border-radius:50%; }
@@ -442,6 +445,7 @@ button { cursor: pointer; }
 .react-flow__node-architecture:has(.shape-service.service-node) { width:112px; height:142px; }
 .react-flow__node-architecture:has(.shape-header-card) { width:270px; height:130px; }
 .react-flow__node-architecture:has(.shape-side-panel) { width:310px; height:130px; }
+.react-flow__node-architecture:has(.shape-left-panel) { width:270px; height:130px; }
 .react-flow__node-architecture:has(.shape-circle) { width:160px; height:160px; }
 .react-flow__node-architecture:has(.shape-pentagon), .react-flow__node-architecture:has(.shape-hexagon), .react-flow__node-architecture:has(.shape-triangle), .react-flow__node-architecture:has(.shape-star) { width:190px; height:150px; }
 /* Text annotation node — no shape, no border, just the text */
