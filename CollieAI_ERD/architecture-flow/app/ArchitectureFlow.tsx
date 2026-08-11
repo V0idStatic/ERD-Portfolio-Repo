@@ -776,6 +776,8 @@ function FlowingConnectorEdge({
   };
   const jointControl = joint ?? { x: mx, y: my };
   const labelPosition = edgeData.labelPosition ?? { x: mx, y: my };
+  const labelBackgroundEnabled = edgeData.labelBackground !== false;
+  const labelBackgroundColor = typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff";
   const renderCardinalityMarker = (
     key: string,
     x: number,
@@ -904,10 +906,11 @@ function FlowingConnectorEdge({
                 color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
                 fontSize: labelStyle?.fontSize,
                 fontWeight: labelStyle?.fontWeight,
-                background: edgeData.labelBackground === false ? "transparent" : (typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff"),
+                background: labelBackgroundEnabled ? labelBackgroundColor : "transparent",
                 opacity: 1,
                 borderRadius: labelBgBorderRadius,
                 padding: `${labelBgPadding?.[1] ?? 4}px ${labelBgPadding?.[0] ?? 6}px`,
+                boxShadow: labelBackgroundEnabled ? `0 0 0 3px ${labelBackgroundColor}` : "none",
               }}
             >
               {label}
