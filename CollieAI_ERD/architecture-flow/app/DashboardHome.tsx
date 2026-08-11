@@ -21,6 +21,67 @@ import {
 import { useEffect, useState } from "react";
 import lemmaLogo from "./assets/Lemma_MainLogo-transparent.png";
 
+const HISTORY_PREFIX = "collieai-architecture-history-";
+const LEGACY_DIAGRAM_KEY = "collieai-architecture-v1";
+const MAIN_DIAGRAM_KEY = "collieai-architecture-page-main";
+const EMERGENCY_HISTORY_ENTRIES = 3;
+
+const isQuotaExceeded = (error: unknown) =>
+  error instanceof DOMException &&
+  (error.name === "QuotaExceededError" || error.name === "NS_ERROR_DOM_QUOTA_REACHED");
+
+const historyKeys = (storage: Storage) => {
+  const keys: string[] = [];
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+    if (key?.startsWith(HISTORY_PREFIX)) keys.push(key);
+  }
+  return keys;
+};
+
+// History contains full diagram snapshots and is the only disposable data in
+// local storage. Keep a small recovery trail when the browser quota is full;
+// current diagrams, page indexes, comments and animations are never removed.
+const compactHistory = (storage: Storage) => {
+  for (const key of historyKeys(storage)) {
+    try {
+      const value = storage.getItem(key);
+      const entries = value ? JSON.parse(value) : [];
+      if (Array.isArray(entries) && entries.length > EMERGENCY_HISTORY_ENTRIES) {
+        storage.setItem(key, JSON.stringify(entries.slice(0, EMERGENCY_HISTORY_ENTRIES)));
+      }
+    } catch {
+      storage.removeItem(key);
+    }
+  }
+
+  if (storage.getItem(MAIN_DIAGRAM_KEY)) storage.removeItem(LEGACY_DIAGRAM_KEY);
+};
+
+export const setLocalStorageItem = (key: string, value: string) => {
+  try {
+    window.localStorage.setItem(key, value);
+    return;
+  } catch (error) {
+    if (!isQuotaExceeded(error)) throw error;
+  }
+
+  compactHistory(window.localStorage);
+  try {
+    window.localStorage.setItem(key, value);
+    return;
+  } catch (error) {
+    if (!isQuotaExceeded(error)) throw error;
+  }
+
+  // If compact snapshots are still too large, sacrifice history only. Cloud
+  // and current local diagrams remain intact and the requested write retries.
+  for (const historyKey of historyKeys(window.localStorage)) {
+    window.localStorage.removeItem(historyKey);
+  }
+  window.localStorage.setItem(key, value);
+};
+
 type HomeView = "recent" | "favorites";
 type StoredNode = {
   id: string;
@@ -328,7 +389,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   };
 
   const saveWorkflows = (workspaceId: string, next: WorkflowMeta[]) => {
-    window.localStorage.setItem(workflowIndexKey(workspaceId), JSON.stringify(next));
+    setLocalStorageItem(workflowIndexKey(workspaceId), JSON.stringify(next));
     void syncWorkspace(workspaceId, "PATCH", { workflows: next });
   };
 
@@ -341,7 +402,7 @@ useEffect(() => {
         return { ...base, favorite: Boolean((base as ExtraWorkspace).favorite) };
       }).filter((item) => item.id && item.name);
       setExtraWorkspaces(normalized);
-      window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(normalized));
+      setLocalStorageItem("collieai-extra-workspaces-v1", JSON.stringify(normalized));
     } catch { /* no extra workspaces yet */ }
 
     const loadWorkspace = async () => {
@@ -391,7 +452,7 @@ useEffect(() => {
         const cloud = body.data as { workspace?: WorkspaceMeta; workflows?: WorkflowMeta[]; diagrams?: Record<string, { nodes?: StoredNode[]; edges?: StoredEdge[] }>; pages?: { id?: string; name?: string }[] } | null;
         if (cloud?.workflows?.length) {
           setWorkflows(cloud.workflows);
-          window.localStorage.setItem(workflowIndexKey(targetId), JSON.stringify(cloud.workflows));
+          setLocalStorageItem(workflowIndexKey(targetId), JSON.stringify(cloud.workflows));
         }
         const main = cloud?.diagrams?.main;
         const pageName = cloud?.pages?.find((page) => page.id === "main")?.name;
@@ -414,7 +475,7 @@ useEffect(() => {
 
   useEffect(() => {
     if (!workspaceReady) return;
-    window.localStorage.setItem(WORKSPACE_KEY, JSON.stringify(collieMeta));
+    setLocalStorageItem(WORKSPACE_KEY, JSON.stringify(collieMeta));
     void syncWorkspace("collie", "PATCH", { workspace: collieMeta });
   }, [collieMeta, workspaceReady]);
 
@@ -448,13 +509,13 @@ useEffect(() => {
     const workspace = { id: `workspace-${Date.now()}`, name, favorite: false };
     setExtraWorkspaces((current) => {
       const next = [...current, workspace];
-      window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
+      setLocalStorageItem("collieai-extra-workspaces-v1", JSON.stringify(next));
       return next;
     });
-    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, workspace.id);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_OWNER_KEY, workspace.id);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, "main");
-    window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, defaultWorkflows[0].name);
+    setLocalStorageItem(ACTIVE_WORKSPACE_KEY, workspace.id);
+    setLocalStorageItem(ACTIVE_WORKSPACE_OWNER_KEY, workspace.id);
+    setLocalStorageItem(ACTIVE_WORKFLOW_KEY, "main");
+    setLocalStorageItem(ACTIVE_WORKFLOW_NAME_KEY, defaultWorkflows[0].name);
     await syncWorkspace(workspace.id, "PUT", { workspace: { name: workspace.name, favorite: false }, workflows: defaultWorkflows, pages: [{ id: "main", name: "Main architecture" }], trashedPages: [], activePageId: "main", diagrams: { main: { nodes: [], edges: [] } } });
     setWorkspaceDialogSaving(false);
     setWorkspaceDialogOpen(false);
@@ -462,10 +523,10 @@ useEffect(() => {
   };
 
 const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorite = false) => {
-    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, id);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_OWNER_KEY, id);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, "main");
-    window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, defaultWorkflows[0].name);
+    setLocalStorageItem(ACTIVE_WORKSPACE_KEY, id);
+    setLocalStorageItem(ACTIVE_WORKSPACE_OWNER_KEY, id);
+    setLocalStorageItem(ACTIVE_WORKFLOW_KEY, "main");
+    setLocalStorageItem(ACTIVE_WORKFLOW_NAME_KEY, defaultWorkflows[0].name);
     setSelectedWorkspaceId(id);
     setActiveWorkflowId("main");
     setWorkflows(readWorkflows(id));
@@ -486,7 +547,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
       const cloud = (await response.json()).data as { workspace?: WorkspaceMeta; workflows?: WorkflowMeta[]; diagrams?: Record<string, { nodes?: StoredNode[]; edges?: StoredEdge[] }>; pages?: { id?: string; name?: string }[] } | null;
       if (cloud?.workflows?.length) {
         setWorkflows(cloud.workflows);
-        window.localStorage.setItem(workflowIndexKey(id), JSON.stringify(cloud.workflows));
+        setLocalStorageItem(workflowIndexKey(id), JSON.stringify(cloud.workflows));
       }
       const main = cloud?.diagrams?.main;
       if (id === "collie") {
@@ -543,7 +604,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
       const next = workflows.map((item) => item.id === workflow.id ? { ...item, name } : item);
       setWorkflows(next);
       saveWorkflows(selectedWorkspaceId, next);
-      if (workflow.id === activeWorkflowId) window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, name);
+      if (workflow.id === activeWorkflowId) setLocalStorageItem(ACTIVE_WORKFLOW_NAME_KEY, name);
       setWorkflowDialog(null);
       return;
     }
@@ -554,10 +615,10 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
     saveWorkflows(selectedWorkspaceId, next);
     setWorkflows(next);
     setActiveWorkflowId(workflow.id);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_OWNER_KEY, selectedWorkspaceId);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, workflow.id);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, workflow.name);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, workflowWorkspaceId(selectedWorkspaceId, workflow.id));
+    setLocalStorageItem(ACTIVE_WORKSPACE_OWNER_KEY, selectedWorkspaceId);
+    setLocalStorageItem(ACTIVE_WORKFLOW_KEY, workflow.id);
+    setLocalStorageItem(ACTIVE_WORKFLOW_NAME_KEY, workflow.name);
+    setLocalStorageItem(ACTIVE_WORKSPACE_KEY, workflowWorkspaceId(selectedWorkspaceId, workflow.id));
     await syncWorkspace(workflowWorkspaceId(selectedWorkspaceId, workflow.id), "PUT", {
         workspace: { name: `${workspace.name} · ${workflow.name}`, favorite: false },
         pages: [{ id: "main", name: "Main architecture" }],
@@ -572,10 +633,10 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
 
   const openWorkflow = (workflow: WorkflowMeta) => {
     setActiveWorkflowId(workflow.id);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_OWNER_KEY, selectedWorkspaceId);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_KEY, workflow.id);
-    window.localStorage.setItem(ACTIVE_WORKFLOW_NAME_KEY, workflow.name);
-    window.localStorage.setItem(ACTIVE_WORKSPACE_KEY, workflowWorkspaceId(selectedWorkspaceId, workflow.id));
+    setLocalStorageItem(ACTIVE_WORKSPACE_OWNER_KEY, selectedWorkspaceId);
+    setLocalStorageItem(ACTIVE_WORKFLOW_KEY, workflow.id);
+    setLocalStorageItem(ACTIVE_WORKFLOW_NAME_KEY, workflow.name);
+    setLocalStorageItem(ACTIVE_WORKSPACE_KEY, workflowWorkspaceId(selectedWorkspaceId, workflow.id));
     onOpenWorkspace();
   };
 
@@ -637,7 +698,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
       const existing = extraWorkspaces.find((item) => item.id === id);
       setExtraWorkspaces((current) => {
         const next = current.map((item) => (item.id === id ? { ...item, name: nextName } : item));
-        window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
+        setLocalStorageItem("collieai-extra-workspaces-v1", JSON.stringify(next));
         return next;
       });
       if (selectedWorkspaceId === id) setWorkspace((current) => ({ ...current, name: nextName }));
@@ -658,7 +719,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
       const favorite = !current.favorite;
       setExtraWorkspaces((items) => {
         const next = items.map((item) => (item.id === id ? { ...item, favorite } : item));
-        window.localStorage.setItem("collieai-extra-workspaces-v1", JSON.stringify(next));
+        setLocalStorageItem("collieai-extra-workspaces-v1", JSON.stringify(next));
         return next;
       });
       if (selectedWorkspaceId === id) setWorkspace((cur) => ({ ...cur, favorite }));

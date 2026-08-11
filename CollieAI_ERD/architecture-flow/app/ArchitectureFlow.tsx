@@ -96,7 +96,7 @@ Type,
 import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import DashboardHome from "./DashboardHome";
+import DashboardHome, { setLocalStorageItem } from "./DashboardHome";
 
 type NodeShape =
   | "service"
@@ -729,7 +729,12 @@ function FlowingConnectorEdge({
   };
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
   // Keep one editable elbow control, like a classic orthogonal diagram line.
-  const joint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
+  const storedJoint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
+  // A bad value from a previous drag must never be allowed into an SVG path.
+  // SVG silently renders malformed path geometry as large, opaque wedges.
+  const joint = storedJoint && Number.isFinite(storedJoint.x) && Number.isFinite(storedJoint.y)
+    ? storedJoint
+    : undefined;
   // A connector only counts as straight when its endpoints are genuinely on
   // the same axis. Small placement differences still need a usable elbow.
   const portsAreAligned =
@@ -780,16 +785,22 @@ function FlowingConnectorEdge({
       });
   const dragJoint = (event: ReactPointerEvent<SVGCircleElement>) => {
     event.stopPropagation();
-    const svg = event.currentTarget.ownerSVGElement;
-    if (!svg || !edgeData.onJointsChange) return;
+    const control = event.currentTarget;
+    if (!edgeData.onJointsChange) return;
     const toFlowPoint = (clientX: number, clientY: number): EdgeBend => {
-      const matrix = svg.getScreenCTM();
+      // The React Flow canvas pan/zoom transform lives below the root SVG.
+      // Use the control's CTM so drag coordinates stay in diagram space.
+      const matrix = control.getScreenCTM();
       if (!matrix) return { x: clientX, y: clientY };
+      const svg = control.ownerSVGElement;
+      if (!svg) return { x: clientX, y: clientY };
       const point = svg.createSVGPoint();
       point.x = clientX;
       point.y = clientY;
       const converted = point.matrixTransform(matrix.inverse());
-      return { x: converted.x, y: converted.y };
+      return Number.isFinite(converted.x) && Number.isFinite(converted.y)
+        ? { x: converted.x, y: converted.y }
+        : { x: clientX, y: clientY };
     };
     const move = (moveEvent: PointerEvent) => {
       const point = toFlowPoint(moveEvent.clientX, moveEvent.clientY);
@@ -959,7 +970,21 @@ function FlowingConnectorEdge({
       style={{ ...style, strokeOpacity: 0 }}
         interactionWidth={24}
       />
-      <path className="react-flow__edge-path edge-visible-path" d={d} fill="none" markerEnd={markerEnd} pathLength={1000} style={edgePathStyle} />
+      <path
+        className="react-flow__edge-path edge-visible-path"
+        d={d}
+        fill="none"
+        markerEnd={markerEnd}
+        pathLength={1000}
+        style={{
+          ...edgePathStyle,
+          fill: "none",
+          stroke: style?.stroke ?? "#64748b",
+          strokeWidth: style?.strokeWidth ?? 1.7,
+          strokeLinecap: "round",
+          strokeLinejoin: "round",
+        }}
+      />
       <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
       {edgeData.sourceCardinality && edgeData.sourceCardinality !== "default"
         ? renderCardinalityMarker("source-cardinality", sourceX, sourceY, sourcePosition, edgeData.sourceCardinality)
@@ -1405,8 +1430,9 @@ const annotationsStorageKey = (workspaceId: string, pageId: string) =>
   workspaceId === "collie"
     ? `collieai-annotations-${pageId}`
     : `collieai-annotations-${workspaceId}-${pageId}`;
-const MAX_HISTORY_ENTRIES = 40;
-const MAX_DAILY_HISTORY_ENTRIES = 180;
+const MAX_HISTORY_ENTRIES = 20;
+const MAX_DAILY_HISTORY_ENTRIES = 30;
+const MAX_HISTORY_BYTES = 700_000;
 
 const activeWorkspaceId = () =>
   typeof window !== "undefined"
@@ -1454,7 +1480,16 @@ const retainHistory = (entries: DiagramHistoryEntry[]) => {
     if (dailySnapshots.length === MAX_DAILY_HISTORY_ENTRIES) break;
   }
 
-  return [...recent, ...dailySnapshots];
+  const retained = [...recent, ...dailySnapshots];
+  const withinBudget: DiagramHistoryEntry[] = [];
+  let bytes = 2;
+  for (const entry of retained) {
+    const entryBytes = JSON.stringify(entry).length + 1;
+    if (withinBudget.length > 0 && bytes + entryBytes > MAX_HISTORY_BYTES) break;
+    withinBudget.push(entry);
+    bytes += entryBytes;
+  }
+  return withinBudget;
 };
 
 const removeAnimationEdgeClasses = (className?: string) =>
@@ -1608,7 +1643,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       skipAnnotationSaveRef.current = false;
       return;
     }
-    window.localStorage.setItem(
+    setLocalStorageItem(
       annotationsStorageKey(workspaceId.current, activePageId),
       JSON.stringify(annotationStrokes),
     );
@@ -1876,9 +1911,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
           const cloudActive = cloud.pages.find((page) => page.id === cloud.activePageId)?.id ?? cloud.pages[0].id;
           const cloudDiagram = cloud.diagrams?.[cloudActive];
           if (!cloudDiagram) return;
-          window.localStorage.setItem(pageIndexKey(wsId), JSON.stringify({ pages: cloud.pages, trashedPages: cloud.trashedPages ?? [], activePageId: cloudActive }));
+          setLocalStorageItem(pageIndexKey(wsId), JSON.stringify({ pages: cloud.pages, trashedPages: cloud.trashedPages ?? [], activePageId: cloudActive }));
           Object.entries(cloud.diagrams ?? {}).forEach(([pageId, diagram]) => {
-            window.localStorage.setItem(pageStorageKey(wsId, pageId), JSON.stringify(diagram));
+            setLocalStorageItem(pageStorageKey(wsId, pageId), JSON.stringify(diagram));
           });
           restore(cloud.pages, cloud.trashedPages ?? [], cloudActive);
           setNodes(synchronizeLegendKey([...(cloudDiagram.nodes ?? []), ...commentMarkers(restoredComments)]));
@@ -2125,10 +2160,13 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
 
   const updateEdgeJoints = useCallback(
     (edgeId: string, joints: EdgeBend[]) => {
+      const validJoints = joints
+        .filter((joint) => Number.isFinite(joint.x) && Number.isFinite(joint.y))
+        .slice(0, 1);
       setEdges((current) =>
         current.map((edgeItem) =>
           edgeItem.id === edgeId
-            ? { ...edgeItem, data: { ...edgeItem.data, joints } }
+            ? { ...edgeItem, data: { ...edgeItem.data, joints: validJoints } }
             : edgeItem,
         ),
       );
@@ -2185,7 +2223,7 @@ const persistPageIndex = (
     nextActivePageId: string,
     nextTrashedPages: DiagramPage[] = trashedPages,
   ) => {
-    window.localStorage.setItem(
+    setLocalStorageItem(
       pageIndexKey(workspaceId.current),
       JSON.stringify({
         pages: nextPages,
@@ -2201,9 +2239,9 @@ const persistPageIndex = (
       return { ...n, data: cleanData };
     });
     const wsId = workspaceId.current;
-    window.localStorage.setItem(pageStorageKey(wsId, activePageId), JSON.stringify({ nodes: cleanNodes, edges }));
+    setLocalStorageItem(pageStorageKey(wsId, activePageId), JSON.stringify({ nodes: cleanNodes, edges }));
     if (activePageId === "main" && wsId === "collie") {
-      window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: cleanNodes, edges }));
+      setLocalStorageItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: cleanNodes, edges }));
     }
   };
 
@@ -2234,7 +2272,7 @@ const persistPageIndex = (
   };
 
   const persistAnimationData = () => {
-    window.localStorage.setItem(
+    setLocalStorageItem(
       animationStorageKey(workspaceId.current, activePageId),
       JSON.stringify({ sequences: animationSequences, activeSequenceId, branchChoices: animationBranchChoices }),
     );
@@ -2320,7 +2358,7 @@ const persistPageIndex = (
       name: `Architecture page ${pages.length + 1}`,
     };
     const nextPages = [...pages, page];
-    window.localStorage.setItem(pageStorageKey(workspaceId.current, page.id), JSON.stringify({ nodes: [], edges: [] }));
+    setLocalStorageItem(pageStorageKey(workspaceId.current, page.id), JSON.stringify({ nodes: [], edges: [] }));
     persistPageIndex(nextPages, page.id);
     setPages(nextPages);
     setActivePageId(page.id);
@@ -2360,7 +2398,7 @@ const persistPageIndex = (
       };
       nextPages = [replacement];
       nextActive = replacement.id;
-      window.localStorage.setItem(
+      setLocalStorageItem(
         pageStorageKey(workspaceId.current, replacement.id),
         JSON.stringify({ nodes: [], edges: [] }),
       );
@@ -2957,14 +2995,14 @@ const persistPageIndex = (
         nodes: ArchitectureNode[];
         edges: Edge[];
       };
-      window.localStorage.setItem(
+      setLocalStorageItem(
         pageStorageKey(workspaceId.current, activePageId),
         JSON.stringify(cleanDiagram),
       );
       if (activePageId === "main" && workspaceId.current === "collie") {
-        window.localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify(cleanDiagram));
+        setLocalStorageItem(LEGACY_STORAGE_KEY, JSON.stringify(cleanDiagram));
       }
-      window.localStorage.setItem(
+      setLocalStorageItem(
         pageIndexKey(workspaceId.current),
         JSON.stringify({ pages, trashedPages, activePageId }),
       );
@@ -2982,7 +3020,7 @@ const persistPageIndex = (
         };
         const nextHistory = retainHistory([entry, ...historyEntries]);
         setHistoryEntries(nextHistory);
-        window.localStorage.setItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
+        setLocalStorageItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
         lastHistorySignatureRef.current = signature;
       }
       setAutoSaveState("saved");
@@ -3016,13 +3054,13 @@ const persistPageIndex = (
     setEdges(entry.edges);
     setHistoryEntries(nextHistory);
     lastHistorySignatureRef.current = diagramSignature(entry.nodes, entry.edges);
-    window.localStorage.setItem(
+    setLocalStorageItem(
       pageStorageKey(workspaceId.current, activePageId),
       JSON.stringify({ nodes: entry.nodes, edges: entry.edges }),
     );
-    window.localStorage.setItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
+    setLocalStorageItem(historyStorageKey(workspaceId.current, activePageId), JSON.stringify(nextHistory));
     if (activePageId === "main") {
-      window.localStorage.setItem(
+      setLocalStorageItem(
         LEGACY_STORAGE_KEY,
         JSON.stringify({ nodes: entry.nodes, edges: entry.edges }),
       );
@@ -3161,6 +3199,27 @@ const persistPageIndex = (
   };
 
   const prepareExportSafeSvgPaint = (viewport: HTMLElement) => {
+    // html-to-image renders the cloned DOM inside a new SVG document. Some
+    // browsers lose the React Flow stylesheet's `fill: none` during that
+    // conversion and implicitly close open polylines with a black fill. Pin
+    // connector paint inline so preview and downloaded PNGs stay line-only.
+    viewport.querySelectorAll<SVGPathElement>(
+      ".edge-visible-path, .edge-label-measure-path, .connector-water-pulse, .react-flow__edge-interaction",
+    ).forEach((path) => {
+      path.setAttribute("fill", "none");
+      path.style.setProperty("fill", "none", "important");
+      path.style.setProperty("stroke-linecap", "round");
+      path.style.setProperty("stroke-linejoin", "round");
+    });
+    viewport.querySelectorAll<SVGPathElement>(".edge-visible-path").forEach((path) => {
+      const computed = getComputedStyle(path);
+      const stroke = computed.stroke && computed.stroke !== "none" ? computed.stroke : "#64748b";
+      const strokeWidth = Number.parseFloat(computed.strokeWidth);
+      path.setAttribute("stroke", stroke);
+      path.setAttribute("stroke-width", String(Number.isFinite(strokeWidth) ? strokeWidth : 1.7));
+      path.style.setProperty("stroke", stroke);
+      path.style.setProperty("stroke-width", `${Number.isFinite(strokeWidth) ? strokeWidth : 1.7}px`);
+    });
     viewport.querySelectorAll<SVGPathElement>(".decision-art path").forEach((path) => {
       const node = path.closest<HTMLElement>(".architecture-node");
       const stroke = node
@@ -3669,7 +3728,7 @@ const persistPageIndex = (
   };
 
   const persistComments = (nextComments: DiagramComment[]) => {
-    window.localStorage.setItem(
+    setLocalStorageItem(
       commentsStorageKey(workspaceId.current, activePageId),
       JSON.stringify(nextComments),
     );
