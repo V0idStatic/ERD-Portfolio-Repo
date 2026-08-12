@@ -102,6 +102,11 @@ type NodeShape =
   | "service"
   | "decision"
   | "database"
+  | "data-store"
+  | "fishbone-branch"
+  | "fishbone-circle"
+  | "fishbone-spine"
+  | "fishbone-template"
   | "cloud"
   | "terminal"
   | "predefined-process"
@@ -166,7 +171,7 @@ type NodeIcon =
   | "user"
   | "check";
 type NodeTone = "cyan" | "violet" | "amber" | "emerald" | "slate" | "rose" | "black";
-type ComponentCategory = "service" | "shape" | "flowchart" | "erd";
+type ComponentCategory = "service" | "shape" | "flowchart" | "erd" | "fishbone";
 type ComponentTextTarget = "title" | "description" | "header";
 type ComponentTextStyle = Pick<CSSProperties, "color" | "fontFamily" | "fontStyle" | "fontWeight" | "textAlign" | "textDecoration">;
 
@@ -216,6 +221,17 @@ type ArchitectureNodeData = {
   erdColumns?: Array<ErdColumn | string>;
   erdExpanded?: boolean;
   onErdExpandedChange?: (expanded: boolean) => void;
+  fishboneLineCount?: number;
+  fishboneLabels?: string[];
+  fishboneSide?: "top" | "bottom";
+  fishboneCircleIconMode?: boolean;
+  fishboneCategoryCount?: number;
+  fishboneEndMarker?: "arrow" | "circle";
+  fishboneLineLengths?: number[];
+  fishboneLabelSizes?: number[];
+  fishboneTextSize?: number;
+  fishboneCircleTextSize?: number;
+  fishboneCircleTextBold?: boolean;
 };
 
 const normalizeErdColumns = (columns?: Array<ErdColumn | string>): ErdColumn[] =>
@@ -481,6 +497,97 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
     );
   }
 
+  if (data.shape === "fishbone-spine") {
+    return (
+      <div className={`architecture-node shape-fishbone-spine tone-${data.tone} ${selected ? "is-selected" : ""}`} style={data.legendColor ? { "--node": data.legendColor } as CSSProperties : undefined}>
+        <NodeResizer minWidth={500} minHeight={32} isVisible={selected} color="#0ea5c6" handleStyle={{ width: 9, height: 9, borderRadius: 3 }} />
+        <svg viewBox="0 0 1250 42" preserveAspectRatio="none" aria-label="Fishbone main spine"><defs><marker id={`fishbone-spine-arrow-${id}`} markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 9 4.5 0 9Z" /></marker></defs><path d="M4 21H1238" markerEnd={`url(#fishbone-spine-arrow-${id})`} /></svg>
+        <Handle className="side-handle" type="source" position={Position.Left} id="left" />
+        <Handle className="side-handle" type="source" position={Position.Right} id="right" />
+      </div>
+    );
+  }
+
+  if (data.shape === "fishbone-branch") {
+    const lineCount = Math.max(1, Math.min(8, Math.round(data.fishboneLineCount ?? 3)));
+    const labels = Array.from({ length: lineCount }, (_, index) => data.fishboneLabels?.[index] ?? `Cause ${index + 1}`);
+    const lineLengths = Array.from({ length: lineCount }, (_, index) => Math.max(0, Math.min(100, data.fishboneLineLengths?.[index] ?? 100)));
+    const labelSize = Math.max(8, Math.min(32, data.fishboneTextSize ?? data.fishboneLabelSizes?.[0] ?? 11));
+    const branchWidth = width ?? 390;
+    const branchHeight = height ?? 210;
+    const isBottom = data.fishboneSide === "bottom";
+    const startY = isBottom ? branchHeight - 12 : 12;
+    const endY = isBottom ? 12 : branchHeight - 12;
+    const boneX = 18;
+    return (
+      <div className={`architecture-node shape-fishbone-branch tone-${data.tone} ${selected ? "is-selected" : ""}`} style={data.legendColor ? { "--node": data.legendColor } as CSSProperties : undefined}>
+        <NodeResizer minWidth={320} minHeight={130} isVisible={selected} color="#0ea5c6" handleStyle={{ width: 9, height: 9, borderRadius: 3 }} />
+        <svg viewBox={`0 0 ${branchWidth} ${branchHeight}`} preserveAspectRatio="none" aria-label={`${lineCount}-line fishbone cause branch`}>
+          <defs>
+            <marker id={`fishbone-arrow-${id}`} markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto" markerUnits="userSpaceOnUse"><path d="M0.5 0.5 5.5 3 0.5 5.5Z" /></marker>
+            <marker id={`fishbone-circle-${id}`} markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><circle cx="4.5" cy="4.5" r="3.2" /></marker>
+          </defs>
+          <path className="fishbone-branch-spine" d={`M${boneX} ${startY} V${endY}`} />
+          {labels.map((label, index) => {
+            const fraction = (index + 1) / (lineCount + 1);
+            const lineY = startY + (endY - startY) * fraction;
+            const maximumEndX = branchWidth - 18;
+            const endX = boneX + (maximumEndX - boneX) * lineLengths[index] / 100;
+            // Keep a long cause label readable without allowing the cause line to
+            // sit underneath it.  Labels always start after their endpoint marker.
+            const maxCharactersPerLine = Math.max(18, Math.floor(220 / (labelSize * 0.58)));
+            const words = label.trim().split(/\s+/).filter(Boolean);
+            const firstLineWords: string[] = [];
+            while (words.length && `${firstLineWords.join(" ")} ${words[0]}`.trim().length <= maxCharactersPerLine) {
+              firstLineWords.push(words.shift()!);
+            }
+            const labelLines = firstLineWords.length && words.length
+              ? [firstLineWords.join(" "), words.join(" ")]
+              : [label];
+            const labelY = lineY + (labelLines.length > 1 ? -labelSize * 0.25 : labelSize * 0.34);
+            return <g key={`${index}-${label}`}>
+              <path className="fishbone-cause-line" d={`M${boneX} ${lineY} H${endX}`} markerEnd={`url(#fishbone-${data.fishboneEndMarker === "circle" ? "circle" : "arrow"}-${id})`} />
+              <text className="fishbone-cause-label" x={endX + 11} y={labelY} textAnchor="start" style={{ fontSize: `${labelSize}px` }}>
+                {labelLines.map((line, lineIndex) => <tspan key={`${line}-${lineIndex}`} x={endX + 11} dy={lineIndex === 0 ? 0 : labelSize * 1.1}>{line}</tspan>)}
+              </text>
+            </g>;
+          })}
+        </svg>
+        <Handle className="side-handle" type="source" position={Position.Left} id="category" style={{ top: startY, left: boneX }} />
+        <Handle className="side-handle" type="source" position={Position.Left} id="spine" style={{ top: endY, left: boneX }} />
+      </div>
+    );
+  }
+
+  if (data.shape === "fishbone-circle") {
+    const circleSize = Math.max(52, Math.min(76, (width ?? 150) * 0.58, (height ?? 126) * 0.72));
+    const circleTextStyle = {
+      fontSize: `${Math.max(8, Math.min(32, data.fishboneCircleTextSize ?? 10))}px`,
+      fontWeight: data.fishboneCircleTextBold === false ? 400 : 800,
+    } as CSSProperties;
+    return (
+      <div
+        className={`architecture-node shape-fishbone-circle tone-${data.tone} ${data.fishboneCircleIconMode ? "has-icon" : ""} ${selected ? "is-selected" : ""}`}
+        style={{
+          ...(data.legendColor ? { "--node": data.legendColor } : {}),
+          "--fishbone-circle-size": `${circleSize}px`,
+          "--fishbone-circle-half": `${circleSize / 2}px`,
+        } as CSSProperties}
+        onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("title"); }}
+      >
+        <NodeResizer minWidth={110} minHeight={96} isVisible={selected} color="#0ea5c6" handleStyle={{ width: 9, height: 9, borderRadius: 3 }} />
+        <div className="fishbone-circle-disc">
+          {data.fishboneCircleIconMode ? <Icon size={34} strokeWidth={1.8} aria-hidden="true" /> : <strong style={circleTextStyle}>{data.label}</strong>}
+        </div>
+        {data.fishboneCircleIconMode ? <strong className="fishbone-circle-label" style={circleTextStyle}>{data.label}</strong> : null}
+        <Handle className="side-handle" type="source" position={Position.Top} id="top" />
+        <Handle className="side-handle" type="source" position={Position.Right} id="right" />
+        <Handle className="side-handle" type="source" position={Position.Bottom} id="bottom" />
+        <Handle className="side-handle" type="source" position={Position.Left} id="left" />
+      </div>
+    );
+  }
+
   const erdColumns = normalizeErdColumns(data.erdColumns);
   const namedErdColumns = erdColumns.filter((column) => column.name.trim());
 
@@ -582,6 +689,13 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         : connectorStops.map((pct, i) => (
             <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
           ))}
+      {data.shape === "data-store" ? (
+        <svg className="database-art" viewBox="0 0 260 112" preserveAspectRatio="none" aria-hidden="true">
+          <path className="db-body" d="M3 16V94c0 10 57 16 127 16s127-6 127-16V16Z" />
+          <ellipse className="db-top" cx="130" cy="16" rx="127" ry="14" />
+          <path className="db-ring" d="M3 55c0 10 57 16 127 16s127-6 127-16" />
+        </svg>
+      ) : null}
       {data.shape === "cloud" ? (
         <svg className="cloud-art" viewBox="0 0 290 116" preserveAspectRatio="none" aria-hidden="true">
           <defs>
@@ -678,6 +792,10 @@ const defaultShapeSize = (shape: NodeShape) => {
   if (shape === "decision") return { width: 230, height: 126 };
   if (shape === "cloud") return { width: 290, height: 118 };
   if (shape === "database") return { width: 270, height: 78 };
+  if (shape === "data-store") return { width: 260, height: 112 };
+  if (shape === "fishbone-branch") return { width: 390, height: 210 };
+  if (shape === "fishbone-circle") return { width: 150, height: 126 };
+  if (shape === "fishbone-spine") return { width: 1250, height: 42 };
   if (shape === "terminal") return { width: 250, height: 62 };
   if (shape === "predefined-process") return { width: 260, height: 92 };
   if (shape === "header-card") return { width: 270, height: 130 };
@@ -1298,7 +1416,12 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
   { value: "side-panel", label: "Side Panel" },
   { value: "left-panel", label: "Left Panel" },
   { value: "decision", label: "Diamond" },
-  { value: "database", label: "Database" },
+  { value: "database", label: "ERD Table" },
+  { value: "data-store", label: "Database" },
+  { value: "fishbone-branch", label: "Cause Branch" },
+  { value: "fishbone-circle", label: "Category Circle" },
+  { value: "fishbone-spine", label: "Main Spine" },
+  { value: "fishbone-template", label: "Complete Fishbone" },
   { value: "cloud", label: "Cloud" },
   { value: "terminal", label: "Start / End" },
   { value: "predefined-process", label: "Predefined Process" },
@@ -1306,26 +1429,29 @@ const shapeOptions: { value: NodeShape; label: string }[] = [
 
 const shapeDrawerSections: { id: string; label: string; shapes: NodeShape[] }[] = [
   { id: "basic", label: "Shapes", shapes: ["service", "header-card", "side-panel", "left-panel", "circle", "pentagon", "callout", "arrow", "hexagon", "triangle", "star", "parallelogram", "document"] },
-  { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "predefined-process", "decision", "cloud"] },
+  { id: "flowchart", label: "Flowchart", shapes: ["service", "terminal", "predefined-process", "decision", "cloud", "data-store"] },
   { id: "erd", label: "ERD", shapes: ["database"] },
+  { id: "fishbone", label: "Fishbone Diagram", shapes: ["fishbone-template", "fishbone-branch", "fishbone-circle"] },
 ];
 
 const shapesByCategory: Record<Exclude<ComponentCategory, "service">, NodeShape[]> = {
   shape: shapeDrawerSections.find((section) => section.id === "basic")!.shapes,
   flowchart: shapeDrawerSections.find((section) => section.id === "flowchart")!.shapes,
   erd: shapeDrawerSections.find((section) => section.id === "erd")!.shapes,
+  fishbone: shapeDrawerSections.find((section) => section.id === "fishbone")!.shapes,
 };
 
 const componentCategoryFor = (data: ArchitectureNodeData): ComponentCategory => {
   if (data.componentCategory) return data.componentCategory;
   if (data.serviceLogo || data.serviceSymbol) return "service";
   if (data.shape === "database") return "erd";
-  if (["decision", "cloud", "terminal", "predefined-process"].includes(data.shape)) return "flowchart";
+  if (["fishbone-branch", "fishbone-circle", "fishbone-spine", "fishbone-template"].includes(data.shape)) return "fishbone";
+  if (["decision", "cloud", "terminal", "predefined-process", "data-store"].includes(data.shape)) return "flowchart";
   return "shape";
 };
 
 const defaultIconForShape = (shape: NodeShape): NodeIcon =>
-  shape === "decision" ? "decision" : shape === "database" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
+  shape === "decision" ? "decision" : shape === "database" || shape === "data-store" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
 
 const servicePresets: { label: string; logo?: string; kind?: NonNullable<ArchitectureNodeData["serviceSymbol"]>; icon: NodeIcon; tone: NodeTone }[] = [
   { label: "Supabase", logo: "https://cdn.simpleicons.org/supabase/3FCF8E", icon: "database", tone: "emerald" },
@@ -1361,7 +1487,11 @@ function ShapeOutlinePreview({ shape, className }: { shape: NodeShape; className
   if (shape === "decision") return <svg {...svgProps}><path d="m16 1 15 12-15 12L1 13Z" /></svg>;
   if (shape === "terminal") return <svg {...svgProps}><rect x="2" y="5" width="28" height="16" rx="8" /></svg>;
   if (shape === "predefined-process") return <svg {...svgProps}><rect x="2" y="4" width="28" height="18" rx="2" /><path d="M7 4v18M25 4v18" /></svg>;
-  if (shape === "database") return <svg {...svgProps}><ellipse cx="16" cy="5" rx="11" ry="3" /><path d="M5 5v16c0 1.7 4.9 3 11 3s11-1.3 11-3V5" /><path d="M5 13c0 1.7 4.9 3 11 3s11-1.3 11-3" /></svg>;
+  if (shape === "database") return <svg {...svgProps}><rect x="3" y="2" width="26" height="22" rx="1.5" /><path d="M3 8h26M3 13.5h26M3 19h26M11 8v16" /><circle cx="7" cy="10.75" r=".8" fill="currentColor" stroke="none" /></svg>;
+  if (shape === "data-store") return <svg {...svgProps}><ellipse cx="16" cy="5" rx="11" ry="3" /><path d="M5 5v16c0 1.7 4.9 3 11 3s11-1.3 11-3V5" /><path d="M5 13c0 1.7 4.9 3 11 3s11-1.3 11-3" /></svg>;
+  if (shape === "fishbone-branch") return <svg {...svgProps}><path d="M3 24 17 3M7 18h19m-15-6h16M15 6h14" /><path d="m26 15 3 3-3 3m1-12 3 3-3 3m-1-9 3-3-3-3" /></svg>;
+  if (shape === "fishbone-circle") return <svg {...svgProps}><circle cx="12" cy="10" r="8" /><path d="M21 18h9M21 22h7" /></svg>;
+  if (shape === "fishbone-template") return <svg {...svgProps}><path d="M2 14h28m-3-3 3 3-3 3M8 14 4 5m12 9-4-9m4 9-4 9m12-9-4 9" /><circle cx="4" cy="4" r="2.5" /><circle cx="12" cy="4" r="2.5" /><circle cx="12" cy="24" r="2.5" /><circle cx="20" cy="24" r="2.5" /></svg>;
   if (shape === "cloud") return <svg {...svgProps}><path d="M7 22h17a6 6 0 0 0 .7-12A8 8 0 0 0 9.5 8 6 6 0 0 0 7 22Z" /></svg>;
   return <svg {...svgProps}><rect x="3" y="4" width="26" height="18" rx="2" /></svg>;
 }
@@ -1377,6 +1507,17 @@ const iconOptions: { value: NodeIcon; label: string }[] = [
   { value: "bot", label: "Tutor" },
   { value: "dashboard", label: "Dashboard" },
   { value: "alert", label: "Alert" },
+];
+
+const fishboneIconOptions: { value: NodeIcon; label: string }[] = [
+  { value: "user", label: "People" },
+  { value: "workflow", label: "Process" },
+  { value: "server", label: "Equipment" },
+  { value: "database", label: "Data" },
+  { value: "brain", label: "Knowledge" },
+  { value: "route", label: "Environment" },
+  { value: "check", label: "Quality" },
+  { value: "alert", label: "Risk" },
 ];
 
 const createNodeDraft = (): ArchitectureNodeData => ({
@@ -1441,8 +1582,10 @@ const activeWorkspaceId = () =>
 
 const workspaceApiUrl = () =>
   typeof window !== "undefined"
-    ? `${window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" ? "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace" : "/api/workspace"}?id=${encodeURIComponent(activeWorkspaceId())}`
+    ? `/api/workspace?id=${encodeURIComponent(activeWorkspaceId())}`
     : "/api/workspace?id=collie";
+const isLocalRuntime = () =>
+  typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
 const diagramSignature = (nodes: ArchitectureNode[], edges: Edge[]) =>
   JSON.stringify({ nodes: nodes.filter((node) => node.data.shape !== "comment"), edges }, (key, value) =>
@@ -1519,7 +1662,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const architectureShellRef = useRef<HTMLElement | null>(null);
   const activeAnnotationStrokeRef = useRef<string | null>(null);
   const skipAnnotationSaveRef = useRef(false);
-  const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ services: false, basic: true, flowchart: true, erd: true, icons: false });
+  const [openShapeSections, setOpenShapeSections] = useState<Record<string, boolean>>({ services: false, basic: true, flowchart: true, erd: true, fishbone: true, icons: false });
   const [legendShapeFilter, setLegendShapeFilter] = useState<"all" | NodeShape>("all");
   const selectionClipboardRef = useRef<{ nodes: ArchitectureNode[]; edges: Edge[] } | null>(null);
   const undoHistoryRef = useRef<CanvasSnapshot[]>([]);
@@ -1579,6 +1722,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [selectedCreatorOption, setSelectedCreatorOption] = useState<string | null>(null);
   const [applyTitleSizeToAll, setApplyTitleSizeToAll] = useState(false);
   const [applyDescriptionSizeToAll, setApplyDescriptionSizeToAll] = useState(false);
+  const [linkFishboneLineLengths, setLinkFishboneLineLengths] = useState(false);
   const [legendDraft, setLegendDraft] = useState<LegendDraft>(createLegendDraft);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -1883,7 +2027,11 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       // repairs stale local data (such as a page name leaked from another
       // workspace before storage was namespaced) and keeps every workspace
       // consistent with its own cloud copy.
-      void fetch(workspaceApiUrl())
+      if (isLocalRuntime()) {
+        // Localhost is the authoring source. It stays local until the user
+        // explicitly pushes the complete workspace from the home page.
+        cloudHydratedRef.current = true;
+      } else void fetch(workspaceApiUrl())
         .then((response) => response.json())
         .then((body) => {
           const cloud = body.data as {
@@ -2026,6 +2174,23 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     },
     [selectedId, setNodes],
   );
+
+  const updateSelectedFishbone = useCallback((patch: Partial<ArchitectureNodeData>) => {
+    if (!selectedId) return;
+    setNodes((current) => current.map((node) => {
+      if (node.id !== selectedId) return node;
+      const data = { ...node.data, ...patch };
+      if (data.shape !== "fishbone-branch") return { ...node, data };
+      const count = Math.max(1, Math.min(8, Math.round(data.fishboneLineCount ?? 3)));
+      const labels = Array.from({ length: count }, (_, index) => data.fishboneLabels?.[index] ?? `Cause ${index + 1}`);
+      const lineLengths = Array.from({ length: count }, (_, index) => Math.max(0, Math.min(100, data.fishboneLineLengths?.[index] ?? 100)));
+      const textSize = Math.max(8, Math.min(32, data.fishboneTextSize ?? data.fishboneLabelSizes?.[0] ?? 11));
+      const width = Number.parseFloat(String(node.style?.width ?? node.width ?? defaultShapeSize("fishbone-branch").width));
+      const height = 82 + count * 42;
+      return { ...node, width, height, data: { ...data, fishboneLineCount: count, fishboneLabels: labels, fishboneLineLengths: lineLengths }, style: { ...node.style, width, height } };
+    }));
+    window.setTimeout(() => updateNodeInternals(selectedId), 0);
+  }, [selectedId, setNodes, updateNodeInternals]);
 
   const updateSelectedTextStyle = (patch: Partial<ComponentTextStyle>) => {
     if (!selectedTextTarget) return;
@@ -2246,6 +2411,7 @@ const persistPageIndex = (
   };
 
   const syncWorkspaceToCloud = (nextPages: DiagramPage[], nextTrashedPages: DiagramPage[], nextActivePageId: string) => {
+    if (isLocalRuntime()) return;
     const wsId = workspaceId.current;
     const allPages = [...nextPages, ...nextTrashedPages];
     const diagrams = Object.fromEntries(
@@ -3099,33 +3265,28 @@ const persistPageIndex = (
       const padding = 180;
       const cropWidth = Math.ceil(bounds.width + padding * 2);
       const cropHeight = Math.ceil(bounds.height + padding * 2);
-      const idealScale = 3;
-      const maxDimension = 14_000;
-      const maxPixels = 60_000_000;
-      const safeScale = Math.min(
-        idealScale,
-        maxDimension / cropWidth,
-        maxDimension / cropHeight,
-        Math.sqrt(maxPixels / (cropWidth * cropHeight)),
+      const isPortrait = cropHeight > cropWidth;
+      const exportWidth = isPortrait ? 2160 : 3840;
+      const exportHeight = isPortrait ? 3840 : 2160;
+      const exportMargin = 72;
+      const renderScale = Math.min(
+        (exportWidth - exportMargin * 2) / cropWidth,
+        (exportHeight - exportMargin * 2) / cropHeight,
       );
-      const renderScale = Math.max(0.5, Math.floor(safeScale * 10) / 10);
-      const exportWidth = Math.max(1, Math.floor(cropWidth * renderScale));
-      const exportHeight = Math.max(1, Math.floor(cropHeight * renderScale));
+      const translateX = (exportWidth - cropWidth * renderScale) / 2 + (padding - bounds.x) * renderScale;
+      const translateY = (exportHeight - cropHeight * renderScale) / 2 + (padding - bounds.y) * renderScale;
 
       const dataUrl = await toPng(viewport, {
-        backgroundColor: "#f6f8fb",
+        backgroundColor: "#ffffff",
         cacheBust: true,
-        // Keep the cloned canvas at its original logical size. Resolution is
-        // added by pixelRatio; scaling its CSS box caused narrow cards to clip
-        // the last characters of titles on larger pages.
-        pixelRatio: renderScale,
-        width: cropWidth,
-        height: cropHeight,
+        pixelRatio: 1,
+        width: exportWidth,
+        height: exportHeight,
         style: {
-          width: `${cropWidth}px`,
-          height: `${cropHeight}px`,
+          width: `${exportWidth}px`,
+          height: `${exportHeight}px`,
           transformOrigin: "top left",
-          transform: `translate(${padding - bounds.x}px, ${padding - bounds.y}px)`,
+          transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
         },
         filter: (domNode) =>
           !(
@@ -3141,11 +3302,12 @@ const persistPageIndex = (
       link.href = dataUrl;
       link.click();
       setExportNotice(
-        `Exported ${exportWidth.toLocaleString()} × ${exportHeight.toLocaleString()} PNG · ${renderScale.toFixed(1)}× detail`,
+        `Exported true 4K ${exportWidth.toLocaleString()} × ${exportHeight.toLocaleString()} PNG`,
       );
     } catch {
       setExportNotice("PNG export could not finish. Try closing other large tabs and export again.");
     } finally {
+      restoreExportSafeFishbonePaint(viewport);
       viewport.classList.remove("png-export-snapshot");
       setExporting(false);
       window.setTimeout(() => setExportNotice(null), 5200);
@@ -3179,6 +3341,7 @@ const persistPageIndex = (
   };
 
   const clearDocsViewportStyles = (viewport: HTMLElement) => {
+    restoreExportSafeFishbonePaint(viewport);
     viewport.classList.remove(
       "document-export-mode",
       "docs-custom-export",
@@ -3195,6 +3358,43 @@ const persistPageIndex = (
         delete label.dataset.exportOriginalFontSize;
       }
       delete label.dataset.exportBaseFontSize;
+    });
+  };
+
+  const rememberExportSafeFishbonePaint = (element: SVGElement) => {
+    if ("exportOriginalStyle" in element.dataset) return;
+    element.dataset.exportOriginalStyle = element.getAttribute("style") ?? "__none__";
+    element.dataset.exportOriginalPaint = JSON.stringify({
+      fill: element.getAttribute("fill"),
+      stroke: element.getAttribute("stroke"),
+      strokeWidth: element.getAttribute("stroke-width"),
+      strokeLinecap: element.getAttribute("stroke-linecap"),
+      strokeLinejoin: element.getAttribute("stroke-linejoin"),
+      vectorEffect: element.getAttribute("vector-effect"),
+    });
+  };
+
+  const restoreExportSafeFishbonePaint = (viewport: HTMLElement) => {
+    viewport.querySelectorAll<HTMLElement | SVGElement>("[data-export-original-style]").forEach((element) => {
+      const originalStyle = element.dataset.exportOriginalStyle;
+      if (originalStyle === "__none__") element.removeAttribute("style");
+      else if (originalStyle !== undefined) element.setAttribute("style", originalStyle);
+      if (element.dataset.exportOriginalPaint) {
+        const originalPaint = JSON.parse(element.dataset.exportOriginalPaint) as Record<string, string | null>;
+        ([
+          ["fill", originalPaint.fill],
+          ["stroke", originalPaint.stroke],
+          ["stroke-width", originalPaint.strokeWidth],
+          ["stroke-linecap", originalPaint.strokeLinecap],
+          ["stroke-linejoin", originalPaint.strokeLinejoin],
+          ["vector-effect", originalPaint.vectorEffect],
+        ] as Array<[string, string | null | undefined]>).forEach(([attribute, value]) => {
+          if (value === null || value === undefined) element.removeAttribute(attribute);
+          else element.setAttribute(attribute, value);
+        });
+      }
+      delete element.dataset.exportOriginalStyle;
+      delete element.dataset.exportOriginalPaint;
     });
   };
 
@@ -3250,6 +3450,68 @@ const persistPageIndex = (
       path.setAttribute("stroke", color || "#0ea5c6");
       path.setAttribute("stroke-width", "2.5");
     });
+    viewport.querySelectorAll<SVGPathElement>(
+      ".shape-fishbone-spine > svg > path, .shape-fishbone-branch .fishbone-branch-spine, .shape-fishbone-branch .fishbone-cause-line",
+    ).forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const isMainSpine = Boolean(path.closest(".shape-fishbone-spine"));
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", color || "#0ea5c6");
+      path.setAttribute("stroke-width", isMainSpine ? "3" : "2");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("vector-effect", "non-scaling-stroke");
+      path.style.setProperty("fill", "none", "important");
+      path.style.setProperty("stroke", color || "#0ea5c6", "important");
+      path.style.setProperty("stroke-width", `${isMainSpine ? 3 : 2}px`, "important");
+    });
+    viewport.querySelectorAll<SVGPathElement>(
+      ".shape-fishbone-spine marker path, .shape-fishbone-branch marker path",
+    ).forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      path.setAttribute("fill", color || "#0ea5c6");
+      path.setAttribute("stroke", "none");
+      path.style.setProperty("fill", color || "#0ea5c6", "important");
+      path.style.setProperty("stroke", "none", "important");
+    });
+    viewport.querySelectorAll<SVGCircleElement>(".shape-fishbone-branch marker circle").forEach((circle) => {
+      rememberExportSafeFishbonePaint(circle);
+      const node = circle.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      circle.setAttribute("fill", "#ffffff");
+      circle.setAttribute("stroke", color || "#0ea5c6");
+      circle.setAttribute("stroke-width", "1.8");
+    });
+    viewport.querySelectorAll<SVGTextElement>(".fishbone-cause-label").forEach((label) => {
+      rememberExportSafeFishbonePaint(label);
+      const computed = getComputedStyle(label);
+      label.setAttribute("fill", computed.fill && computed.fill !== "none" ? computed.fill : "#526276");
+      label.setAttribute("stroke", "none");
+      label.style.setProperty("paint-order", "normal");
+      label.style.setProperty("stroke", "none", "important");
+      label.style.setProperty("font-size", computed.fontSize);
+      label.style.setProperty("font-family", computed.fontFamily);
+      label.style.setProperty("font-weight", computed.fontWeight);
+    });
+    viewport.querySelectorAll<HTMLElement>(".fishbone-circle-disc strong, .fishbone-circle-label").forEach((label) => {
+      if (!("exportOriginalStyle" in label.dataset)) {
+        label.dataset.exportOriginalStyle = label.getAttribute("style") ?? "__none__";
+      }
+      const computed = getComputedStyle(label);
+      const width = label.getBoundingClientRect().width;
+      label.style.setProperty("width", `${width}px`, "important");
+      label.style.setProperty("max-width", `${width}px`, "important");
+      label.style.setProperty("font-size", computed.fontSize, "important");
+      label.style.setProperty("font-family", computed.fontFamily, "important");
+      label.style.setProperty("font-weight", computed.fontWeight, "important");
+      label.style.setProperty("line-height", computed.lineHeight, "important");
+      label.style.setProperty("white-space", computed.whiteSpace, "important");
+      label.style.setProperty("overflow-wrap", computed.overflowWrap, "important");
+    });
     viewport.querySelectorAll<SVGRectElement>(".react-flow__edge-textbg").forEach((rect) => {
       rect.setAttribute("fill", "#ffffff");
       rect.setAttribute("stroke", "#ffffff");
@@ -3268,39 +3530,45 @@ const persistPageIndex = (
     const cropHeight = bounds.height + cropPadding * 2;
     const originX = bounds.x - cropPadding;
     const originY = bounds.y - cropPadding;
+    const portrait = {
+      width: Math.round(2160 * outputScale),
+      height: Math.round(3840 * outputScale),
+      name: "portrait-4k",
+    };
+    const landscape = {
+      width: Math.round(3840 * outputScale),
+      height: Math.round(2160 * outputScale),
+      name: "landscape-4k",
+    };
+    const page = cropHeight > cropWidth ? portrait : landscape;
     if (mode === "full-design") {
-      const page = {
-        width: Math.max(1, Math.round(cropWidth * outputScale)),
-        height: Math.max(1, Math.round(cropHeight * outputScale)),
-        name: "original-layout",
+      // Documentation needs a tightly cropped image that keeps the canvas's
+      // real aspect ratio. A fixed 16:9 frame adds large blank bands around
+      // wide diagrams and makes them awkward to size in Word/Docs. Keep the
+      // longest edge at 4K and derive the other edge proportionally.
+      const longestEdge = Math.round(3840 * outputScale);
+      const tightScale = longestEdge / Math.max(cropWidth, cropHeight);
+      const tightPage = {
+        width: Math.max(1, Math.round(cropWidth * tightScale)),
+        height: Math.max(1, Math.round(cropHeight * tightScale)),
+        name: cropHeight > cropWidth ? "portrait-proportional-4k" : "landscape-proportional-4k",
       };
-      const renderScale = outputScale * manualZoom;
+      const renderScale = tightScale * manualZoom;
       const contentWidth = cropWidth * renderScale;
       const contentHeight = cropHeight * renderScale;
       return {
-        page,
+        page: tightPage,
         renderScale,
-        translateX: (page.width - contentWidth) / 2 - originX * renderScale,
-        translateY: (page.height - contentHeight) / 2 - originY * renderScale,
+        translateX: (tightPage.width - contentWidth) / 2 - originX * renderScale,
+        translateY: (tightPage.height - contentHeight) / 2 - originY * renderScale,
       };
     }
     const pageMargin = 55 * outputScale;
-    const portrait = {
-      width: Math.round(2550 * outputScale),
-      height: Math.round(3300 * outputScale),
-      name: "portrait",
-    };
-    const landscape = {
-      width: Math.round(3300 * outputScale),
-      height: Math.round(2550 * outputScale),
-      name: "landscape",
-    };
     const fitScale = (page: typeof portrait) =>
       Math.min(
         (page.width - pageMargin * 2) / cropWidth,
         (page.height - pageMargin * 2) / cropHeight,
       );
-    const page = fitScale(portrait) >= fitScale(landscape) ? portrait : landscape;
     const renderScale = fitScale(page) * manualZoom;
     const contentWidth = cropWidth * renderScale;
     const contentHeight = cropHeight * renderScale;
@@ -3391,7 +3659,7 @@ const persistPageIndex = (
       const { page, renderScale, translateX, translateY } = getDocsLayout(mode);
 
       const blob = await toBlob(viewport, {
-        backgroundColor: mode === "readable" ? "#ffffff" : "#f6f8fb",
+        backgroundColor: "#ffffff",
         cacheBust: false,
         pixelRatio: 1,
         width: page.width,
@@ -3473,7 +3741,7 @@ const persistPageIndex = (
           );
           prepareExportSafeSvgPaint(viewport);
           const renderedCanvas = await toCanvas(viewport, {
-            backgroundColor: docsExportMode === "readable" ? "#ffffff" : "#f6f8fb",
+            backgroundColor: "#ffffff",
             cacheBust: false,
             pixelRatio: 1,
             width: page.width,
@@ -3661,22 +3929,93 @@ const persistPageIndex = (
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     });
-    setNodes((current) => [
-      ...current,
-      n(
+    if (nodeDraft.shape === "fishbone-template") {
+      const categoryCount = Math.max(2, Math.min(8, Math.round(nodeDraft.fishboneCategoryCount ?? 6)));
+      const causeCount = Math.max(1, Math.min(8, Math.round(nodeDraft.fishboneLineCount ?? 3)));
+      const pairCount = Math.ceil(categoryCount / 2);
+      const branchWidth = 360;
+      const branchHeight = 82 + causeCount * 42;
+      const columnSpacing = 405;
+      const spineWidth = pairCount * columnSpacing + 170;
+      const originX = canvasPoint.x - spineWidth / 2;
+      const spineY = canvasPoint.y;
+      const templateId = Date.now();
+      const spineId = `fishbone-spine-${templateId}`;
+      const effectId = `fishbone-effect-${templateId}`;
+      const generatedNodes: ArchitectureNode[] = [{
+        ...n(spineId, originX + 35, spineY, "Main spine", "", "fishbone-spine", "route", nodeDraft.tone, undefined, undefined, "fishbone"),
+        data: { label: "Main spine", description: "", shape: "fishbone-spine", icon: "route", tone: nodeDraft.tone, componentCategory: "fishbone", legendColor: nodeDraft.legendColor },
+        style: { width: spineWidth - 65, height: 42 },
+      }];
+      for (let index = 0; index < categoryCount; index += 1) {
+        const side: "top" | "bottom" = index % 2 === 0 ? "top" : "bottom";
+        const column = Math.floor(index / 2);
+        const branchX = originX + 70 + column * columnSpacing;
+        const branchY = side === "top" ? spineY - branchHeight + 32 : spineY + 11;
+        const branchId = `fishbone-branch-${templateId}-${index}`;
+        const circleId = `fishbone-category-${templateId}-${index}`;
+        generatedNodes.push({
+          ...n(branchId, branchX, branchY, `Category ${index + 1} causes`, "", "fishbone-branch", "route", nodeDraft.tone, undefined, undefined, "fishbone"),
+          data: {
+            label: `Category ${index + 1} causes`, description: "", shape: "fishbone-branch", icon: "route", tone: nodeDraft.tone,
+            componentCategory: "fishbone", legendColor: nodeDraft.legendColor, fishboneLineCount: causeCount,
+            fishboneLabels: Array.from({ length: causeCount }, (_, causeIndex) => `Cause ${causeIndex + 1}`), fishboneSide: side,
+            fishboneEndMarker: nodeDraft.fishboneEndMarker ?? "arrow",
+            fishboneLineLengths: Array.from({ length: causeCount }, () => 100),
+            fishboneLabelSizes: Array.from({ length: causeCount }, () => 11),
+            fishboneTextSize: nodeDraft.fishboneTextSize ?? 11,
+          },
+          style: { width: branchWidth, height: branchHeight },
+        });
+        generatedNodes.push({
+          ...n(circleId, branchX - 57, side === "top" ? branchY - 26 : branchY + branchHeight - 50, `Category ${index + 1}`, "", "fishbone-circle", "server", nodeDraft.tone, undefined, undefined, "fishbone"),
+          data: { label: `Category ${index + 1}`, description: "", shape: "fishbone-circle", icon: "server", tone: nodeDraft.tone, componentCategory: "fishbone", legendColor: nodeDraft.legendColor, fishboneCircleIconMode: false, fishboneCircleTextSize: 10, fishboneCircleTextBold: true },
+          style: { width: 150, height: 126 },
+        });
+      }
+      generatedNodes.push({
+        ...n(effectId, originX + spineWidth - 105, spineY - 43, nodeDraft.label.trim() || "Effect", "", "fishbone-circle", "alert", nodeDraft.tone, undefined, undefined, "fishbone"),
+        data: { label: nodeDraft.label.trim() || "Effect", description: "", shape: "fishbone-circle", icon: "alert", tone: nodeDraft.tone, componentCategory: "fishbone", legendColor: nodeDraft.legendColor, fishboneCircleIconMode: false, fishboneCircleTextSize: 10, fishboneCircleTextBold: true },
+        style: { width: 150, height: 126 },
+      });
+      setNodes((current) => [...current, ...generatedNodes]);
+      setSelectedId(effectId);
+      setSelectedEdgeId(null);
+      setCreatorOpen(false);
+      setNodeDraft(createNodeDraft());
+      setSelectedCreatorOption(null);
+      setInspectorOpen(true);
+      window.setTimeout(() => fitView({ padding: 0.12, duration: 550 }), 30);
+      return;
+    }
+    const baseNode = n(
         id,
         canvasPoint.x - 135,
         canvasPoint.y - 45,
         nodeDraft.label.trim(),
-        nodeDraft.description.trim(),
+        (nodeDraft.description ?? "").trim(),
         nodeDraft.shape,
         nodeDraft.icon,
         nodeDraft.tone,
         nodeDraft.serviceLogo,
         nodeDraft.serviceSymbol,
         nodeDraft.componentCategory,
-      ),
-    ]);
+      );
+    const fishboneLineCount = Math.max(1, Math.min(8, Math.round(nodeDraft.fishboneLineCount ?? 3)));
+    const fishboneSize = nodeDraft.shape === "fishbone-branch"
+      ? { width: 390, height: 82 + fishboneLineCount * 42 }
+      : nodeDraft.shape === "fishbone-circle" ? defaultShapeSize("fishbone-circle") : null;
+    const newNode: ArchitectureNode = {
+      ...baseNode,
+      data: {
+        ...baseNode.data,
+        ...nodeDraft,
+        label: nodeDraft.label.trim(),
+        description: (nodeDraft.description ?? "").trim(),
+      },
+      ...(fishboneSize ? { style: { width: fishboneSize.width, height: fishboneSize.height } } : {}),
+    };
+    setNodes((current) => [...current, newNode]);
     setSelectedId(id);
     setSelectedEdgeId(null);
     setInspectorOpen(false);
@@ -4795,14 +5134,27 @@ const persistPageIndex = (
                                         setSelectedCreatorOption(`shape:${section.id}:${shape}`);
                                         setNodeDraft((current) => ({
                                           ...current,
-                                          label: shape === "database" && current.label === "New Service" ? "New Table" : current.label,
+                                          label: current.label === "New Service"
+                                            ? shape === "database" ? "New Table" : shape === "fishbone-template" ? "Effect" : shape === "fishbone-branch" ? "Cause Branch" : shape === "fishbone-circle" ? "Category" : current.label
+                                            : current.label,
                                           description: shape === "database" ? "" : current.description,
                                           shape,
                                           icon: defaultIconForShape(shape),
                                           serviceLogo: undefined,
                                           serviceSymbol: undefined,
-                                          componentCategory: section.id === "erd" ? "erd" : section.id === "flowchart" ? "flowchart" : "shape",
+                                          componentCategory: section.id === "erd" ? "erd" : section.id === "flowchart" ? "flowchart" : section.id === "fishbone" ? "fishbone" : "shape",
                                           hideIcon: section.id !== "flowchart",
+                                          fishboneLineCount: shape === "fishbone-branch" || shape === "fishbone-template" ? (current.fishboneLineCount ?? 3) : undefined,
+                                          fishboneLabels: shape === "fishbone-branch" ? (current.fishboneLabels ?? ["Cause 1", "Cause 2", "Cause 3"]) : undefined,
+                                          fishboneSide: shape === "fishbone-branch" ? (current.fishboneSide ?? "top") : undefined,
+                                          fishboneCircleIconMode: shape === "fishbone-circle" ? (current.fishboneCircleIconMode ?? false) : undefined,
+                                          fishboneCircleTextSize: shape === "fishbone-circle" ? (current.fishboneCircleTextSize ?? 10) : undefined,
+                                          fishboneCircleTextBold: shape === "fishbone-circle" ? (current.fishboneCircleTextBold ?? true) : undefined,
+                                          fishboneCategoryCount: shape === "fishbone-template" ? (current.fishboneCategoryCount ?? 6) : undefined,
+                                          fishboneEndMarker: shape === "fishbone-branch" || shape === "fishbone-template" ? (current.fishboneEndMarker ?? "arrow") : undefined,
+                                          fishboneLineLengths: shape === "fishbone-branch" ? (current.fishboneLineLengths ?? [100, 100, 100]) : undefined,
+                                          fishboneLabelSizes: shape === "fishbone-branch" ? (current.fishboneLabelSizes ?? [11, 11, 11]) : undefined,
+                                          fishboneTextSize: shape === "fishbone-branch" ? (current.fishboneTextSize ?? 11) : undefined,
                                         }));
                                       }}
                                     >
@@ -4817,6 +5169,48 @@ const persistPageIndex = (
                       })}
                     </div>
                   </div>
+                  {nodeDraft.shape === "fishbone-template" ? <fieldset className="fishbone-creator-controls">
+                    <legend>Complete fishbone</legend>
+                    <label><span>Number of categories</span><select value={nodeDraft.fishboneCategoryCount ?? 6} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCategoryCount: Number(event.target.value) })}>{[2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
+                    <label><span>Causes per category</span><select value={nodeDraft.fishboneLineCount ?? 3} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneLineCount: Number(event.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
+                    <label><span>Cause endpoint</span><select value={nodeDraft.fishboneEndMarker ?? "arrow"} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneEndMarker: event.target.value as "arrow" | "circle" })}><option value="arrow">Arrow</option><option value="circle">Circle</option></select></label>
+                    <small>Creates a complete editable diagram with alternating branches, category circles, a main spine, and an effect.</small>
+                  </fieldset> : null}
+                  {nodeDraft.shape === "fishbone-branch" ? <fieldset className="fishbone-creator-controls">
+                    <legend>Cause branch</legend>
+                    <label><span>Number of cause lines</span><select value={nodeDraft.fishboneLineCount ?? 3} onChange={(event) => {
+                      const count = Number(event.target.value);
+                      setNodeDraft({
+                        ...nodeDraft,
+                        fishboneLineCount: count,
+                        fishboneLabels: Array.from({ length: count }, (_, index) => nodeDraft.fishboneLabels?.[index] ?? `Cause ${index + 1}`),
+                        fishboneLineLengths: Array.from({ length: count }, (_, index) => nodeDraft.fishboneLineLengths?.[index] ?? 100),
+                        fishboneLabelSizes: Array.from({ length: count }, (_, index) => nodeDraft.fishboneLabelSizes?.[index] ?? 11),
+                      });
+                    }}>{[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
+                    <label><span>Branch position</span><select value={nodeDraft.fishboneSide ?? "top"} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneSide: event.target.value as "top" | "bottom" })}><option value="top">Above main spine</option><option value="bottom">Below main spine</option></select></label>
+                    <label><span>Line endpoint</span><select value={nodeDraft.fishboneEndMarker ?? "arrow"} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneEndMarker: event.target.value as "arrow" | "circle" })}><option value="arrow">Arrow</option><option value="circle">Circle</option></select></label>
+                    <label><span>Cause text size (px)</span><input type="number" min="8" max="32" value={nodeDraft.fishboneTextSize ?? 11} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneTextSize: Number(event.target.value) })} onBlur={(event) => setNodeDraft({ ...nodeDraft, fishboneTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 11)) })} /></label>
+                    <label className="description-toggle inspector-apply-toggle"><span><strong>Link all line lengths</strong><small>Adjusting one length updates every cause line.</small></span><input type="checkbox" checked={linkFishboneLineLengths} onChange={(event) => setLinkFishboneLineLengths(event.target.checked)} /><i aria-hidden="true" /></label>
+                    <div className="fishbone-label-fields">
+                      {Array.from({ length: nodeDraft.fishboneLineCount ?? 3 }, (_, index) => <div className="fishbone-line-editor" key={index}>
+                        <label><span>Line {index + 1}</span><input value={nodeDraft.fishboneLabels?.[index] ?? ""} placeholder={`Cause ${index + 1}`} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneLabels: Array.from({ length: nodeDraft.fishboneLineCount ?? 3 }, (__, labelIndex) => labelIndex === index ? event.target.value : (nodeDraft.fishboneLabels?.[labelIndex] ?? `Cause ${labelIndex + 1}`)) })} /></label>
+                        <label className="fishbone-line-length"><span>Length</span><input type="range" min="0" max="100" value={nodeDraft.fishboneLineLengths?.[index] ?? 100} onChange={(event) => { const length = Number(event.target.value); setNodeDraft({ ...nodeDraft, fishboneLineLengths: Array.from({ length: nodeDraft.fishboneLineCount ?? 3 }, (__, lineIndex) => linkFishboneLineLengths || lineIndex === index ? length : (nodeDraft.fishboneLineLengths?.[lineIndex] ?? 100)) }); }} /><output>{nodeDraft.fishboneLineLengths?.[index] ?? 100}%</output></label>
+                      </div>)}
+                    </div>
+                  </fieldset> : null}
+                  {nodeDraft.shape === "fishbone-circle" ? <fieldset className="fishbone-creator-controls">
+                    <legend>Category circle</legend>
+                    <label><span>Category text size (px)</span><input type="number" min="8" max="32" value={nodeDraft.fishboneCircleTextSize ?? 10} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Number(event.target.value) })} onBlur={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 10)) })} /></label>
+                    <label className="description-toggle inspector-apply-toggle"><span><strong>Bold category text</strong><small>Applies inside or beside the circle.</small></span><input type="checkbox" checked={nodeDraft.fishboneCircleTextBold !== false} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextBold: event.target.checked })} /><i aria-hidden="true" /></label>
+                    <label className="description-toggle inspector-apply-toggle"><span><strong>Use a Fishbone icon</strong><small>Places the title beside the circle.</small></span><input type="checkbox" checked={Boolean(nodeDraft.fishboneCircleIconMode)} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleIconMode: event.target.checked, icon: event.target.checked ? (fishboneIconOptions.some((option) => option.value === nodeDraft.icon) ? nodeDraft.icon : fishboneIconOptions[0].value) : nodeDraft.icon, hideIcon: !event.target.checked })} /><i aria-hidden="true" /></label>
+                    {nodeDraft.fishboneCircleIconMode ? <div className="fishbone-icon-picker option-grid icon-grid" aria-label="Fishbone category icons">
+                      {fishboneIconOptions.map((option) => {
+                        const FishboneIcon = iconMap[option.value];
+                        return <button type="button" key={option.value} title={option.label} aria-label={option.label} className={nodeDraft.icon === option.value ? "active" : ""} onClick={() => setNodeDraft({ ...nodeDraft, icon: option.value })}><FishboneIcon size={18} /></button>;
+                      })}
+                    </div> : null}
+                  </fieldset> : null}
                   {nodeDraft.componentCategory === "flowchart" ? <section className="icon-picker-drawer creator-drawer">
                     <button className="shape-drawer-heading" type="button" onClick={() => setOpenShapeSections((current) => ({ ...current, icons: !current.icons }))} aria-expanded={openShapeSections.icons}>
                       <span>Icon</span><small>{nodeDraft.hideIcon ? "None" : iconOptions.find((option) => option.value === nodeDraft.icon)?.label}</small><ChevronDown size={15} />
@@ -5546,7 +5940,7 @@ const persistPageIndex = (
               </fieldset>
               <button type="button" className="close-text-editor" onClick={() => updateSelected({ editingTextTarget: undefined })}>Done editing text</button>
             </> : <div className="inspector-tip"><Type size={16} /> Double-click a component to edit its title, or double-click its description to customize that text.</div>}
-            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedComponentCategory === "erd" ? "Table columns and details" : selectedComponentCategory === "service" ? "Service selection" : selectedComponentCategory === "flowchart" ? "Flowchart symbol and icon" : "Shape selection"}</small></div></div>
+            <div className="editor-section-heading section-structure-heading"><span>04</span><div><strong>Structure</strong><small>{selectedComponentCategory === "erd" ? "Table columns and details" : selectedComponentCategory === "fishbone" ? "Fishbone branch and category options" : selectedComponentCategory === "service" ? "Service selection" : selectedComponentCategory === "flowchart" ? "Flowchart symbol and icon" : "Shape selection"}</small></div></div>
             {selectedComponentCategory === "erd" ? (
               <fieldset className="component-erd-controls inspector-control-card">
                 <legend>ERD table</legend>
@@ -5594,6 +5988,35 @@ const persistPageIndex = (
                   />
                   <i aria-hidden="true" />
                 </label>
+              </fieldset>
+            ) : selectedComponentCategory === "fishbone" ? (
+              <fieldset className="component-fishbone-controls inspector-control-card">
+                <legend>{selectedNode.data.shape === "fishbone-branch" ? "Cause branch" : selectedNode.data.shape === "fishbone-circle" ? "Category circle" : "Main spine"}</legend>
+                {selectedNode.data.shape === "fishbone-branch" ? <>
+                  <label><span>Number of cause lines</span><select value={selectedNode.data.fishboneLineCount ?? 3} onChange={(event) => updateSelectedFishbone({ fishboneLineCount: Number(event.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
+                  <label className="inspector-select-label"><span>Branch position</span><select value={selectedNode.data.fishboneSide ?? "top"} onChange={(event) => updateSelectedFishbone({ fishboneSide: event.target.value as "top" | "bottom" })}><option value="top">Above main spine</option><option value="bottom">Below main spine</option></select></label>
+                  <label className="inspector-select-label"><span>Line endpoint</span><select value={selectedNode.data.fishboneEndMarker ?? "arrow"} onChange={(event) => updateSelectedFishbone({ fishboneEndMarker: event.target.value as "arrow" | "circle" })}><option value="arrow">Arrow</option><option value="circle">Circle</option></select></label>
+                  <label><span>Cause text size (px)</span><input type="number" min="8" max="32" value={selectedNode.data.fishboneTextSize ?? 11} onChange={(event) => updateSelectedFishbone({ fishboneTextSize: Number(event.target.value) })} onBlur={(event) => updateSelectedFishbone({ fishboneTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 11)) })} /></label>
+                  <label className="description-toggle inspector-apply-toggle"><span><strong>Link all line lengths</strong><small>Adjusting one length updates every cause line.</small></span><input type="checkbox" checked={linkFishboneLineLengths} onChange={(event) => setLinkFishboneLineLengths(event.target.checked)} /><i aria-hidden="true" /></label>
+                  <div className="fishbone-label-fields">
+                    {Array.from({ length: selectedNode.data.fishboneLineCount ?? 3 }, (_, index) => <div className="fishbone-line-editor" key={index}>
+                      <label><span>Line {index + 1}</span><input value={selectedNode.data.fishboneLabels?.[index] ?? ""} placeholder={`Cause ${index + 1}`} onChange={(event) => updateSelectedFishbone({ fishboneLabels: Array.from({ length: selectedNode.data.fishboneLineCount ?? 3 }, (__, labelIndex) => labelIndex === index ? event.target.value : (selectedNode.data.fishboneLabels?.[labelIndex] ?? `Cause ${labelIndex + 1}`)) })} /></label>
+                      <label className="fishbone-line-length"><span>Length</span><input type="range" min="0" max="100" value={selectedNode.data.fishboneLineLengths?.[index] ?? 100} onChange={(event) => { const length = Number(event.target.value); updateSelectedFishbone({ fishboneLineLengths: Array.from({ length: selectedNode.data.fishboneLineCount ?? 3 }, (__, lineIndex) => linkFishboneLineLengths || lineIndex === index ? length : (selectedNode.data.fishboneLineLengths?.[lineIndex] ?? 100)) }); }} /><output>{selectedNode.data.fishboneLineLengths?.[index] ?? 100}%</output></label>
+                    </div>)}
+                  </div>
+                  <small>The branch only grows vertically when lines are added. Text never changes its width; adjust each line manually when needed.</small>
+                </> : selectedNode.data.shape === "fishbone-circle" ? <>
+                  <label><span>Circle text</span><input value={selectedNode.data.label} onChange={(event) => updateSelectedFishbone({ label: event.target.value })} /></label>
+                  <label><span>Category text size (px)</span><input type="number" min="8" max="32" value={selectedNode.data.fishboneCircleTextSize ?? 10} onChange={(event) => updateSelectedFishbone({ fishboneCircleTextSize: Number(event.target.value) })} onBlur={(event) => updateSelectedFishbone({ fishboneCircleTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 10)) })} /></label>
+                  <label className="description-toggle inspector-apply-toggle"><span><strong>Bold category text</strong><small>Applies inside or beside the circle.</small></span><input type="checkbox" checked={selectedNode.data.fishboneCircleTextBold !== false} onChange={(event) => updateSelectedFishbone({ fishboneCircleTextBold: event.target.checked })} /><i aria-hidden="true" /></label>
+                  <label className="description-toggle inspector-apply-toggle"><span><strong>Use a Fishbone icon</strong><small>Show the title beside the circle.</small></span><input type="checkbox" checked={Boolean(selectedNode.data.fishboneCircleIconMode)} onChange={(event) => updateSelectedFishbone({ fishboneCircleIconMode: event.target.checked, icon: event.target.checked && !fishboneIconOptions.some((option) => option.value === selectedNode.data.icon) ? fishboneIconOptions[0].value : selectedNode.data.icon })} /><i aria-hidden="true" /></label>
+                  {selectedNode.data.fishboneCircleIconMode ? <div className="fishbone-icon-picker option-grid icon-grid" aria-label="Fishbone category icons">
+                    {fishboneIconOptions.map((option) => {
+                      const FishboneIcon = iconMap[option.value];
+                      return <button key={option.value} type="button" title={option.label} aria-label={option.label} className={selectedNode.data.icon === option.value ? "active" : ""} onClick={() => updateSelectedFishbone({ icon: option.value })}><FishboneIcon size={18} /></button>;
+                    })}
+                  </div> : null}
+                </> : <small>Drag either end to resize the main fishbone spine. Category branches and circles remain independent editable components.</small>}
               </fieldset>
             ) : selectedComponentCategory === "service" ? (
               <fieldset className="component-service-controls inspector-control-card">

@@ -4,12 +4,15 @@ import { getSmoothStepPath, Position } from "@xyflow/react";
 import {
   ArrowRight,
   Check,
+  CircleAlert,
   Clock3,
+  CloudUpload,
   Folder,
   Grid2X2,
   Home,
   Layers3,
   List,
+  LoaderCircle,
   Network,
   Pencil,
   Plus,
@@ -18,7 +21,7 @@ import {
   Star,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type DragEvent } from "react";
 import lemmaLogo from "./assets/Lemma_MainLogo-transparent.png";
 
 const HISTORY_PREFIX = "collieai-architecture-history-";
@@ -110,6 +113,8 @@ type StoredEdge = {
 type WorkspaceMeta = { name: string; favorite: boolean };
 type ExtraWorkspace = { id: string; name: string; favorite: boolean };
 type WorkflowMeta = { id: string; name: string; favorite?: boolean };
+type StoredPage = { id: string; name: string; deletedAt?: string };
+type PublishState = "idle" | "publishing" | "success" | "error";
 
 const WORKSPACE_KEY = "collieai-workspace-home-v1";
 const PAGE_KEY = "collieai-architecture-page-main";
@@ -123,27 +128,80 @@ const defaultWorkflows: WorkflowMeta[] = [{ id: "main", name: "Workflow 1", favo
 const workflowIndexKey = (workspaceId: string) => `collieai-workflows-${workspaceId}-v1`;
 const workflowWorkspaceId = (workspaceId: string, workflowId: string) =>
   workflowId === "main" ? workspaceId : `${workspaceId}-workflow-${workflowId}`;
-const workspaceApiUrl = (workspaceId: string) => {
+const PUBLISHED_API_BASE = "https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace";
+const PUBLISHED_SITE_ORIGIN = "https://collieai-system-architecture.yestinguarin.chatgpt.site";
+const publishedSignInUrl = `${PUBLISHED_SITE_ORIGIN}/signin-with-chatgpt?return_to=%2F%3FpublishBridge%3D1`;
+const isLocalBrowser = () =>
+  typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const pageIndexStorageKey = (workspaceId: string) =>
+  workspaceId === "collie" ? PAGE_INDEX_KEY : `collieai-architecture-pages-${workspaceId}-v1`;
+const pageDiagramStorageKey = (workspaceId: string, pageId: string) =>
+  workspaceId === "collie"
+    ? `collieai-architecture-page-${pageId}`
+    : `collieai-architecture-page-${workspaceId}-${pageId}`;
+const workspaceApiUrl = (workspaceId: string, published = false) => {
   const query = `?id=${encodeURIComponent(workspaceId)}`;
-  if (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")) {
-    return `https://collieai-system-architecture.yestinguarin.chatgpt.site/api/workspace${query}`;
+  if (published) return `${PUBLISHED_API_BASE}${query}`;
+  if (isLocalBrowser()) {
+    return `/api/workspace${query}`;
   }
   return `/api/workspace${query}`;
 };
 
 // Remote sync must never make a locally created workspace unusable. Network,
 // auth, or CORS failures stay local and do not become unhandled rejections.
-const syncWorkspace = async (workspaceId: string, method: "PUT" | "PATCH", payload: unknown) => {
+const syncWorkspace = async (workspaceId: string, method: "PUT" | "PATCH", payload: unknown, force = false) => {
+  if (isLocalBrowser() && !force) return true;
   try {
-    const response = await fetch(workspaceApiUrl(workspaceId), {
+    const response = await fetch(workspaceApiUrl(workspaceId, force), {
       method,
       headers: { "Content-Type": "application/json" },
+      credentials: "include",
       body: JSON.stringify(payload),
     });
     return response.ok;
   } catch {
     return false;
   }
+};
+
+const readLocalWorkspaceSnapshot = (workspaceId: string) => {
+  const fallbackPages: StoredPage[] = [{ id: "main", name: "Main architecture" }];
+  let pages = fallbackPages;
+  let trashedPages: StoredPage[] = [];
+  let activePageId = "main";
+
+  try {
+    const storedIndex = window.localStorage.getItem(pageIndexStorageKey(workspaceId));
+    if (storedIndex) {
+      const index = JSON.parse(storedIndex) as {
+        pages?: StoredPage[];
+        trashedPages?: StoredPage[];
+        activePageId?: string;
+      };
+      if (Array.isArray(index.pages) && index.pages.length) pages = index.pages;
+      if (Array.isArray(index.trashedPages)) trashedPages = index.trashedPages;
+      if (index.activePageId && pages.some((page) => page.id === index.activePageId)) {
+        activePageId = index.activePageId;
+      }
+    }
+  } catch { /* A damaged page index falls back to the main page. */ }
+
+  const diagrams = Object.fromEntries(
+    [...pages, ...trashedPages].map((page) => {
+      try {
+        const stored = window.localStorage.getItem(pageDiagramStorageKey(workspaceId, page.id));
+        if (stored) return [page.id, JSON.parse(stored)];
+        if (workspaceId === "collie" && page.id === "main") {
+          const legacy = window.localStorage.getItem(LEGACY_DIAGRAM_KEY);
+          if (legacy) return [page.id, JSON.parse(legacy)];
+        }
+      } catch { /* Publish an empty page if its local snapshot is unreadable. */ }
+      return [page.id, { nodes: [], edges: [] }];
+    }),
+  );
+
+  return { pages, trashedPages, activePageId, diagrams };
 };
 
 // Reads the main page's name for a workspace from its own localStorage
@@ -374,10 +432,15 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   const [workflowDraft, setWorkflowDraft] = useState("");
   const [workflowDialogError, setWorkflowDialogError] = useState("");
   const [workflowDialogSaving, setWorkflowDialogSaving] = useState(false);
+  const [draggedWorkflowId, setDraggedWorkflowId] = useState<string | null>(null);
+  const [dragOverWorkflowId, setDragOverWorkflowId] = useState<string | null>(null);
   const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
   const [workspaceDraft, setWorkspaceDraft] = useState("");
   const [workspaceDialogError, setWorkspaceDialogError] = useState("");
   const [workspaceDialogSaving, setWorkspaceDialogSaving] = useState(false);
+  const [isLocalhost, setIsLocalhost] = useState(false);
+  const [publishState, setPublishState] = useState<PublishState>("idle");
+  const [publishMessage, setPublishMessage] = useState("");
 
   const readWorkflows = (workspaceId: string) => {
     try {
@@ -394,6 +457,7 @@ export default function DashboardHome({ onOpenWorkspace }: { onOpenWorkspace: ()
   };
 
 useEffect(() => {
+    setIsLocalhost(isLocalBrowser());
     let normalized: ExtraWorkspace[] = [];
     try {
       const savedExtras = JSON.parse(window.localStorage.getItem("collieai-extra-workspaces-v1") ?? "[]") as Array<ExtraWorkspace | string>;
@@ -446,6 +510,10 @@ useEffect(() => {
       setNodes(localNodes);
       setEdges(localEdges);
       setDiagramName(localName || "Main architecture");
+      if (isLocalBrowser()) {
+        setWorkspaceReady(true);
+        return;
+      }
       try {
         const response = await fetch(workspaceApiUrl(targetId));
         const body = await response.json();
@@ -542,6 +610,7 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
     setNodes(localNodes);
     setEdges(localEdges);
     setDiagramName(readLocalDiagramName(id) || "Main architecture");
+    if (isLocalBrowser()) return;
     try {
       const response = await fetch(workspaceApiUrl(id));
       const cloud = (await response.json()).data as { workspace?: WorkspaceMeta; workflows?: WorkflowMeta[]; diagrams?: Record<string, { nodes?: StoredNode[]; edges?: StoredEdge[] }>; pages?: { id?: string; name?: string }[] } | null;
@@ -646,6 +715,24 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
     saveWorkflows(selectedWorkspaceId, next);
   };
 
+  const reorderWorkflow = (targetWorkflowId: string) => {
+    if (!draggedWorkflowId || draggedWorkflowId === targetWorkflowId) return;
+    const fromIndex = workflows.findIndex((workflow) => workflow.id === draggedWorkflowId);
+    const toIndex = workflows.findIndex((workflow) => workflow.id === targetWorkflowId);
+    if (fromIndex < 0 || toIndex < 0) return;
+    const next = [...workflows];
+    const [moved] = next.splice(fromIndex, 1);
+    next.splice(toIndex, 0, moved);
+    setWorkflows(next);
+    saveWorkflows(selectedWorkspaceId, next);
+  };
+
+  const beginWorkflowDrag = (event: DragEvent<HTMLElement>, workflowId: string) => {
+    setDraggedWorkflowId(workflowId);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", workflowId);
+  };
+
   const visibleWorkflowItems = workflows.filter((workflow) =>
     (view !== "favorites" || workflow.favorite) &&
     (!query.trim() || workflow.name.toLowerCase().includes(query.trim().toLowerCase())),
@@ -727,6 +814,99 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
     }
   };
 
+  const publishWorkspace = async () => {
+    if (!isLocalhost || publishState === "publishing") return;
+    setPublishState("publishing");
+    setPublishMessage(`Publishing ${workspace.name} and all workflows…`);
+
+    const rootSnapshot = readLocalWorkspaceSnapshot(selectedWorkspaceId);
+    const snapshots = [
+      {
+        workspaceId: selectedWorkspaceId,
+        payload: { workspace, workflows, ...rootSnapshot },
+      },
+      ...workflows
+        .filter((workflow) => workflow.id !== "main")
+        .map((workflow) => {
+          const remoteWorkspaceId = workflowWorkspaceId(selectedWorkspaceId, workflow.id);
+          return {
+            workspaceId: remoteWorkspaceId,
+            payload: {
+              workspace: { name: `${workspace.name} · ${workflow.name}`, favorite: Boolean(workflow.favorite) },
+              ...readLocalWorkspaceSnapshot(remoteWorkspaceId),
+            },
+          };
+        }),
+    ];
+
+    const published = await new Promise<boolean>((resolve) => {
+      const requestId = `publish-${Date.now()}`;
+      const target = window.open(`${PUBLISHED_SITE_ORIGIN}/?publishBridge=1`, "lemma-publish-bridge");
+      if (!target) {
+        resolve(false);
+        return;
+      }
+      let finished = false;
+      const finish = (success: boolean) => {
+        if (finished) return;
+        finished = true;
+        window.clearInterval(sendTimer);
+        window.clearTimeout(timeout);
+        window.removeEventListener("message", receiveResult);
+        resolve(success);
+      };
+      const receiveResult = (event: MessageEvent) => {
+        if (event.origin !== PUBLISHED_SITE_ORIGIN) return;
+        if (event.data?.type !== "lemma-publish-result" || event.data.requestId !== requestId) return;
+        finish(Boolean(event.data.ok));
+      };
+      const sendRequest = () => {
+        try {
+          target.postMessage({ type: "lemma-publish-request", requestId, snapshots }, PUBLISHED_SITE_ORIGIN);
+        } catch {
+          finish(false);
+        }
+      };
+      window.addEventListener("message", receiveResult);
+      const sendTimer = window.setInterval(sendRequest, 500);
+      const timeout = window.setTimeout(() => finish(false), 30000);
+      sendRequest();
+    });
+
+    if (published) {
+      setPublishState("success");
+      setPublishMessage(`Published ${workflows.length} ${workflows.length === 1 ? "workflow" : "workflows"} successfully.`);
+    } else {
+      setPublishState("error");
+      setPublishMessage("Sign in to the published site window, then retry publishing. Your local work is still safe.");
+      window.setTimeout(() => {
+        setPublishState("idle");
+        setPublishMessage("");
+      }, 6000);
+    }
+  };
+
+  useEffect(() => {
+    if (isLocalBrowser()) return;
+    const receivePublishRequest = async (event: MessageEvent) => {
+      if (!/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(event.origin)) return;
+      if (event.data?.type !== "lemma-publish-request" || !Array.isArray(event.data.snapshots)) return;
+      const snapshots = event.data.snapshots as { workspaceId?: string; payload?: unknown }[];
+      const results = await Promise.all(
+        snapshots
+          .filter((snapshot) => snapshot.workspaceId && snapshot.payload)
+          .map((snapshot) => syncWorkspace(snapshot.workspaceId!, "PUT", snapshot.payload, true)),
+      );
+      const source = event.source as WindowProxy | null;
+      source?.postMessage(
+        { type: "lemma-publish-result", requestId: event.data.requestId, ok: results.length === snapshots.length && results.every(Boolean) },
+        event.origin,
+      );
+    };
+    window.addEventListener("message", receivePublishRequest);
+    return () => window.removeEventListener("message", receivePublishRequest);
+  }, []);
+
   return (
     <main className="home-shell">
       <aside className="home-sidebar">
@@ -759,17 +939,18 @@ const selectWorkspace = async (id: string, fallbackName: string, fallbackFavorit
       </aside>
 
       <section className="home-main">
-        <header className="home-topbar"><div><p>WORKSPACE</p><h1>{workspace.name}</h1></div><label className="home-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search your diagrams" aria-label="Search diagrams" /></label></header>
+        <header className="home-topbar"><div><p>WORKSPACE</p><h1>{workspace.name}</h1></div><div className="home-topbar-actions">{isLocalhost ? <button className={`home-publish ${publishState}`} type="button" onClick={() => void publishWorkspace()} disabled={publishState === "publishing"} title="Push all local pages and workflows to the published site">{publishState === "publishing" ? <LoaderCircle className="spin" size={16} /> : publishState === "success" ? <Check size={16} /> : publishState === "error" ? <CircleAlert size={16} /> : <CloudUpload size={16} />}<span>{publishState === "publishing" ? "Publishing…" : publishState === "success" ? "Published" : publishState === "error" ? "Try again" : "Push to published site"}</span></button> : null}<label className="home-search"><Search size={17} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search your diagrams" aria-label="Search diagrams" /></label></div></header>
+        {isLocalhost && publishMessage ? <div className={`home-publish-message ${publishState}`} role="status"><span>{publishMessage}</span>{publishState === "error" ? <a href={publishedSignInUrl} target="_blank" rel="noreferrer">Sign in</a> : null}<button type="button" onClick={() => { setPublishState("idle"); setPublishMessage(""); }} aria-label="Dismiss publish message"><X size={14} /></button></div> : null}
         <section className="workspace-hero"><div><span className="eyebrow"><Network size={14} /> {workspace.name.toUpperCase()} WORKSPACE</span><h2>Your architecture,<br />all in one place.</h2><p>This workspace contains your live CollieAI diagram. Its preview below follows the components currently saved in the canvas.</p><button onClick={onOpenWorkspace}>Open {workspace.name} <ArrowRight size={16} /></button></div><div className="hero-map" aria-hidden="true"><span className="hero-orbit orbit-one" /><span className="hero-orbit orbit-two" /><span className="hero-core"><img src={lemmaLogo.src} alt="" /></span><span className="hero-dot dot-one" /><span className="hero-dot dot-two" /><span className="hero-dot dot-three" /></div></section>
         <section className="project-library solo-library">
           <div className="library-toolbar"><div className="library-tabs" role="tablist"><button className={view === "recent" ? "active" : ""} onClick={() => setView("recent")}>Recently viewed</button><button className={view === "favorites" ? "active" : ""} onClick={() => setView("favorites")}>Favorites</button></div><div className="display-toggle"><button className={display === "grid" ? "active" : ""} onClick={() => setDisplay("grid")} aria-label="Grid view"><Grid2X2 size={15} /></button><button className={display === "list" ? "active" : ""} onClick={() => setDisplay("list")} aria-label="List view"><List size={16} /></button></div></div>
-          {display === "list" && workflows.length && matchesSearch ? <div className="workflow-list"><div className="workflow-list-head"><span>Name</span><span>Workspace</span><span>Last modified</span><span>Pages</span><span>Created by</span><span>Action</span></div>{visibleWorkflowItems.map((workflow) => <article className="workflow-list-row" key={workflow.id}><button className="workflow-list-name" onClick={() => openWorkflow(workflow)}><span className="workflow-list-preview"><ActualDiagramPreview nodes={workflowNodes(workflow)} edges={workflowEdges(workflow)} /></span><strong>{workflow.name}</strong></button><span>{workspace.name}</span><span>Recently edited</span><span className="workflow-list-metric"><b>{workflowPageCount(workflow)}</b> {workflowPageCount(workflow) === 1 ? "page" : "pages"}</span><span>Yen Yen</span><span className="workflow-list-actions"><button className={`workflow-list-favorite ${workflow.favorite ? "is-favorite" : ""}`} onClick={() => toggleWorkflowFavorite(workflow.id)} aria-label={workflow.favorite ? `Remove ${workflow.name} from favorites` : `Add ${workflow.name} to favorites`}><Star size={15} fill={workflow.favorite ? "currentColor" : "none"} /></button><button className="workflow-list-action" onClick={() => openRenameWorkflowDialog(workflow)} aria-label={`Rename ${workflow.name} workflow`}>•••</button></span></article>)}</div> : null}
+          {display === "list" && workflows.length && matchesSearch ? <div className="workflow-list"><div className="workflow-list-head"><span>Name</span><span>Workspace</span><span>Last modified</span><span>Pages</span><span>Created by</span><span>Action</span></div>{visibleWorkflowItems.map((workflow) => <article className={`workflow-list-row ${dragOverWorkflowId === workflow.id ? "is-drag-over" : ""}`} key={workflow.id} draggable onDragStart={(event) => beginWorkflowDrag(event, workflow.id)} onDragOver={(event) => { event.preventDefault(); setDragOverWorkflowId(workflow.id); }} onDrop={(event) => { event.preventDefault(); reorderWorkflow(workflow.id); setDraggedWorkflowId(null); setDragOverWorkflowId(null); }} onDragEnd={() => { setDraggedWorkflowId(null); setDragOverWorkflowId(null); }}><button className="workflow-list-name" onClick={() => openWorkflow(workflow)}><span className="workflow-list-preview"><ActualDiagramPreview nodes={workflowNodes(workflow)} edges={workflowEdges(workflow)} /></span><strong>{workflow.name}</strong></button><span>{workspace.name}</span><span>Recently edited</span><span className="workflow-list-metric"><b>{workflowPageCount(workflow)}</b> {workflowPageCount(workflow) === 1 ? "page" : "pages"}</span><span>Yen Yen</span><span className="workflow-list-actions"><button className={`workflow-list-favorite ${workflow.favorite ? "is-favorite" : ""}`} onClick={() => toggleWorkflowFavorite(workflow.id)} aria-label={workflow.favorite ? `Remove ${workflow.name} from favorites` : `Add ${workflow.name} to favorites`}><Star size={15} fill={workflow.favorite ? "currentColor" : "none"} /></button><button className="workflow-list-action" onClick={() => openRenameWorkflowDialog(workflow)} aria-label={`Rename ${workflow.name} workflow`}>•••</button></span></article>)}</div> : null}
           {display === "grid" && workflows.length && matchesSearch ? <div className="project-grid">{visibleWorkflowItems.map((workflow) => {
             const isActive = workflow.id === activeWorkflowId;
             const itemNodes = workflowNodes(workflow);
             const pageCount = workflowPageCount(workflow);
             const componentCount = workflowComponentCount(workflow);
-            return <article className="project-card" key={workflow.id}><button className="project-open" onClick={() => openWorkflow(workflow)} aria-label={`Open ${workflow.name} workflow`}><ActualDiagramPreview nodes={itemNodes} edges={workflowEdges(workflow)} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> WORKFLOW</span><div className="project-title-row"><button onClick={() => openWorkflow(workflow)}>{workflow.name}</button><button className="workflow-rename" onClick={() => openRenameWorkflowDialog(workflow)} aria-label={`Rename ${workflow.name} workflow`}><Pencil size={14} /></button>{isActive ? <span className="workflow-active-label">Open</span> : null}<button className={`workflow-favorite ${workflow.favorite ? "is-favorite" : ""}`} onClick={() => toggleWorkflowFavorite(workflow.id)} aria-label={workflow.favorite ? `Remove ${workflow.name} from favorites` : `Add ${workflow.name} to favorites`}><Star size={16} fill={workflow.favorite ? "currentColor" : "none"} /></button></div><p>{workflow.id === "main" ? "This workflow contains the existing pages in your workspace." : "A separate empty workflow with its own pages and components."}</p><footer><span className="workflow-page-name">{workflow.id === "main" ? (diagramName || "Main architecture") : "Empty workflow"}</span><span className="workflow-card-metric"><b>{pageCount}</b> {pageCount === 1 ? "page" : "pages"}</span><span className="workflow-card-metric"><b>{componentCount}</b> {componentCount === 1 ? "component" : "components"}</span></footer></div></article>;
+             return <article className={`project-card workflow-draggable ${dragOverWorkflowId === workflow.id ? "is-drag-over" : ""}`} key={workflow.id} draggable onDragStart={(event) => beginWorkflowDrag(event, workflow.id)} onDragOver={(event) => { event.preventDefault(); setDragOverWorkflowId(workflow.id); }} onDrop={(event) => { event.preventDefault(); reorderWorkflow(workflow.id); setDraggedWorkflowId(null); setDragOverWorkflowId(null); }} onDragEnd={() => { setDraggedWorkflowId(null); setDragOverWorkflowId(null); }}><button className="project-open" onClick={() => openWorkflow(workflow)} aria-label={`Open ${workflow.name} workflow`}><ActualDiagramPreview nodes={itemNodes} edges={workflowEdges(workflow)} /></button><div className="project-card-body"><span className="project-kind tone-cyan"><Folder size={13} /> WORKFLOW</span><div className="project-title-row"><button onClick={() => openWorkflow(workflow)}>{workflow.name}</button><button className="workflow-rename" onClick={() => openRenameWorkflowDialog(workflow)} aria-label={`Rename ${workflow.name} workflow`}><Pencil size={14} /></button>{isActive ? <span className="workflow-active-label">Open</span> : null}<button className={`workflow-favorite ${workflow.favorite ? "is-favorite" : ""}`} onClick={() => toggleWorkflowFavorite(workflow.id)} aria-label={workflow.favorite ? `Remove ${workflow.name} from favorites` : `Add ${workflow.name} to favorites`}><Star size={16} fill={workflow.favorite ? "currentColor" : "none"} /></button></div><p>{workflow.id === "main" ? "This workflow contains the existing pages in your workspace." : "A separate empty workflow with its own pages and components."}</p><footer><span className="workflow-page-name">{workflow.id === "main" ? (diagramName || "Main architecture") : "Empty workflow"}</span><span className="workflow-card-metric"><b>{pageCount}</b> {pageCount === 1 ? "page" : "pages"}</span><span className="workflow-card-metric"><b>{componentCount}</b> {componentCount === 1 ? "component" : "components"}</span></footer></div></article>;
           })}{view === "recent" ? <button className="workflow-create-tile" onClick={openCreateWorkflowDialog} aria-label="Create workflow"><span><Plus size={22} /></span><strong>New workflow</strong><small>Create an empty workflow</small></button> : null}</div> : !matchesSearch ? <div className="empty-library"><Layers3 size={22} /><strong>{query ? "No matching workflows" : view === "favorites" ? "No favorite workflows yet" : "This workspace is empty"}</strong><p>{query ? "Try a different search." : view === "favorites" ? "Star a workflow to keep it here." : "Create a workflow to start a new diagram."}</p></div> : null}
           {false ? <div className={`project-grid single-project ${display === "list" ? "is-list" : ""}`}>{visibleWorkspaces.map((item) => {
             const isSelected = item.id === selectedWorkspaceId;

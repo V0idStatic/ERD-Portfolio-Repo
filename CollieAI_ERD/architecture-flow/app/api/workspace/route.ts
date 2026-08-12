@@ -5,7 +5,7 @@ const workspaceId = (request: Request) => new URL(request.url).searchParams.get(
 const responseHeaders = (request: Request) => {
   const origin = request.headers.get("origin");
   return origin && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
-    ? { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Methods": "GET, PUT, PATCH, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }
+    ? { "Access-Control-Allow-Origin": origin, "Access-Control-Allow-Credentials": "true", "Access-Control-Allow-Methods": "GET, PUT, PATCH, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" }
     : {};
 };
 
