@@ -93,7 +93,7 @@ SELECT
     ad.avg_time_spent_seconds,
     COALESCE(hd.hinted_attempt_count, 0) AS hinted_attempt_count,
     COALESCE(he.help_request_count, 0) AS help_request_count,
-    COALESCE(dd.dda_trigger_count, 0) AS dda_trigger_count,
+    COALESCE(dd.dda_trigger_count, 0) AS dda_trigger_count, 
     COALESCE(sm.show_me_count, 0) AS show_me_count,
     CASE
         WHEN COALESCE(ad.total_answer_attempts, 0) = 0 THEN NULL

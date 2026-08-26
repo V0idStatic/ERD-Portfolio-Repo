@@ -299,6 +299,34 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
+        },
+        "fk_class_sections_organization_id_organizations": {
+          "type": "FOREIGN KEY",
+          "name": "fk_class_sections_organization_id_organizations",
+          "columnNames": [
+            "organization_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "organization_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_class_sections_organization_teacher_membership": {
+          "type": "FOREIGN KEY",
+          "name": "fk_class_sections_organization_teacher_membership",
+          "columnNames": [
+            "organization_id",
+            "teacher_id"
+          ],
+          "targetTableName": "organization_members",
+          "targetColumnNames": [
+            "organization_id",
+            "teacher_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -327,6 +355,22 @@
           "default": null,
           "check": null,
           "notNull": false,
+          "comment": null
+        },
+        "grade_level": {
+          "name": "grade_level",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "interests": {
+          "name": "interests",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
           "comment": null
         },
         "avatar_id": {
@@ -709,6 +753,1163 @@
           "targetTableName": "class_sections",
           "targetColumnNames": [
             "section_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "organizations": {
+      "name": "organizations",
+      "columns": {
+        "organization_id": {
+          "name": "organization_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "organization_name": {
+          "name": "organization_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "organization_type": {
+          "name": "organization_type",
+          "type": "text",
+          "default": "school",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "contact_email": {
+          "name": "contact_email",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "organization_status": {
+          "name": "organization_status",
+          "type": "text",
+          "default": "active",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "organizations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "organizations_pkey",
+          "columnNames": [
+            "organization_id"
+          ]
+        },
+        "ck_organizations_type": {
+          "type": "CHECK",
+          "name": "ck_organizations_type",
+          "detail": "organization_type IN ('school', 'enterprise')"
+        },
+        "ck_organizations_status": {
+          "type": "CHECK",
+          "name": "ck_organizations_status",
+          "detail": "organization_status IN ('active', 'inactive')"
+        }
+      }
+    },
+    "organization_members": {
+      "name": "organization_members",
+      "columns": {
+        "organization_member_id": {
+          "name": "organization_member_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "teacher_id": {
+          "name": "teacher_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "membership_role": {
+          "name": "membership_role",
+          "type": "text",
+          "default": "teacher",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "organization_members_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "organization_members_pkey",
+          "columnNames": [
+            "organization_member_id"
+          ]
+        },
+        "organization_members_organization_id_teacher_id_key": {
+          "type": "UNIQUE",
+          "name": "organization_members_organization_id_teacher_id_key",
+          "columnNames": [
+            "organization_id",
+            "teacher_id"
+          ]
+        },
+        "ck_organization_members_role": {
+          "type": "CHECK",
+          "name": "ck_organization_members_role",
+          "detail": "membership_role IN ('owner', 'admin', 'teacher')"
+        },
+        "ck_organization_members_dates": {
+          "type": "CHECK",
+          "name": "ck_organization_members_dates",
+          "detail": "left_at IS NULL OR left_at >= joined_at"
+        },
+        "fk_organization_members_organization_id_organizations": {
+          "type": "FOREIGN KEY",
+          "name": "fk_organization_members_organization_id_organizations",
+          "columnNames": [
+            "organization_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "organization_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_organization_members_teacher_id_teacher_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_organization_members_teacher_id_teacher_profiles",
+          "columnNames": [
+            "teacher_id"
+          ],
+          "targetTableName": "teacher_profiles",
+          "targetColumnNames": [
+            "teacher_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "organization_student_enrollments": {
+      "name": "organization_student_enrollments",
+      "columns": {
+        "organization_student_enrollment_id": {
+          "name": "organization_student_enrollment_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "enrolled_at": {
+          "name": "enrolled_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "organization_student_enrollments_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "organization_student_enrollments_pkey",
+          "columnNames": [
+            "organization_student_enrollment_id"
+          ]
+        },
+        "organization_student_enrollments_organization_id_student_id_key": {
+          "type": "UNIQUE",
+          "name": "organization_student_enrollments_organization_id_student_id_key",
+          "columnNames": [
+            "organization_id",
+            "student_id"
+          ]
+        },
+        "ck_organization_student_enrollment_dates": {
+          "type": "CHECK",
+          "name": "ck_organization_student_enrollment_dates",
+          "detail": "left_at IS NULL OR left_at >= enrolled_at"
+        },
+        "fk_organization_student_enrollments_organization_id_organizatio": {
+          "type": "FOREIGN KEY",
+          "name": "fk_organization_student_enrollments_organization_id_organizatio",
+          "columnNames": [
+            "organization_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "organization_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_organization_student_enrollments_student_id_student_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_organization_student_enrollments_student_id_student_profiles",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "subscription_plans": {
+      "name": "subscription_plans",
+      "columns": {
+        "plan_id": {
+          "name": "plan_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plan_code": {
+          "name": "plan_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plan_name": {
+          "name": "plan_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "coverage_type": {
+          "name": "coverage_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "billing_model": {
+          "name": "billing_model",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "price_amount": {
+          "name": "price_amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_code": {
+          "name": "currency_code",
+          "type": "bpchar",
+          "default": "PHP",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "access_duration_months": {
+          "name": "access_duration_months",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_lifetime": {
+          "name": "is_lifetime",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "default_seat_limit": {
+          "name": "default_seat_limit",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "subscription_plans_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "subscription_plans_pkey",
+          "columnNames": [
+            "plan_id"
+          ]
+        },
+        "subscription_plans_plan_code_key": {
+          "type": "UNIQUE",
+          "name": "subscription_plans_plan_code_key",
+          "columnNames": [
+            "plan_code"
+          ]
+        },
+        "ck_subscription_plans_coverage": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_coverage",
+          "detail": "coverage_type IN ('individual', 'enterprise')"
+        },
+        "ck_subscription_plans_billing_model": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_billing_model",
+          "detail": "billing_model IN ('free', 'one_time', 'contract')"
+        },
+        "ck_subscription_plans_price": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_price",
+          "detail": "price_amount >= 0"
+        },
+        "ck_subscription_plans_duration": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_duration",
+          "detail": "\n     access_duration_months IS NULL\n     OR access_duration_months > 0\n "
+        },
+        "ck_subscription_plans_lifetime_duration": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_lifetime_duration",
+          "detail": "\n     is_lifetime IS FALSE\n     OR access_duration_months IS NULL\n "
+        },
+        "ck_subscription_plans_seat_limit": {
+          "type": "CHECK",
+          "name": "ck_subscription_plans_seat_limit",
+          "detail": "\n     default_seat_limit IS NULL\n     OR default_seat_limit > 0\n "
+        }
+      }
+    },
+    "billing_accounts": {
+      "name": "billing_accounts",
+      "columns": {
+        "billing_account_id": {
+          "name": "billing_account_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "billing_email": {
+          "name": "billing_email",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "provider_customer_reference": {
+          "name": "provider_customer_reference",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "billing_accounts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "billing_accounts_pkey",
+          "columnNames": [
+            "billing_account_id"
+          ]
+        },
+        "billing_accounts_provider_customer_reference_key": {
+          "type": "UNIQUE",
+          "name": "billing_accounts_provider_customer_reference_key",
+          "columnNames": [
+            "provider_customer_reference"
+          ]
+        },
+        "billing_accounts_user_id_key": {
+          "type": "UNIQUE",
+          "name": "billing_accounts_user_id_key",
+          "columnNames": [
+            "user_id"
+          ]
+        },
+        "billing_accounts_organization_id_key": {
+          "type": "UNIQUE",
+          "name": "billing_accounts_organization_id_key",
+          "columnNames": [
+            "organization_id"
+          ]
+        },
+        "ck_billing_accounts_exactly_one_owner": {
+          "type": "CHECK",
+          "name": "ck_billing_accounts_exactly_one_owner",
+          "detail": "\n     (user_id IS NOT NULL AND organization_id IS NULL)\n     OR\n     (user_id IS NULL AND organization_id IS NOT NULL)\n "
+        },
+        "fk_billing_accounts_user_id_users": {
+          "type": "FOREIGN KEY",
+          "name": "fk_billing_accounts_user_id_users",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "user_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_billing_accounts_organization_id_organizations": {
+          "type": "FOREIGN KEY",
+          "name": "fk_billing_accounts_organization_id_organizations",
+          "columnNames": [
+            "organization_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "organization_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "subscriptions": {
+      "name": "subscriptions",
+      "columns": {
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "billing_account_id": {
+          "name": "billing_account_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "provider_subscription_reference": {
+          "name": "provider_subscription_reference",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "subscription_status": {
+          "name": "subscription_status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "purchased_at": {
+          "name": "purchased_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "access_starts_at": {
+          "name": "access_starts_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "access_ends_at": {
+          "name": "access_ends_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_lifetime": {
+          "name": "is_lifetime",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "auto_renew": {
+          "name": "auto_renew",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "seat_limit": {
+          "name": "seat_limit",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "subscriptions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "subscriptions_pkey",
+          "columnNames": [
+            "subscription_id"
+          ]
+        },
+        "subscriptions_provider_subscription_reference_key": {
+          "type": "UNIQUE",
+          "name": "subscriptions_provider_subscription_reference_key",
+          "columnNames": [
+            "provider_subscription_reference"
+          ]
+        },
+        "ck_subscriptions_status": {
+          "type": "CHECK",
+          "name": "ck_subscriptions_status",
+          "detail": "\n     subscription_status IN\n     ('pending', 'active', 'expired', 'cancelled', 'refunded')\n "
+        },
+        "ck_subscriptions_access_period": {
+          "type": "CHECK",
+          "name": "ck_subscriptions_access_period",
+          "detail": "\n     (\n         is_lifetime IS TRUE\n         AND access_ends_at IS NULL\n     )\n     OR\n     (\n         is_lifetime IS FALSE\n         AND access_ends_at IS NOT NULL\n         AND access_ends_at > access_starts_at\n     )\n "
+        },
+        "ck_subscriptions_no_automatic_renewal": {
+          "type": "CHECK",
+          "name": "ck_subscriptions_no_automatic_renewal",
+          "detail": "auto_renew IS FALSE"
+        },
+        "ck_subscriptions_seat_limit": {
+          "type": "CHECK",
+          "name": "ck_subscriptions_seat_limit",
+          "detail": "seat_limit IS NULL OR seat_limit > 0"
+        },
+        "fk_subscriptions_billing_account_id_billing_accounts": {
+          "type": "FOREIGN KEY",
+          "name": "fk_subscriptions_billing_account_id_billing_accounts",
+          "columnNames": [
+            "billing_account_id"
+          ],
+          "targetTableName": "billing_accounts",
+          "targetColumnNames": [
+            "billing_account_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_subscriptions_plan_id_subscription_plans": {
+          "type": "FOREIGN KEY",
+          "name": "fk_subscriptions_plan_id_subscription_plans",
+          "columnNames": [
+            "plan_id"
+          ],
+          "targetTableName": "subscription_plans",
+          "targetColumnNames": [
+            "plan_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "subscription_students": {
+      "name": "subscription_students",
+      "columns": {
+        "subscription_student_id": {
+          "name": "subscription_student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "assigned_at": {
+          "name": "assigned_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "removed_at": {
+          "name": "removed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "subscription_students_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "subscription_students_pkey",
+          "columnNames": [
+            "subscription_student_id"
+          ]
+        },
+        "subscription_students_subscription_id_student_id_key": {
+          "type": "UNIQUE",
+          "name": "subscription_students_subscription_id_student_id_key",
+          "columnNames": [
+            "subscription_id",
+            "student_id"
+          ]
+        },
+        "ck_subscription_students_dates": {
+          "type": "CHECK",
+          "name": "ck_subscription_students_dates",
+          "detail": "removed_at IS NULL OR removed_at >= assigned_at"
+        },
+        "fk_subscription_students_subscription_id_subscriptions": {
+          "type": "FOREIGN KEY",
+          "name": "fk_subscription_students_subscription_id_subscriptions",
+          "columnNames": [
+            "subscription_id"
+          ],
+          "targetTableName": "subscriptions",
+          "targetColumnNames": [
+            "subscription_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_subscription_students_student_id_student_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_subscription_students_student_id_student_profiles",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payment_transactions": {
+      "name": "payment_transactions",
+      "columns": {
+        "payment_id": {
+          "name": "payment_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "subscription_id": {
+          "name": "subscription_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "provider_payment_reference": {
+          "name": "provider_payment_reference",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_code": {
+          "name": "currency_code",
+          "type": "bpchar",
+          "default": "PHP",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payment_status": {
+          "name": "payment_status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "paid_at": {
+          "name": "paid_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "payment_transactions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payment_transactions_pkey",
+          "columnNames": [
+            "payment_id"
+          ]
+        },
+        "payment_transactions_provider_payment_reference_key": {
+          "type": "UNIQUE",
+          "name": "payment_transactions_provider_payment_reference_key",
+          "columnNames": [
+            "provider_payment_reference"
+          ]
+        },
+        "ck_payment_transactions_amount": {
+          "type": "CHECK",
+          "name": "ck_payment_transactions_amount",
+          "detail": "amount >= 0"
+        },
+        "ck_payment_transactions_status": {
+          "type": "CHECK",
+          "name": "ck_payment_transactions_status",
+          "detail": "\n     payment_status IN ('pending', 'paid', 'failed', 'refunded')\n "
+        },
+        "fk_payment_transactions_subscription_id_subscriptions": {
+          "type": "FOREIGN KEY",
+          "name": "fk_payment_transactions_subscription_id_subscriptions",
+          "columnNames": [
+            "subscription_id"
+          ],
+          "targetTableName": "subscriptions",
+          "targetColumnNames": [
+            "subscription_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "student_login_challenges": {
+      "name": "student_login_challenges",
+      "columns": {
+        "challenge_id": {
+          "name": "challenge_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "issued_by_parent_id": {
+          "name": "issued_by_parent_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "issued_by_teacher_id": {
+          "name": "issued_by_teacher_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "challenge_type": {
+          "name": "challenge_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "public_code": {
+          "name": "public_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "secret_hash": {
+          "name": "secret_hash",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "used_at": {
+          "name": "used_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "failed_attempt_count": {
+          "name": "failed_attempt_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "maximum_attempt_count": {
+          "name": "maximum_attempt_count",
+          "type": "int4",
+          "default": 5,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_login_challenges_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_login_challenges_pkey",
+          "columnNames": [
+            "challenge_id"
+          ]
+        },
+        "student_login_challenges_public_code_key": {
+          "type": "UNIQUE",
+          "name": "student_login_challenges_public_code_key",
+          "columnNames": [
+            "public_code"
+          ]
+        },
+        "ck_student_login_challenges_issuer": {
+          "type": "CHECK",
+          "name": "ck_student_login_challenges_issuer",
+          "detail": "\n     (\n         challenge_type = 'parent_qr'\n         AND issued_by_parent_id IS NOT NULL\n         AND issued_by_teacher_id IS NULL\n     )\n     OR\n     (\n         challenge_type = 'teacher_pin'\n         AND issued_by_parent_id IS NULL\n         AND issued_by_teacher_id IS NOT NULL\n     )\n "
+        },
+        "ck_student_login_challenges_expiry": {
+          "type": "CHECK",
+          "name": "ck_student_login_challenges_expiry",
+          "detail": "expires_at > created_at"
+        },
+        "ck_student_login_challenges_attempts": {
+          "type": "CHECK",
+          "name": "ck_student_login_challenges_attempts",
+          "detail": "\n     failed_attempt_count >= 0\n     AND maximum_attempt_count > 0\n "
+        },
+        "fk_student_login_challenges_student_id_student_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_login_challenges_student_id_student_profiles",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_login_challenges_parent_id_parent_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_login_challenges_parent_id_parent_profiles",
+          "columnNames": [
+            "issued_by_parent_id"
+          ],
+          "targetTableName": "parent_profiles",
+          "targetColumnNames": [
+            "parent_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_login_challenges_teacher_id_teacher_profiles": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_login_challenges_teacher_id_teacher_profiles",
+          "columnNames": [
+            "issued_by_teacher_id"
+          ],
+          "targetTableName": "teacher_profiles",
+          "targetColumnNames": [
+            "teacher_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"

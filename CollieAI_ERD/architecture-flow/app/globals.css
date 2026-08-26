@@ -511,9 +511,20 @@ button { cursor: pointer; }
 /* Text annotation node — no shape, no border, just the text */
 .shape-text { position:relative; width:100%; height:100%; min-height:0; border:0; border-radius:0; background:transparent; box-shadow:none; cursor:move; }
 .shape-text.is-selected { box-shadow:0 0 0 1.5px #0ea5c6; border-radius:6px; }
-.shape-text .node-inner { display:none; }
-.shape-text .text-node-content { width:100%; height:100%; display:flex; align-items:center; font-weight:600; line-height:1.3; white-space:pre-wrap; word-break:break-word; padding:2px 4px; }
-.shape-text .text-node-content.is-placeholder { color:#a0aec0 !important; }
+.shape-text .text-node-content {
+  width:100%; height:100%; min-height:24px; display:block; font-weight:600; line-height:1.3;
+  word-break:break-word; padding:3px 6px; outline:0; cursor:text; box-sizing:border-box;
+}
+.shape-text .text-node-content:empty::before {
+  content: attr(data-placeholder);
+  color: #a0aec0;
+  pointer-events: none;
+  display: block;
+}
+::highlight(text-format-selection) {
+  color:#fff;
+  background:#2563eb;
+}
 .shape-text .text-node-editor {
   width:100%; height:100%; display:block; resize:none; overflow:hidden; padding:2px 4px;
   border:0; outline:0; background:transparent; font-weight:600; line-height:1.3; font-family:inherit;
@@ -534,6 +545,12 @@ button { cursor: pointer; }
 .text-format-toolbar button.active { color:#4f46e5; background:#eef2ff; }
 .text-format-toolbar select { width:54px; padding:0 2px; border-left:1px solid #e6ebf0; border-right:1px solid #e6ebf0; border-radius:0; outline:0; }
 .text-format-toolbar .text-font-family-select { width:112px; border:0; font-size:11px; }
+.text-format-menu { position:relative; }
+.text-format-toolbar .text-format-menu-trigger { display:flex; align-items:center; justify-content:space-between; gap:3px; width:70px; padding:0 5px; border-left:1px solid #e6ebf0; border-right:1px solid #e6ebf0; border-radius:0; white-space:nowrap; }
+.text-format-toolbar .text-format-menu-trigger.text-font-family-select { width:150px; border:0; font-size:11px; }
+.text-format-menu-list { position:absolute; top:calc(100% + 5px); left:0; z-index:30; display:grid; min-width:72px; max-height:196px; overflow-y:auto; padding:4px; border:1px solid #d8e3eb; border-radius:7px; background:#fff; box-shadow:0 8px 20px rgba(15,23,42,.16); }
+.text-format-toolbar .text-format-menu-list button { width:100%; min-width:62px; justify-content:flex-start; height:27px; padding:0 7px; border-radius:4px; white-space:nowrap; }
+.text-format-menu-list.text-font-menu-list { min-width:150px; }
 .text-toolbar-divider { color:#c4cfda; font-size:14px; line-height:1; user-select:none; }
 .text-format-toolbar label { position:relative; border-bottom:3px solid var(--text-color,#334155); color:var(--text-color,#334155); background:color-mix(in srgb,var(--text-color,#334155) 12%,transparent); font-weight:800; }
 .text-format-toolbar input[type="color"] { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; }
@@ -642,12 +659,15 @@ button { cursor: pointer; }
   flex:none; width:clamp(16px,calc(20px * var(--legend-scale)),58px); height:clamp(16px,calc(20px * var(--legend-scale)),58px); border:1px solid rgba(15,23,42,.11);
   border-radius:3px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.3);
 }
-.legend-key-entry > span { min-width:0; display:grid; gap:2px; }
+.legend-key-entry > span { min-width:0; display:grid; gap:2px; overflow:visible; }
 .legend-key-entry strong {
   overflow:visible; color:#334155; font-size:clamp(9px,calc(12px * var(--legend-scale)),36px); line-height:1.1;
-  text-overflow:clip; white-space:normal; overflow-wrap:anywhere;
+  text-overflow:clip; white-space:nowrap; overflow-wrap:normal;
 }
-.legend-key-entry small { color:#8290a1; font-size:clamp(7px,calc(8px * var(--legend-scale)),24px); line-height:1; }
+.legend-key-entry small {
+  display:block; overflow:visible; color:#8290a1; font-size:clamp(7px,calc(8px * var(--legend-scale)),24px); line-height:1;
+  text-overflow:clip; white-space:nowrap;
+}
 /* A wide, short legend has horizontal room but very little vertical room.
    Use a grid instead of forcing a long, scrollable column of entries. */
 .shape-legend-key.is-wide .legend-key-list {
@@ -722,45 +742,39 @@ button { cursor: pointer; }
   display:block !important;
   visibility:hidden !important;
 }
-.docs-hide-descriptions .legend-area-label strong,
-.docs-hide-descriptions .legend-key-head strong,
-.docs-hide-descriptions .legend-key-entry strong {
-  overflow:visible !important;
-  max-width:none !important;
-  text-overflow:clip !important;
-  white-space:nowrap !important;
-}
-/* The document snapshot must never replace legend labels with an ellipsis. */
-.docs-export-snapshot .legend-area-label strong,
-.docs-export-snapshot .legend-key-head strong,
-.docs-export-snapshot .legend-key-entry strong {
-  overflow:visible !important;
-  max-width:none !important;
-  text-overflow:clip !important;
-  white-space:nowrap !important;
-}
-.docs-export-snapshot .legend-key-list {
-  overflow:visible !important;
-  padding:clamp(6px,2.45cqh,24px);
-}
-.docs-export-snapshot .legend-key-entry {
-  gap:clamp(6px,3cqh,28px);
-  padding:clamp(4px,1.7cqh,16px) clamp(4px,2cqh,18px);
-}
-.docs-export-snapshot .legend-key-entry strong {
-  font-size:clamp(8px,3.75cqh,36px);
-  letter-spacing:-.02em;
-}
+/* Keep legend geometry identical to the live canvas during document export.
+   Container-query units resolve against the temporary SVG page created by
+   html-to-image, not reliably against the legend card, and can enlarge the
+   labels until they spill out of the key. The live legend already scales from
+   --legend-scale, so no export-specific typography override is needed. */
 
 /* Export snapshots intentionally inherit the live node typography and layout.
    This keeps font sizes, line breaks, spacing, and clipping identical to the
    canvas instead of reflowing text in the cloned export DOM. */
 .png-export-snapshot .legend-area-label strong,
-.png-export-snapshot .legend-key-head strong,
-.png-export-snapshot .legend-key-entry strong {
+.png-export-snapshot .legend-key-head strong {
   overflow:visible !important;
   text-overflow:clip !important;
   white-space:nowrap !important;
+}
+
+/* Legend rows are designed as exactly two lines: a one-line title and a
+   one-line component count. Keep that contract in both export paths so a
+   wider fallback font cannot wrap the title over the count in the SVG clone. */
+.docs-export-snapshot .legend-key-entry > span,
+.png-export-snapshot .legend-key-entry > span {
+  min-width:0 !important;
+  overflow:visible !important;
+}
+.docs-export-snapshot .legend-key-entry strong,
+.docs-export-snapshot .legend-key-entry small,
+.png-export-snapshot .legend-key-entry strong,
+.png-export-snapshot .legend-key-entry small {
+  display:block !important;
+  overflow:visible !important;
+  text-overflow:clip !important;
+  white-space:nowrap !important;
+  overflow-wrap:normal !important;
 }
 
 /* Keep export typography inside its shape while the sliders change size. */
@@ -2044,4 +2058,112 @@ button { cursor: pointer; }
 @media (max-width:480px) {
   .quick-start-grid,.project-grid { grid-template-columns:1fr; }.quick-start-grid > button { min-height:128px; }
   .project-grid.is-list .project-card { grid-template-columns:1fr; }.project-grid.is-list .project-open { height:115px; }
+}
+
+/* ── Group node shape ──────────────────────────────────────────────────────── */
+.shape-group {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed #64748b;
+  border-radius: 10px;
+  background: rgba(100, 116, 139, 0.04);
+  position: relative;
+  box-sizing: border-box;
+  transition: border-color 0.15s, background 0.15s;
+}
+.shape-group.is-selected {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.06);
+}
+.group-label {
+  position: absolute;
+  top: 7px;
+  left: 11px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+.shape-group.is-selected .group-label {
+  color: #38bdf8;
+}
+
+/* ── Multi-select floating action bar ─────────────────────────────────────── */
+.multi-select-bar {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 7px 12px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255,255,255,0.04);
+  animation: multi-select-bar-in 0.18s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  pointer-events: all;
+}
+@keyframes multi-select-bar-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+.multi-select-count {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+.multi-select-divider {
+  width: 1px;
+  height: 18px;
+  background: #1e293b;
+  flex-shrink: 0;
+}
+.multi-select-action {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 7px;
+  color: #f8fafc;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+.multi-select-action:hover {
+  background: #334155;
+  border-color: #475569;
+}
+.multi-select-action kbd {
+  font-size: 10px;
+  font-family: inherit;
+  color: #64748b;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+.multi-select-action-ungroup {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #fca5a5;
+}
+.multi-select-action-ungroup:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.4);
 }

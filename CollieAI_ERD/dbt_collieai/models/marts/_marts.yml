@@ -17,24 +17,307 @@ models:
       - name: lineage_type
         description: "Whether the value is passed through directly or derived."
   - name: mv_daily_student_performance
-    description: "Final materialized view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      INDEX:
+
+      - ux_mv_daily_student_performance_grain
+
+      - (student_id, performance_date)
+
+      - Ensures one row per student per activity day and supports concurrent refresh.
+
+
+      FUNCTIONS THAT CREATED A VISIONARY TABLE ALONG WITH THE CALCULATIONS
+
+      CALCULATIONS ARE MADE ON THIS MV TABLE
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+
+      Source of Truth : class_sections
+
+      - section_name
+
+      - grade_level
+
+
+      UNION / DRIVING-GRAIN LINEAGE
+
+      (creates the daily row list; not a source-of-truth table)
+
+
+      CTE: activity_keys
+
+
+      Source CTEs:
+
+      - session_daily
+
+      - attempt_daily
+
+      - hint_daily
+
+      - help_daily
+
+      - dda_daily
+
+      - show_me_daily
+
+
+      ___________________________________________________________________________________
+
+      FILTERED LINEAGE (created through a condition)
+
+
+      CTE: session_daily : Source of Truth: ai_sessions
+
+
+      - sessions_completed
+
+      \  COUNT(*) FILTER (WHERE session_status = 'completed')
+
+
+      CTE: attempt_daily : Source of Truth: student_attempts
+
+
+      - correct_attempts : COUNT(*) FILTER (WHERE is_correct IS TRUE)
+
+
+      - wrong_attempts : COUNT(*) FILTER (WHERE is_correct IS FALSE)
+
+
+      CTE: hint_daily : Wrapped CTE: attempt_hint : Source of Truth: attempt_steps through student_attempts
+
+
+      - hinted_attempt_count
+
+      \  COUNT(*) FILTER (WHERE used_hint IS TRUE)
+
+
+      CTE: final SELECT
+
+
+      - accuracy_rate
+
+      \  Returns NULL when total_answer_attempts = 0.
+
+
+      RENAMED / DATE-NORMALIZED LINEAGE
+
+
+      CTE: session_daily : Source of Truth: ai_sessions
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: attempt_daily : Source of Truth: student_attempts
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: help_daily : Source of Truth: student_help_events
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: dda_daily : Source of Truth: dda_events
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: show_me_daily : Source of Truth: show_me_breakdowns
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      ___________________________________________________________________________________
+
+      DERIVED AGGREGATED LINEAGE
+
+
+      CTE: session_daily : Source of Truth: ai_sessions
+
+
+      - sessions_started
+
+      \  COUNT(*) per student per date
+
+
+      CTE: attempt_daily : Source of Truth: student_attempts
+
+
+      - total_answer_attempts
+
+      \  COUNT(*) per student per date
+
+
+      - avg_score
+
+      \  AVG(score)
+
+
+      - avg_time_spent_seconds
+
+      \  AVG(time_spent_seconds)
+
+
+      CTE: help_daily : Source of Truth: student_help_events
+
+
+      - help_request_count
+
+      \  COUNT(*) per student per date
+
+
+      CTE: dda_daily : Source of Truth: dda_events
+
+
+      - dda_trigger_count
+
+      \  COUNT(*) per student per date
+
+
+      CTE: show_me_daily : Source of Truth: show_me_breakdowns
+
+      Bridge table: ai_sessions
+
+
+      - show_me_count
+
+      \  COUNT(*) per student per date
+
+
+      Relationship used for student attribution:
+
+      show_me_breakdowns.session_id → ai_sessions.session_id → ai_sessions.student_id
+
+
+      ___________________________________________________________________________________
+
+      RENAMED / DATE-NORMALIZED LINEAGE
+
+
+      CTE: session_daily : Source of Truth: ai_sessions
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: attempt_daily : Source of Truth: student_attempts
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: help_daily : Source of Truth: student_help_events
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: dda_daily : Source of Truth: dda_events
+
+
+      - performance_date
+
+      \  created_at::date
+
+
+      CTE: show_me_daily : Source of Truth: show_me_breakdowns
+
+
+      - performance_date
+
+      \  created_at::date"
     columns:
       - name: performance_date
+        description: RENAMED / DATE-NORMALIZED LINEAGE
       - name: student_id
       - name: section_name
+        description: DIRECT LINEAGE
       - name: grade_level
+        description: DIRECT LINEAGE
       - name: sessions_started
+        description: DERIVED AGGREGATED LINEAGE
+
+
+          COUNT(*) per student per date
       - name: sessions_completed
+        description: |-
+          FILTERED LINEAGE
+
+           COUNT(*) FILTER (WHERE session_status = 'completed')
       - name: total_answer_attempts
+        description: DERIVED AGGREGATED LINEAGE
       - name: correct_attempts
+        description: |-
+          FILTERED LINEAGE
+
+          COUNT(*) FILTER (WHERE is_correct IS TRUE)
       - name: wrong_attempts
+        description: |-
+          FILTERED LINEAGE
+
+          COUNT(*) FILTER (WHERE is_correct IS FALSE
       - name: avg_score
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) per student per date
       - name: avg_time_spent_seconds
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+           AVG(time_spent_seconds)
       - name: hinted_attempt_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) FILTER (WHERE used_hint IS TRUE)
       - name: help_request_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+           COUNT(*) per student per date
       - name: dda_trigger_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+           COUNT(*) per student per date
       - name: show_me_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+           COUNT(*) per student per date
       - name: accuracy_rate
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          correct_attempts ÷ total_answer_attempts
   - name: mv_topic_failure_patterns
     description: "Final materialized view endpoint with explicit columns for lineage."
     columns:
@@ -55,29 +338,342 @@ models:
       - name: dda_trigger_count
       - name: show_me_count
   - name: mv_weekly_skill_mastery
-    description: "Final materialized view endpoint with explicit columns for lineage."
+    description: "VIEW TABLE ( READ )
+
+
+      INDEX:
+
+      - ux_mv_weekly_skill_mastery_grain
+
+      - (student_id, skill_id, week_start_date)
+
+      - Ensures one row per student, per skill, per week and supports concurrent refresh.
+
+
+      FUNCTIONS / CTEs THAT CREATE THE MATERIALIZED VIEW
+
+      CALCULATIONS ARE MADE AND CACHED IN THIS MV TABLE
+
+      ___________________________________________________________________________________
+
+      DIRECT LINEAGE ( naturally fetch from the source of truth table ) :
+
+
+      Source of Truth : class_sections
+
+      Source of Truth: math_skills
+
+
+      - skill_name
+
+
+      Source of Truth: math_topics
+
+
+      - topic_name
+
+
+      UNION / DRIVING-GRAIN LINEAGE
+
+      (creates the weekly row list; not a source-of-truth table)
+
+
+      CTE: activity_keys
+
+
+      Source CTEs:
+
+      - attempt_weekly
+
+      - hint_weekly
+
+      - help_weekly
+
+      - dda_weekly
+
+      - show_me_weekly
+
+
+      UNION output:
+
+      - week_start_date
+
+      - student_id
+
+      - skill_id
+
+
+      ___________________________________________________________________________________
+
+      FILTERED LINEAGE (created through a condition)
+
+
+      CTE: session_daily : Source of Truth: ai_sessions
+
+
+      - sessions_completed
+
+      \  COUNT(*) FILTER (WHERE session_status = 'completed')
+
+
+      CTE: attempt_weekly : Source of Truth: student_attempts
+
+
+      - correct_attempts
+
+      \  COUNT(*) FILTER (WHERE is_correct IS TRUE)
+
+
+      - wrong_attempts
+
+      \  COUNT(*) FILTER (WHERE is_correct IS FALSE)
+
+
+      CTE: attempt_hint : Source of Truth: attempt_steps
+
+
+      - used_hint
+
+      \  BOOL_OR(hint_used > 0)
+
+
+      CTE: hint_weekly : Wrapped CTE: attempt_hint : Sources of Truth: student_attempts + math_problems + attempt_steps
+
+
+      - hinted_attempt_count
+
+      \  COUNT(*) FILTER (WHERE used_hint IS TRUE)
+
+
+      CTE: help_weekly : Source of Truth: student_help_events
+
+
+      - help_request_count
+
+      \  WHERE skill_id IS NOT NULL
+
+
+      LATERAL SUBQUERY: prediction
+
+      Source of Truth: student_skill_predictions
+
+
+      Filtered by:
+
+      - p.student_id = k.student_id
+
+      - p.skill_id = k.skill_id
+
+      - p.predicted_at is before the end of the selected week
+
+
+      Ordered by:
+
+      - predicted_at DESC
+
+      - prediction_id DESC
+
+
+      Limited to:
+
+      - LIMIT 1
+
+
+      Produces:
+
+      - latest_predicted_mastery_score
+
+      - latest_risk_level
+
+      - recommended_action
+
+      - latest_prediction_at
+
+
+      ___________________________________________________________________________________
+
+      DERIVED LINEAGE
+
+      CTE: attempt_weekly
+
+      Sources of Truth: student_attempts + math_problems
+
+
+      Relationship:
+
+      student_attempts.problem_id → math_problems.problem_id
+
+      math_problems.skill_id → math_skills.skill_id
+
+
+      - total_answer_attempts
+
+      \  COUNT(*) per student, skill, and week
+
+
+      - avg_score
+
+      \  AVG(student_attempts.score)
+
+
+      - avg_time_spent_seconds
+
+      \  AVG(student_attempts.time_spent_seconds)
+
+
+      CTE: help_weekly
+
+      Source of Truth: student_help_events
+
+
+      - help_request_count
+
+      \  COUNT(*) per student, skill, and week
+
+
+      CTE: dda_weekly
+
+      Source of Truth: dda_events
+
+
+      - dda_trigger_count
+
+      \  COUNT(*) per student, skill, and week
+
+
+      CTE: show_me_weekly
+
+      Source of Truth: show_me_breakdowns
+
+      Bridge table: ai_sessions
+
+
+      - show_me_count
+
+      \  COUNT(*) per student, skill, and week
+
+
+      Relationship used for student attribution:
+
+      show_me_breakdowns.session_id
+
+      → ai_sessions.session_id
+
+      → ai_sessions.student_id
+
+
+      CTE: final SELECT
+
+
+      - hint_usage_rate
+
+      \  hinted_attempt_count ÷ total_answer_attempts
+
+
+      - help_request_rate
+
+      \  help_request_count ÷
+
+      \  (total_answer_attempts + help_request_count)
+
+
+      - accuracy_rate
+
+      \  correct_attempts ÷ total_answer_attempts"
     columns:
       - name: week_start_date
+        description: UNION / DRIVING-GRAIN LINEAGE
       - name: student_id
+        description: UNION / DRIVING-GRAIN LINEAGE
       - name: skill_id
+        description: UNION / DRIVING-GRAIN LINEAGE
       - name: skill_name
+        description: DIRECT LINEAGE
       - name: topic_name
+        description: DIRECT LINEAGE
       - name: total_answer_attempts
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) per student, skill, and week
       - name: correct_attempts
+        description: |-
+          FILTERED LINEAGE
+
+           COUNT(*) FILTER (WHERE is_correct IS TRUE)
       - name: wrong_attempts
+        description: |-
+          FILTERED LINEAGE
+
+          COUNT(*) FILTER (WHERE is_correct IS FALSE)
       - name: avg_score
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+           AVG(student_attempts.score)
       - name: avg_time_spent_seconds
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+           AVG(student_attempts.time_spent_seconds)
       - name: hinted_attempt_count
+        description: |-
+          FILTERED LINEAGE
+
+          COUNT(*) FILTER (WHERE used_hint IS TRUE)
       - name: hint_usage_rate
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+            hinted_attempt_count ÷ total_answer_attempts
       - name: help_request_count
+        description: |-
+          FILTERED LINEAGE
+
+          WHERE skill_id IS NOT NULL !!!!
       - name: help_request_rate
+        description: "DERIVED AGGREGATED LINEAGE
+
+
+          \ help_request_count ÷  (total_answer_attempts + help_request_count)"
       - name: dda_trigger_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) per student, skill, and week
       - name: show_me_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          COUNT(*) per student, skill, and week
       - name: accuracy_rate
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+
+          - hint_usage_rate
+            hinted_attempt_count ÷ total_answer_attempts
+
+          - help_request_rate
+            help_request_count ÷
+            (total_answer_attempts + help_request_count)
+
+          - accuracy_rate
+            correct_attempts ÷ total_answer_attempts
       - name: latest_predicted_mastery_score
+        description: |-
+          FILTERED LINEAGE : LATERAL SUBQUERY: prediction
+          Source of Truth: student_skill_predictions
       - name: latest_risk_level
+        description: |-
+          FILTERED LINEAGE : LATERAL SUBQUERY: prediction
+          Source of Truth: student_skill_predictions
       - name: recommended_action
+        description: |-
+          FILTERED LINEAGE : LATERAL SUBQUERY: prediction
+          Source of Truth: student_skill_predictions
       - name: latest_prediction_at
+        description: |-
+          FILTERED LINEAGE : LATERAL SUBQUERY: prediction
+          Source of Truth: student_skill_predictions
   - name: vw_dda_effectiveness
     description: "VIEW TABLE ( READ )
 

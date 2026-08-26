@@ -47,6 +47,8 @@ CREATE TABLE student_profiles
  student_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  user_id INT NOT NULL UNIQUE,
  section_id INT, --fk
+ grade_level SMALLINT,
+ interests TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
  avatar_id INT, -- fk
  total_star_points DOUBLE PRECISION,
  current_streak INT,
@@ -85,6 +87,285 @@ CREATE TABLE parent_profiles
  is_active BOOLEAN NOT NULL DEFAULT TRUE,
 
  UNIQUE (student_id, teacher_id, section_id)
+);
+
+ -- 1.1) Organization, Subscription, and Sales
+
+CREATE TABLE organizations
+(
+ organization_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ organization_name VARCHAR(255) NOT NULL,
+ organization_type TEXT NOT NULL DEFAULT 'school',
+ contact_email TEXT,
+ organization_status TEXT NOT NULL DEFAULT 'active',
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ CONSTRAINT ck_organizations_type
+ CHECK (organization_type IN ('school', 'enterprise')),
+
+ CONSTRAINT ck_organizations_status
+ CHECK (organization_status IN ('active', 'inactive'))
+);
+
+
+-- Connects teachers to the school/enterprise they belong to.
+CREATE TABLE organization_members
+(
+ organization_member_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ organization_id INT NOT NULL, -- fk
+ teacher_id INT NOT NULL, -- fk
+ membership_role TEXT NOT NULL DEFAULT 'teacher',
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ left_at TIMESTAMPTZ,
+
+ UNIQUE (organization_id, teacher_id),
+
+ CONSTRAINT ck_organization_members_role
+ CHECK (membership_role IN ('owner', 'admin', 'teacher')),
+
+ CONSTRAINT ck_organization_members_dates
+ CHECK (left_at IS NULL OR left_at >= joined_at)
+);
+
+
+-- Connects students to a school independently from their current class.
+CREATE TABLE organization_student_enrollments
+(
+ organization_student_enrollment_id INT
+ GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+ organization_id INT NOT NULL, -- fk
+ student_id INT NOT NULL, -- fk
+ enrolled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ left_at TIMESTAMPTZ,
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+ UNIQUE (organization_id, student_id),
+
+ CONSTRAINT ck_organization_student_enrollment_dates
+ CHECK (left_at IS NULL OR left_at >= enrolled_at)
+);
+
+
+-- Defines Starter, Semester, Lifetime, and Enterprise products.
+CREATE TABLE subscription_plans
+(
+ plan_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ plan_code VARCHAR(50) NOT NULL UNIQUE,
+ plan_name VARCHAR(100) NOT NULL,
+ coverage_type TEXT NOT NULL,
+ billing_model TEXT NOT NULL,
+ price_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+ currency_code CHAR(3) NOT NULL DEFAULT 'PHP',
+ access_duration_months INT,
+ is_lifetime BOOLEAN NOT NULL DEFAULT FALSE,
+ default_seat_limit INT,
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ CONSTRAINT ck_subscription_plans_coverage
+ CHECK (coverage_type IN ('individual', 'enterprise')),
+
+ CONSTRAINT ck_subscription_plans_billing_model
+ CHECK (billing_model IN ('free', 'one_time', 'contract')),
+
+ CONSTRAINT ck_subscription_plans_price
+ CHECK (price_amount >= 0),
+
+ CONSTRAINT ck_subscription_plans_duration
+ CHECK
+ (
+     access_duration_months IS NULL
+     OR access_duration_months > 0
+ ),
+
+ CONSTRAINT ck_subscription_plans_lifetime_duration
+ CHECK
+ (
+     is_lifetime IS FALSE
+     OR access_duration_months IS NULL
+ ),
+
+ CONSTRAINT ck_subscription_plans_seat_limit
+ CHECK
+ (
+     default_seat_limit IS NULL
+     OR default_seat_limit > 0
+ )
+);
+
+
+-- The payer is either an individual user or an organization.
+-- A user may be a parent or a self-paying student.
+CREATE TABLE billing_accounts
+(
+ billing_account_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ user_id INT, -- fk; parent or self-paying learner
+ organization_id INT, -- fk; school/enterprise payer
+ billing_email TEXT NOT NULL,
+ provider_customer_reference TEXT UNIQUE,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ UNIQUE (user_id),
+ UNIQUE (organization_id),
+
+ CONSTRAINT ck_billing_accounts_exactly_one_owner
+ CHECK
+ (
+     (user_id IS NOT NULL AND organization_id IS NULL)
+     OR
+     (user_id IS NULL AND organization_id IS NOT NULL)
+ )
+);
+
+
+-- Stores the purchased access period.
+-- It may represent free, semester, lifetime, or Enterprise access.
+CREATE TABLE subscriptions
+(
+ subscription_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ billing_account_id INT NOT NULL, -- fk
+ plan_id INT NOT NULL, -- fk
+ provider_subscription_reference TEXT UNIQUE,
+ subscription_status TEXT NOT NULL DEFAULT 'pending',
+ purchased_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ access_starts_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ access_ends_at TIMESTAMPTZ,
+ is_lifetime BOOLEAN NOT NULL DEFAULT FALSE,
+ auto_renew BOOLEAN NOT NULL DEFAULT FALSE,
+ seat_limit INT,
+ cancelled_at TIMESTAMPTZ,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ CONSTRAINT ck_subscriptions_status
+ CHECK
+ (
+     subscription_status IN
+     ('pending', 'active', 'expired', 'cancelled', 'refunded')
+ ),
+
+ CONSTRAINT ck_subscriptions_access_period
+ CHECK
+ (
+     (
+         is_lifetime IS TRUE
+         AND access_ends_at IS NULL
+     )
+     OR
+     (
+         is_lifetime IS FALSE
+         AND access_ends_at IS NOT NULL
+         AND access_ends_at > access_starts_at
+     )
+ ),
+
+ CONSTRAINT ck_subscriptions_no_automatic_renewal
+ CHECK (auto_renew IS FALSE),
+
+ CONSTRAINT ck_subscriptions_seat_limit
+ CHECK (seat_limit IS NULL OR seat_limit > 0)
+);
+
+
+-- Identifies which learner receives an individual subscription.
+-- The payer and learner do not have to be the same person.
+CREATE TABLE subscription_students
+(
+ subscription_student_id INT
+ GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+ subscription_id INT NOT NULL, -- fk
+ student_id INT NOT NULL, -- fk
+ assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ removed_at TIMESTAMPTZ,
+ is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+ UNIQUE (subscription_id, student_id),
+
+ CONSTRAINT ck_subscription_students_dates
+ CHECK (removed_at IS NULL OR removed_at >= assigned_at)
+);
+
+
+-- Stores successful, pending, failed, or refunded payments.
+CREATE TABLE payment_transactions
+(
+ payment_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ subscription_id INT NOT NULL, -- fk
+ provider_payment_reference TEXT UNIQUE,
+ amount NUMERIC(12, 2) NOT NULL,
+ currency_code CHAR(3) NOT NULL DEFAULT 'PHP',
+ payment_status TEXT NOT NULL DEFAULT 'pending',
+ paid_at TIMESTAMPTZ,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ CONSTRAINT ck_payment_transactions_amount
+ CHECK (amount >= 0),
+
+ CONSTRAINT ck_payment_transactions_status
+ CHECK
+ (
+     payment_status IN ('pending', 'paid', 'failed', 'refunded')
+ )
+);
+
+-- 1.2) Student QR and One-Time PIN Authentication
+
+CREATE TABLE student_login_challenges
+(
+ challenge_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+ student_id INT NOT NULL, -- fk; student who will log in
+
+ issued_by_parent_id INT, -- fk; populated for parent QR
+ issued_by_teacher_id INT, -- fk; populated for teacher PIN
+
+ challenge_type TEXT NOT NULL,
+
+ public_code VARCHAR(20),
+ secret_hash TEXT NOT NULL,
+
+ expires_at TIMESTAMPTZ NOT NULL,
+ used_at TIMESTAMPTZ,
+ revoked_at TIMESTAMPTZ,
+
+ failed_attempt_count INT NOT NULL DEFAULT 0,
+ maximum_attempt_count INT NOT NULL DEFAULT 5,
+
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+ UNIQUE (public_code),
+
+ CONSTRAINT ck_student_login_challenges_issuer
+ CHECK
+ (
+     (
+         challenge_type = 'parent_qr'
+         AND issued_by_parent_id IS NOT NULL
+         AND issued_by_teacher_id IS NULL
+     )
+     OR
+     (
+         challenge_type = 'teacher_pin'
+         AND issued_by_parent_id IS NULL
+         AND issued_by_teacher_id IS NOT NULL
+     )
+ ),
+
+ CONSTRAINT ck_student_login_challenges_expiry
+ CHECK (expires_at > created_at),
+
+ CONSTRAINT ck_student_login_challenges_attempts
+ CHECK
+ (
+     failed_attempt_count >= 0
+     AND maximum_attempt_count > 0
+ )
 );
 
  -- 2.) Learning Content
@@ -545,7 +826,10 @@ REFERENCES users(user_id);
 ALTER TABLE class_sections
 ADD CONSTRAINT fk_class_sections_teacher_id_teacher_profiles_teacher_id
 FOREIGN KEY (teacher_id)
-REFERENCES teacher_profiles(teacher_id);
+REFERENCES teacher_profiles(teacher_id),
+
+ADD COLUMN organization_id INT,
+ALTER COLUMN organization_id SET NOT NULL;
 
 ALTER TABLE student_teacher_links
 ADD CONSTRAINT fk_student_teacher_links_student_id_student_profiles_student_id
@@ -560,6 +844,87 @@ ADD CONSTRAINT fk_student_teacher_links_section_id_class_sections_section_id
 FOREIGN KEY (section_id)
 REFERENCES class_sections(section_id);
 
+-- 1.1) Organization, Subscription, and Sales Relationships
+
+ALTER TABLE organization_members
+ADD CONSTRAINT fk_organization_members_organization_id_organizations
+FOREIGN KEY (organization_id)
+REFERENCES organizations(organization_id),
+
+ADD CONSTRAINT fk_organization_members_teacher_id_teacher_profiles
+FOREIGN KEY (teacher_id)
+REFERENCES teacher_profiles(teacher_id);
+
+
+ALTER TABLE organization_student_enrollments
+ADD CONSTRAINT fk_organization_student_enrollments_organization_id_organizations
+FOREIGN KEY (organization_id)
+REFERENCES organizations(organization_id),
+
+ADD CONSTRAINT fk_organization_student_enrollments_student_id_student_profiles
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id);
+
+
+ALTER TABLE class_sections
+ADD CONSTRAINT fk_class_sections_organization_id_organizations
+FOREIGN KEY (organization_id)
+REFERENCES organizations(organization_id),
+
+ADD CONSTRAINT fk_class_sections_organization_teacher_membership
+FOREIGN KEY (organization_id, teacher_id)
+REFERENCES organization_members(organization_id, teacher_id);
+
+
+ALTER TABLE billing_accounts
+ADD CONSTRAINT fk_billing_accounts_user_id_users
+FOREIGN KEY (user_id)
+REFERENCES users(user_id),
+
+ADD CONSTRAINT fk_billing_accounts_organization_id_organizations
+FOREIGN KEY (organization_id)
+REFERENCES organizations(organization_id);
+
+
+ALTER TABLE subscriptions
+ADD CONSTRAINT fk_subscriptions_billing_account_id_billing_accounts
+FOREIGN KEY (billing_account_id)
+REFERENCES billing_accounts(billing_account_id),
+
+ADD CONSTRAINT fk_subscriptions_plan_id_subscription_plans
+FOREIGN KEY (plan_id)
+REFERENCES subscription_plans(plan_id);
+
+
+ALTER TABLE subscription_students
+ADD CONSTRAINT fk_subscription_students_subscription_id_subscriptions
+FOREIGN KEY (subscription_id)
+REFERENCES subscriptions(subscription_id),
+
+ADD CONSTRAINT fk_subscription_students_student_id_student_profiles
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id);
+
+
+ALTER TABLE payment_transactions
+ADD CONSTRAINT fk_payment_transactions_subscription_id_subscriptions
+FOREIGN KEY (subscription_id)
+REFERENCES subscriptions(subscription_id);
+
+-- 1.2) Student QR and One-Time PIN Authentication Relationships
+
+ALTER TABLE student_login_challenges
+ADD CONSTRAINT fk_student_login_challenges_student_id_student_profiles
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id),
+
+ADD CONSTRAINT fk_student_login_challenges_parent_id_parent_profiles
+FOREIGN KEY (issued_by_parent_id)
+REFERENCES parent_profiles(parent_id),
+
+ADD CONSTRAINT fk_student_login_challenges_teacher_id_teacher_profiles
+FOREIGN KEY (issued_by_teacher_id)
+REFERENCES teacher_profiles(teacher_id);
 
  -- 2.) Curriculum -> Tutoring session -> multimodal capture
 

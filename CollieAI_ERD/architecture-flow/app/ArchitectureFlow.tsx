@@ -37,10 +37,15 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  Banknote,
   BellRing,
+  BookOpenCheck,
+  BriefcaseBusiness,
   Bot,
   BrainCircuit,
   Check,
+  ChartNoAxesCombined,
+  ChartPie,
   ChevronDown,
   CircleHelp,
   Cloud,
@@ -54,12 +59,17 @@ import {
   GraduationCap,
   HardDrive,
   History as HistoryIcon,
+  KeyRound,
   LayoutDashboard,
+  Landmark,
   LockKeyhole,
+  Layers3,
   ShieldCheck,
+  ShieldAlert,
   List,
   LoaderCircle,
   MessageCircle,
+  MessageCircleCheck,
   Send,
   Maximize2,
   MessageSquareText,
@@ -84,6 +94,7 @@ import {
   Eraser,
   Smartphone,
   Trash2,
+  TrendingUp,
   UserRound,
   UserRoundCheck,
   Workflow,
@@ -125,7 +136,8 @@ type NodeShape =
   | "legend"
   | "legend-key"
   | "text"
-  | "comment";
+  | "comment"
+  | "group";
 type DocsExportMode = "readable" | "full-design";
 type DiagramPage = { id: string; name: string; deletedAt?: string };
 type DiagramCommentReply = { id: string; author: string; text: string; createdAt: string };
@@ -212,7 +224,7 @@ type ArchitectureNodeData = {
   onTextEditingChange?: (target: ComponentTextTarget) => void;
   commentId?: string;
   serviceLogo?: string;
-  serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security" | "cloud" | "domain" | "auth" | "protection" | "ai";
+  serviceSymbol?: "mobile" | "user" | "vector" | "computer" | "server" | "security" | "cloud" | "domain" | "auth" | "protection" | "ai" | "cashflow" | "business-permit" | "business-owner" | "scoring" | "levels" | "analytics" | "confidence-up" | "current-access" | "fraud" | "received-guidance" | "process" | "financial-organization" | "business-literacy" | "business-leverage" | "resolve-concern";
   hideIcon?: boolean;
   fillColor?: string;
   fillOpacity?: number;
@@ -314,6 +326,532 @@ const iconMap: Record<NodeIcon, ComponentType<{ size?: number; strokeWidth?: num
   check: Check,
 };
 
+const textSelectionOffsets = new Map<string, { start: number; end: number }>();
+
+function TextNodeCard({
+  id,
+  data,
+  selected,
+  animState,
+}: {
+  id: string;
+  data: ArchitectureNodeData;
+  selected?: boolean;
+  animState?: "inactive" | "active" | "completed";
+}) {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const savedRangeRef = useRef<Range | null>(null);
+  const [formatMenu, setFormatMenu] = useState<"size" | "font" | null>(null);
+  const [selectionFormat, setSelectionFormat] = useState<{
+    fontSize?: number;
+    fontFamily?: string;
+    fontWeight?: string;
+    fontStyle?: string;
+  }>({});
+
+  const rangeIsInEditor = useCallback((range: Range) => {
+    const editor = editorRef.current;
+    return Boolean(editor && editor.contains(range.startContainer) && editor.contains(range.endContainer));
+  }, []);
+
+  const paintSavedSelection = useCallback((range: Range) => {
+    const cssHighlights = (CSS as unknown as { highlights?: { set: (name: string, highlight: unknown) => void } }).highlights;
+    const HighlightConstructor = (globalThis as unknown as { Highlight?: new (...ranges: Range[]) => unknown }).Highlight;
+    if (!cssHighlights || !HighlightConstructor) return;
+    cssHighlights.set("text-format-selection", new HighlightConstructor(range.cloneRange()));
+  }, []);
+
+  const rememberRange = useCallback((range: Range) => {
+    const editor = editorRef.current;
+    if (!editor || !rangeIsInEditor(range) || range.collapsed) return;
+    const beforeStart = document.createRange();
+    beforeStart.selectNodeContents(editor);
+    beforeStart.setEnd(range.startContainer, range.startOffset);
+    const beforeEnd = document.createRange();
+    beforeEnd.selectNodeContents(editor);
+    beforeEnd.setEnd(range.endContainer, range.endOffset);
+    textSelectionOffsets.set(id, { start: beforeStart.toString().length, end: beforeEnd.toString().length });
+    savedRangeRef.current = range.cloneRange();
+    paintSavedSelection(savedRangeRef.current);
+    const selectionElement = range.startContainer instanceof HTMLElement
+      ? range.startContainer
+      : range.startContainer.parentElement;
+    if (selectionElement) {
+      const computed = window.getComputedStyle(selectionElement);
+      setSelectionFormat({
+        fontSize: Number.parseFloat(computed.fontSize),
+        fontFamily: computed.fontFamily,
+        fontWeight: computed.fontWeight,
+        fontStyle: computed.fontStyle,
+      });
+    }
+  }, [id, paintSavedSelection, rangeIsInEditor]);
+
+  const rangeFromSavedOffsets = useCallback(() => {
+    const editor = editorRef.current;
+    const offsets = textSelectionOffsets.get(id);
+    if (!editor || !offsets || offsets.start === offsets.end) return null;
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    let cursor = 0;
+    let startSet = false;
+    let textNode = walker.nextNode();
+    while (textNode) {
+      const length = textNode.textContent?.length ?? 0;
+      const nextCursor = cursor + length;
+      if (!startSet && offsets.start <= nextCursor) {
+        range.setStart(textNode, Math.max(0, offsets.start - cursor));
+        startSet = true;
+      }
+      if (startSet && offsets.end <= nextCursor) {
+        range.setEnd(textNode, Math.max(0, offsets.end - cursor));
+        return range;
+      }
+      cursor = nextCursor;
+      textNode = walker.nextNode();
+    }
+    return null;
+  }, [id]);
+
+  useEffect(() => {
+    if (!formatMenu) return;
+    const range = rangeFromSavedOffsets();
+    if (!range) return;
+    savedRangeRef.current = range;
+    paintSavedSelection(range);
+  }, [formatMenu, paintSavedSelection, rangeFromSavedOffsets]);
+
+  useEffect(() => {
+    if (!data.editing || !editorRef.current) return;
+
+    const editor = editorRef.current;
+    const frame = window.requestAnimationFrame(() => {
+      editor.focus({ preventScroll: true });
+
+      // A contentEditable element can be focused without receiving a caret.
+      // Put it at the end so a freshly placed (or double-clicked) text node is
+      // immediately ready for typing.
+      const selection = window.getSelection();
+      if (!selection || !document.contains(editor)) return;
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [data.editing]);
+
+  useEffect(() => {
+    if (editorRef.current && editorRef.current !== document.activeElement) {
+      const currentHtml = editorRef.current.innerHTML;
+      const target = data.label || "";
+      const targetHtml = target && !/<[a-z][\s\S]*>/i.test(target) ? target.replace(/\n/g, "<br>") : target;
+      if (currentHtml !== targetHtml) {
+        editorRef.current.innerHTML = targetHtml;
+      }
+    }
+  }, [data.label]);
+
+  useEffect(() => {
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !editorRef.current) return;
+      try {
+        const range = sel.getRangeAt(0);
+        if (rangeIsInEditor(range)) {
+          if (!range.collapsed && range.toString().trim().length > 0) rememberRange(range);
+        }
+      } catch {
+        // ignore selection error
+      }
+    };
+
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
+  }, [rangeIsInEditor, rememberRange]);
+
+  const saveSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current) {
+      try {
+        const range = sel.getRangeAt(0);
+        if (rangeIsInEditor(range)) {
+          if (!range.collapsed && range.toString().trim().length > 0) rememberRange(range);
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }, [rangeIsInEditor, rememberRange]);
+
+  const restoreSelection = useCallback((range: Range) => {
+    // Native form controls (especially <select>) clear the browser selection
+    // after their change event. Restore it on the next frame, after that
+    // default behavior has finished, so the user keeps seeing their highlight.
+    requestAnimationFrame(() => {
+      if (!rangeIsInEditor(range)) return;
+      try {
+        const selection = window.getSelection();
+        if (!selection) return;
+        selection.removeAllRanges();
+        selection.addRange(range);
+      } catch {
+        // The node may have been removed before the animation frame runs.
+      }
+    });
+  }, [rangeIsInEditor]);
+
+  const applyFormat = useCallback(
+    (property: "fontSize" | "fontFamily" | "fontWeight" | "fontStyle" | "color", value: string) => {
+      if (!editorRef.current) return;
+
+      const sel = window.getSelection();
+      let range: Range | null = null;
+
+      if (sel && sel.rangeCount > 0) {
+        try {
+          const r = sel.getRangeAt(0);
+          if (rangeIsInEditor(r) && !r.collapsed && r.toString().trim().length > 0) {
+            range = r;
+          }
+        } catch {
+          // ignore
+        }
+      }
+      if (!range && savedRangeRef.current && rangeIsInEditor(savedRangeRef.current) && !savedRangeRef.current.collapsed) {
+        range = savedRangeRef.current;
+      }
+      if (!range) range = rangeFromSavedOffsets();
+
+      // Never fall back to the whole text box when the user made a character
+      // selection. If its DOM Range was replaced, the saved offsets above are
+      // the only valid formatting target.
+      if (!range && textSelectionOffsets.has(id)) return;
+
+      const hasTextSelection = range && !range.collapsed && rangeIsInEditor(range);
+
+      if (hasTextSelection && range) {
+        const contents = range.extractContents();
+        const span = document.createElement("span");
+
+        if (property === "fontSize") span.style.fontSize = value;
+        else if (property === "fontFamily") span.style.fontFamily = value;
+        else if (property === "fontWeight") span.style.fontWeight = value;
+        else if (property === "fontStyle") span.style.fontStyle = value;
+        else if (property === "color") span.style.color = value;
+
+        span.appendChild(contents);
+
+        // Remove only the property being replaced from nested formatting
+        // spans. This must happen after the extracted content is appended;
+        // otherwise an older inner style overrides the user's new choice.
+        span.querySelectorAll("*").forEach((el) => {
+          if (el instanceof HTMLElement) {
+            if (property === "fontSize") el.style.fontSize = "";
+            else if (property === "fontFamily") el.style.fontFamily = "";
+            else if (property === "fontWeight") el.style.fontWeight = "";
+            else if (property === "fontStyle") el.style.fontStyle = "";
+            else if (property === "color") el.style.color = "";
+          }
+        });
+        range.insertNode(span);
+
+        if (sel) {
+          try {
+            sel.removeAllRanges();
+            const newRange = document.createRange();
+            newRange.selectNodeContents(span);
+            sel.addRange(newRange);
+            savedRangeRef.current = newRange.cloneRange();
+            rememberRange(savedRangeRef.current);
+            restoreSelection(savedRangeRef.current);
+          } catch {
+            // ignore
+          }
+        }
+
+        const newHtml = editorRef.current.innerHTML;
+        data.onLabelChange?.(newHtml);
+      } else {
+        setSelectionFormat({});
+        if (property === "fontSize") {
+          const numeric = parseInt(value, 10);
+          data.onTextStyleChange?.({ titleSize: numeric });
+          if (editorRef.current) {
+            editorRef.current.style.fontSize = value;
+          }
+        } else if (property === "fontFamily") {
+          data.onTextStyleChange?.({ fontFamily: value || undefined });
+          if (editorRef.current) {
+            editorRef.current.style.fontFamily = value;
+          }
+        } else if (property === "fontWeight") {
+          data.onTextStyleChange?.({ fontWeight: value as any });
+          if (editorRef.current) {
+            editorRef.current.style.fontWeight = value;
+          }
+        } else if (property === "fontStyle") {
+          data.onTextStyleChange?.({ fontStyle: value as any });
+          if (editorRef.current) {
+            editorRef.current.style.fontStyle = value;
+          }
+        } else if (property === "color") {
+          data.onTextStyleChange?.({ legendColor: value });
+          if (editorRef.current) {
+            editorRef.current.style.color = value;
+          }
+        }
+      }
+    },
+    [data, id, rangeFromSavedOffsets, rangeIsInEditor, rememberRange, restoreSelection],
+  );
+
+  const toggleBold = useCallback(() => {
+    saveSelection();
+    let isBold = data.fontWeight === 700;
+    const sel = window.getSelection();
+    const r = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : savedRangeRef.current;
+    if (r && rangeIsInEditor(r) && !r.collapsed) {
+      const parentEl = r.commonAncestorContainer instanceof HTMLElement ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+      if (parentEl) {
+        const computed = window.getComputedStyle(parentEl).fontWeight;
+        isBold = computed === "700" || computed === "bold" || parentEl.style.fontWeight === "700";
+      }
+    }
+    applyFormat("fontWeight", isBold ? "400" : "700");
+  }, [applyFormat, data.fontWeight, rangeIsInEditor, saveSelection]);
+
+  const toggleItalic = useCallback(() => {
+    saveSelection();
+    let isItalic = data.fontStyle === "italic";
+    const sel = window.getSelection();
+    const r = sel && sel.rangeCount > 0 ? sel.getRangeAt(0) : savedRangeRef.current;
+    if (r && rangeIsInEditor(r) && !r.collapsed) {
+      const parentEl = r.commonAncestorContainer instanceof HTMLElement ? r.commonAncestorContainer : r.commonAncestorContainer.parentElement;
+      if (parentEl) {
+        const computed = window.getComputedStyle(parentEl).fontStyle;
+        isItalic = computed === "italic" || parentEl.style.fontStyle === "italic";
+      }
+    }
+    applyFormat("fontStyle", isItalic ? "normal" : "italic");
+  }, [applyFormat, data.fontStyle, rangeIsInEditor, saveSelection]);
+
+  const defaultFontSize = data.titleSize ?? 16;
+  const defaultFontFamily = data.fontFamily ?? "";
+  const defaultColor = data.legendColor ?? "#334155";
+  const defaultWeight = data.fontWeight ?? 400;
+  const defaultStyle = data.fontStyle ?? "normal";
+  const displayedFontSize = selectionFormat.fontSize ?? defaultFontSize;
+  const displayedFontFamily = selectionFormat.fontFamily ?? defaultFontFamily;
+  const displayedWeight = selectionFormat.fontWeight ?? String(defaultWeight);
+  const displayedStyle = selectionFormat.fontStyle ?? defaultStyle;
+
+  return (
+    <div
+      className={`architecture-node shape-text ${selected ? "is-selected" : ""} ${animState ? `anim-${animState}` : ""}`}
+      style={
+        {
+          "--node-title-size": `${defaultFontSize}px`,
+          "--node-description-size": `${data.descriptionSize ?? 12}px`,
+        } as CSSProperties
+      }
+    >
+      <NodeResizer
+        minWidth={60}
+        minHeight={24}
+        isVisible={selected}
+        color="#0ea5c6"
+        handleStyle={{ width: 8, height: 8, borderRadius: 3 }}
+      />
+      <div
+        ref={editorRef}
+        className="text-node-content nodrag nopan"
+        contentEditable
+        tabIndex={0}
+        suppressContentEditableWarning
+        data-placeholder="Type something"
+        style={{
+          fontSize: `${defaultFontSize}px`,
+          color: defaultColor,
+          fontWeight: defaultWeight,
+          fontStyle: defaultStyle,
+          fontFamily: defaultFontFamily,
+        }}
+        onPointerDown={(event) => {
+          if (selected) event.stopPropagation();
+        }}
+        onClick={(event) => {
+          event.stopPropagation();
+          event.currentTarget.focus({ preventScroll: true });
+        }}
+        onFocus={() => {
+          data.onEditingChange?.(true);
+          const selection = window.getSelection();
+          if (selection?.isCollapsed) {
+            textSelectionOffsets.delete(id);
+            savedRangeRef.current = null;
+            setSelectionFormat({});
+            (CSS as unknown as { highlights?: { delete: (name: string) => void } }).highlights?.delete("text-format-selection");
+          }
+        }}
+        onInput={(event) => {
+          const html = event.currentTarget.innerHTML;
+          data.onLabelChange?.(html);
+        }}
+        onKeyUp={saveSelection}
+        onMouseUp={saveSelection}
+        onSelect={saveSelection}
+        onBlur={() => {
+          saveSelection();
+          data.onEditingChange?.(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            editorRef.current?.blur();
+            data.onEditingChange?.(false);
+          }
+        }}
+      />
+      <NodeToolbar
+        nodeId={id}
+        isVisible={selected}
+        position={Position.Top}
+        offset={10}
+        className="text-format-toolbar nodrag nopan"
+        // A native select takes focus before its change event. Capture the text
+        // range first, so formatting continues to target only the highlighted text.
+        onPointerDownCapture={(event) => {
+          saveSelection();
+          // Prevent toolbar buttons from taking editor focus on pointer down.
+          // That focus transfer is what clears a character-level selection.
+          if (event.target instanceof HTMLElement && event.target.closest("button")) {
+            event.preventDefault();
+          }
+        }}
+        onMouseDownCapture={saveSelection}
+      >
+        <div className="text-format-menu">
+          <button
+            type="button"
+            className="text-format-menu-trigger text-size-trigger"
+            aria-label="Text size"
+            aria-expanded={formatMenu === "size"}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              saveSelection();
+            }}
+            onClick={() => setFormatMenu((menu) => menu === "size" ? null : "size")}
+          >
+            {Number.isInteger(displayedFontSize) ? displayedFontSize : displayedFontSize.toFixed(1)}px <ChevronDown size={14} />
+          </button>
+          {formatMenu === "size" ? <div className="text-format-menu-list" role="menu" aria-label="Text size options">
+            {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72].map((size) => (
+              <button key={size} type="button" role="menuitem" onMouseDown={(event) => { event.preventDefault(); saveSelection(); }} onClick={() => { applyFormat("fontSize", `${size}px`); setFormatMenu(null); }}>{size}px</button>
+            ))}
+          </div> : null}
+        </div>
+        <span className="text-toolbar-divider" aria-hidden="true">
+          |
+        </span>
+        <div className="text-format-menu">
+          <button
+            type="button"
+            className="text-format-menu-trigger text-font-family-select"
+            aria-label="Font family"
+            aria-expanded={formatMenu === "font"}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              saveSelection();
+            }}
+            onClick={() => setFormatMenu((menu) => menu === "font" ? null : "font")}
+          >
+            {displayedFontFamily.includes("Times New Roman") ? "Times New Roman" : displayedFontFamily ? displayedFontFamily.split(",")[0].replace(/['"]/g, "") : "System"} <ChevronDown size={14} />
+          </button>
+          {formatMenu === "font" ? <div className="text-format-menu-list text-font-menu-list" role="menu" aria-label="Font family options">
+            {[
+              ["", "System"],
+              ["Inter, Arial, sans-serif", "Inter"],
+              ["Arial, sans-serif", "Arial"],
+              ["'Times New Roman', Times, serif", "Times New Roman"],
+              ["Georgia, serif", "Georgia"],
+              ["'Courier New', monospace", "Courier New"],
+            ].map(([value, label]) => <button key={value} type="button" role="menuitem" onMouseDown={(event) => { event.preventDefault(); saveSelection(); }} onClick={() => { applyFormat("fontFamily", value); setFormatMenu(null); }}>{label}</button>)}
+          </div> : null}
+        </div>
+        <span className="text-toolbar-divider" aria-hidden="true">
+          |
+        </span>
+        <button
+          type="button"
+          className={displayedWeight === "700" || displayedWeight === "bold" ? "active" : ""}
+          title="Bold"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            saveSelection();
+          }}
+          onClick={toggleBold}
+        >
+          <strong>B</strong>
+        </button>
+        <button
+          type="button"
+          className={displayedStyle === "italic" ? "active" : ""}
+          title="Italic"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            saveSelection();
+          }}
+          onClick={toggleItalic}
+        >
+          <em>I</em>
+        </button>
+        <label
+          title="Text color"
+          style={{ "--text-color": defaultColor } as CSSProperties}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            saveSelection();
+          }}
+        >
+          <span>A</span>
+          <input
+            type="color"
+            value={defaultColor}
+            onChange={(event) => applyFormat("color", event.target.value)}
+          />
+        </label>
+        <span className="text-toolbar-divider" aria-hidden="true">
+          |
+        </span>
+        <button
+          type="button"
+          title="Edit text"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={() => {
+            data.onEditingChange?.(true);
+            editorRef.current?.focus();
+          }}
+        >
+          <Type size={16} />
+        </button>
+      </NodeToolbar>
+      {selected && (
+        <Handle className="side-handle" type="source" position={Position.Right} id="right" style={{ top: "50%" }} />
+      )}
+    </div>
+  );
+}
+
 function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<ArchitectureNode>) {
   const Icon = iconMap[data.icon] ?? Server;
   const animState = data._animState;
@@ -330,6 +868,18 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
     : isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
   const connectorCenterIndex = Math.floor((connectorStops.length - 1) / 2);
   const serviceTileSize = Math.min((width ?? 112) * 0.96, (height ?? 142) - 32);
+  if (data.shape === "group") {
+    return (
+      <div className={`architecture-node shape-group ${selected ? "is-selected" : ""}`}>
+        <NodeResizer minWidth={120} minHeight={80} isVisible={selected} />
+        <div className="group-label">{data.label || "Group"}</div>
+        {/* Handles on all sides so edges can still connect to grouped containers */}
+        {([Position.Top, Position.Bottom, Position.Left, Position.Right] as Position[]).map((pos) => (
+          <Handle key={pos} type="source" position={pos} style={{ opacity: 0 }} />
+        ))}
+      </div>
+    );
+  }
   if (data.shape === "legend") {
     const color = data.legendColor ?? "#0ea5c6";
     const opacity = data.legendOpacity ?? 0.12;
@@ -426,75 +976,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   }
 
   if (data.shape === "text") {
-    return (
-      <div
-        className={`architecture-node shape-text ${selected ? "is-selected" : ""} ${animState ? `anim-${animState}` : ""}`}
-        style={
-          {
-            "--node-title-size": `${data.titleSize ?? 16}px`,
-            "--node-description-size": `${data.descriptionSize ?? 12}px`,
-          } as CSSProperties
-        }
-      >
-        <NodeResizer
-          minWidth={60}
-          minHeight={24}
-          isVisible={selected}
-          color="#0ea5c6"
-          handleStyle={{ width: 8, height: 8, borderRadius: 3 }}
-        />
-        {data.editing ? (
-          <textarea
-            className="text-node-editor nodrag nopan"
-            autoFocus
-            rows={1}
-            value={data.label}
-            placeholder="Type something"
-            aria-label="Text annotation"
-            style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 400, fontStyle: data.fontStyle ?? "normal", fontFamily: data.fontFamily }}
-            onChange={(event) => data.onLabelChange?.(event.target.value)}
-            onBlur={() => data.onEditingChange?.(false)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                data.onEditingChange?.(false);
-              }
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                data.onEditingChange?.(false);
-              }
-            }}
-          />
-        ) : (
-          <div className={`text-node-content ${data.label ? "" : "is-placeholder"}`} style={{ fontSize: `${data.titleSize ?? 16}px`, color: data.legendColor ?? "#334155", fontWeight: data.fontWeight ?? 400, fontStyle: data.fontStyle ?? "normal", fontFamily: data.fontFamily }}>
-            {data.label || "Type something"}
-          </div>
-        )}
-        <NodeToolbar nodeId={id} isVisible={selected} position={Position.Top} offset={10} className="text-format-toolbar nodrag nopan">
-            <select aria-label="Text size" value={data.titleSize ?? 16} onChange={(event) => data.onTextStyleChange?.({ titleSize: Number(event.target.value) })}>
-              {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72].map((size) => <option key={size} value={size}>{size}px</option>)}
-            </select>
-            <span className="text-toolbar-divider" aria-hidden="true">|</span>
-            <select className="text-font-family-select" aria-label="Font family" value={data.fontFamily ?? ""} onChange={(event) => data.onTextStyleChange?.({ fontFamily: event.target.value || undefined })}>
-              <option value="">System</option>
-              <option value="Inter, Arial, sans-serif">Inter</option>
-              <option value="Arial, sans-serif">Arial</option>
-              <option value="'Times New Roman', Times, serif">Times New Roman</option>
-              <option value="Georgia, serif">Georgia</option>
-              <option value="'Courier New', monospace">Courier New</option>
-            </select>
-            <span className="text-toolbar-divider" aria-hidden="true">|</span>
-            <button type="button" className={data.fontWeight === 700 ? "active" : ""} title="Bold" onClick={() => data.onTextStyleChange?.({ fontWeight: data.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
-            <button type="button" className={data.fontStyle === "italic" ? "active" : ""} title="Italic" onClick={() => data.onTextStyleChange?.({ fontStyle: data.fontStyle === "italic" ? "normal" : "italic" })}><em>I</em></button>
-            <label title="Text color" style={{ "--text-color": data.legendColor ?? "#334155" } as CSSProperties}><span>A</span><input type="color" value={data.legendColor ?? "#334155"} onChange={(event) => data.onTextStyleChange?.({ legendColor: event.target.value })} /></label>
-            <span className="text-toolbar-divider" aria-hidden="true">|</span>
-            <button type="button" title="Edit text" onClick={() => data.onEditingChange?.(true)}><Type size={16} /></button>
-        </NodeToolbar>
-        {selected && (
-          <Handle className="side-handle" type="source" position={Position.Right} id="right" style={{ top: "50%" }} />
-        )}
-      </div>
-    );
+    return <TextNodeCard id={id} data={data} selected={selected} animState={animState} />;
   }
 
   if (data.shape === "fishbone-spine") {
@@ -752,7 +1234,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         <div className="node-inner">
           {(componentCategory === "service" || componentCategory === "flowchart") && data.shape !== "decision" && !data.hideIcon ? (
             <span className="node-icon" aria-hidden="true">
-              {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
+              {data.serviceLogo ? <img className="node-service-logo" src={data.serviceLogo} alt="" /> : data.serviceSymbol === "mobile" ? <Smartphone size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "user" ? <UserRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "vector" ? <Database size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "computer" ? <Monitor size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "server" ? <Server size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "security" ? <LockKeyhole size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cloud" ? <Cloud size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "domain" ? <Globe2 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "auth" ? <UserRoundCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "protection" ? <ShieldCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "ai" ? <BrainCircuit size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "cashflow" ? <Banknote size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "business-permit" ? <FileText size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "business-owner" ? <BriefcaseBusiness size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "scoring" ? <ChartNoAxesCombined size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "levels" ? <Layers3 size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "analytics" ? <ChartPie size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "confidence-up" ? <TrendingUp size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "current-access" ? <KeyRound size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "fraud" ? <ShieldAlert size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "received-guidance" ? <MessageCircleCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "process" ? <Workflow size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "financial-organization" ? <Landmark size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "business-literacy" ? <BookOpenCheck size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "business-leverage" ? <TrendingUp size={serviceIconSize} strokeWidth={2.1} /> : data.serviceSymbol === "resolve-concern" ? <CircleHelp size={serviceIconSize} strokeWidth={2.1} /> : <Icon size={17} strokeWidth={2.2} />}
             </span>
           ) : null}
           <div className="node-copy">
@@ -1453,10 +1935,34 @@ const componentCategoryFor = (data: ArchitectureNodeData): ComponentCategory => 
 const defaultIconForShape = (shape: NodeShape): NodeIcon =>
   shape === "decision" ? "decision" : shape === "database" || shape === "data-store" ? "database" : shape === "cloud" ? "memory" : shape === "terminal" ? "play" : "server";
 
+const GCASH_LOGO_PATH = "/gcash-icon.png";
+const LEGACY_GCASH_LOGO_URL = "https://cdn.simpleicons.org/gcash/007DFE";
+
+const replaceLegacyServiceLogos = (nodes: ArchitectureNode[]): ArchitectureNode[] =>
+  nodes.map((node) => node.data.serviceLogo === LEGACY_GCASH_LOGO_URL
+    ? { ...node, data: { ...node.data, serviceLogo: GCASH_LOGO_PATH } }
+    : node);
+
 const servicePresets: { label: string; logo?: string; kind?: NonNullable<ArchitectureNodeData["serviceSymbol"]>; icon: NodeIcon; tone: NodeTone }[] = [
   { label: "Supabase", logo: "https://cdn.simpleicons.org/supabase/3FCF8E", icon: "database", tone: "emerald" },
   { label: "Vercel", logo: "https://cdn.simpleicons.org/vercel/000000", icon: "app", tone: "slate" },
   { label: "n8n", logo: "https://cdn.simpleicons.org/n8n/EA4B71", icon: "workflow", tone: "rose" },
+  { label: "GCash", logo: GCASH_LOGO_PATH, icon: "app", tone: "cyan" },
+  { label: "Cashflow", kind: "cashflow", icon: "storage", tone: "emerald" },
+  { label: "Business Permit", kind: "business-permit", icon: "check", tone: "amber" },
+  { label: "Business Owner", kind: "business-owner", icon: "user", tone: "violet" },
+  { label: "Scoring", kind: "scoring", icon: "dashboard", tone: "rose" },
+  { label: "Levels", kind: "levels", icon: "route", tone: "cyan" },
+  { label: "Analytics", kind: "analytics", icon: "dashboard", tone: "violet" },
+  { label: "Confidence Up", kind: "confidence-up", icon: "sparkles", tone: "emerald" },
+  { label: "Current Access", kind: "current-access", icon: "session", tone: "cyan" },
+  { label: "Fraud", kind: "fraud", icon: "alert", tone: "rose" },
+  { label: "Received Guidance", kind: "received-guidance", icon: "check", tone: "violet" },
+  { label: "Process", kind: "process", icon: "workflow", tone: "slate" },
+  { label: "Financial Organization", kind: "financial-organization", icon: "storage", tone: "emerald" },
+  { label: "Business Literacy", kind: "business-literacy", icon: "check", tone: "violet" },
+  { label: "Business Leverage", kind: "business-leverage", icon: "sparkles", tone: "cyan" },
+  { label: "Resolve Concern", kind: "resolve-concern", icon: "alert", tone: "amber" },
   { label: "Mobile", kind: "mobile", icon: "app", tone: "cyan" },
   { label: "Pinecone", logo: "/pinecone.svg", kind: "vector", icon: "storage", tone: "violet" },
   { label: "User", kind: "user", icon: "session", tone: "slate" },
@@ -1749,6 +2255,10 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   // the real connector between them.
   const customFlowStartNodeRef = useRef<string | null>(null);
   const textSizeMeasureTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable refs so the keydown handler (registered early) can call groupNodes /
+  // ungroupNodes even though those useCallback hooks are declared further down.
+  const groupNodesRef = useRef<() => void>(() => {});
+  const ungroupNodesRef = useRef<(id: string) => void>(() => {});
   const { fitView, screenToFlowPosition, flowToScreenPosition } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
   // The active workspace is fixed for the lifetime of this FlowWorkspace
@@ -1873,6 +2383,19 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
           edges: edges.filter((edgeItem) => selectedIds.has(edgeItem.source) && selectedIds.has(edgeItem.target))
             .map((edgeItem) => ({ ...edgeItem, selected: false })),
         };
+        event.preventDefault();
+        return;
+      }
+
+      if (key === "g") {
+        if (event.shiftKey) {
+          // Ctrl+Shift+G — ungroup the currently selected group node
+          const group = selectedId ? nodes.find((node) => node.id === selectedId && node.data.shape === "group") : null;
+          if (group) ungroupNodesRef.current(group.id);
+        } else {
+          // Ctrl+G — group all currently selected nodes
+          groupNodesRef.current();
+        }
         event.preventDefault();
         return;
       }
@@ -2014,7 +2537,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       }
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-        setNodes(synchronizeLegendKey([...(parsed.nodes ?? []), ...commentMarkers(restoredComments)]));
+        setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(parsed.nodes ?? []), ...commentMarkers(restoredComments)]));
         setEdges(parsed.edges ?? []);
       } else if (wsId !== "collie" || restoredActive !== "main") {
         // A workspace other than the original collie one starts (and stays)
@@ -2064,7 +2587,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
             setLocalStorageItem(pageStorageKey(wsId, pageId), JSON.stringify(diagram));
           });
           restore(cloud.pages, cloud.trashedPages ?? [], cloudActive);
-          setNodes(synchronizeLegendKey([...(cloudDiagram.nodes ?? []), ...commentMarkers(restoredComments)]));
+          setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(cloudDiagram.nodes ?? []), ...commentMarkers(restoredComments)]));
           setEdges(cloudDiagram.edges ?? []);
         })
         .catch(() => undefined)
@@ -2479,7 +3002,7 @@ const persistPageIndex = (
     }
     try {
       const parsed = JSON.parse(stored) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
-      setNodes(synchronizeLegendKey([...(parsed.nodes ?? []), ...commentMarkers(nextComments)]));
+      setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(parsed.nodes ?? []), ...commentMarkers(nextComments)]));
       setEdges(parsed.edges ?? []);
     } catch {
       if (emptyForNonCollie()) {
@@ -4307,6 +4830,92 @@ const persistPageIndex = (
     setInspectorOpen(false);
   };
 
+  // ── Group / Ungroup (Ctrl+G / Ctrl+Shift+G) ─────────────────────────────────
+
+  const groupNodes = useCallback(() => {
+    const NON_GROUPABLE = ["comment", "legend", "legend-key", "group"];
+    const selected = nodes.filter(
+      (node) => node.selected && !NON_GROUPABLE.includes(node.data.shape),
+    );
+    if (selected.length < 2) return;
+
+    const padding = 32;
+    const minX = Math.min(...selected.map((node) => node.position.x)) - padding;
+    const minY = Math.min(...selected.map((node) => node.position.y)) - padding;
+    const maxX = Math.max(
+      ...selected.map((node) => node.position.x + ((node.measured?.width ?? (node.style?.width as number)) || 190)),
+    ) + padding;
+    const maxY = Math.max(
+      ...selected.map((node) => node.position.y + ((node.measured?.height ?? (node.style?.height as number)) || 80)),
+    ) + padding;
+
+    const groupId = `group-${Date.now()}`;
+    const groupNode: ArchitectureNode = {
+      id: groupId,
+      type: "architecture",
+      position: { x: minX, y: minY },
+      data: {
+        label: "Group",
+        description: "",
+        shape: "group",
+        icon: "dashboard",
+        tone: "slate",
+      },
+      style: { width: maxX - minX, height: maxY - minY, zIndex: -1 },
+      selected: true,
+    };
+
+    // Children positions become relative to the group container
+    const selectedIds = new Set(selected.map((node) => node.id));
+    const childNodes = selected.map((node) => ({
+      ...node,
+      parentId: groupId,
+      extent: "parent" as const,
+      position: { x: node.position.x - minX, y: node.position.y - minY },
+      selected: false,
+    }));
+
+    setNodes((current) => [
+      ...current.filter((node) => !selectedIds.has(node.id)),
+      groupNode,
+      ...childNodes,
+    ]);
+    setSelectedId(groupId);
+    setSelectedEdgeId(null);
+    setInspectorOpen(false);
+  }, [nodes, setNodes, setSelectedId, setSelectedEdgeId, setInspectorOpen]);
+
+  const ungroupNodes = useCallback((groupId: string) => {
+    setNodes((current) => {
+      const group = current.find((node) => node.id === groupId);
+      if (!group || group.data.shape !== "group") return current;
+
+      const children = current.filter((node) => node.parentId === groupId);
+      const absoluteChildren = children.map((node) => ({
+        ...node,
+        parentId: undefined,
+        extent: undefined,
+        position: {
+          x: node.position.x + group.position.x,
+          y: node.position.y + group.position.y,
+        },
+        selected: true,
+      }));
+
+      return [
+        ...current.filter((node) => node.id !== groupId && node.parentId !== groupId),
+        ...absoluteChildren,
+      ];
+    });
+    setSelectedId(null);
+    setSelectedEdgeId(null);
+  }, [setNodes, setSelectedId, setSelectedEdgeId]);
+
+  // Keep the stable refs in sync with the latest callback instances so the
+  // early keydown handler always calls the up-to-date closure.
+  groupNodesRef.current = groupNodes;
+  ungroupNodesRef.current = ungroupNodes;
+
   // Keep untouched nodes and edges referentially stable while dragging. This
   // lets React Flow skip repainting the rest of the diagram on each pointer frame.
   const renderedNodes = useMemo(() => {
@@ -4819,6 +5428,42 @@ const persistPageIndex = (
             <span><i className="legend-swatch emerald" /> Outcomes</span>
           </Panel>
         </ReactFlow>
+        {/* ── Multi-select floating action bar ─────────────────────────── */}
+        {(() => {
+          if (animationMode === "presentation" || drawPresentationOpen) return null;
+          const marqueeSelected = nodes.filter(
+            (node) => node.selected && !["comment"].includes(node.data.shape),
+          );
+          if (marqueeSelected.length < 2) return null;
+          const groupId = marqueeSelected[0]?.parentId;
+          const allInSameGroup = groupId && marqueeSelected.every((node) => node.parentId === groupId);
+          const groupNode = allInSameGroup ? nodes.find((node) => node.id === groupId && node.data.shape === "group") : null;
+          return (
+            <div className="multi-select-bar" role="toolbar" aria-label="Multi-select actions">
+              <span className="multi-select-count">
+                <Layers3 size={14} />
+                {marqueeSelected.length} selected
+              </span>
+              <div className="multi-select-divider" />
+              <button
+                className="multi-select-action"
+                onClick={groupNodes}
+                title="Group selected nodes (Ctrl+G)"
+              >
+                Group <kbd>Ctrl+G</kbd>
+              </button>
+              {groupNode ? (
+                <button
+                  className="multi-select-action multi-select-action-ungroup"
+                  onClick={() => ungroupNodes(groupNode.id)}
+                  title="Ungroup (Ctrl+Shift+G)"
+                >
+                  Ungroup <kbd>Ctrl+⇧+G</kbd>
+                </button>
+              ) : null}
+            </div>
+          );
+        })()}
         {(drawPresentationOpen || annotationStrokes.length > 0) ? (
           <svg
             className={`presentation-annotation-layer ${drawPresentationOpen && presentationInteraction === "draw" ? "is-drawing" : ""}`}
@@ -5096,6 +5741,36 @@ const persistPageIndex = (
                             <ShieldCheck className="service-preset-symbol" size={20} aria-hidden="true" />
                           ) : service.kind === "ai" ? (
                             <BrainCircuit className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "cashflow" ? (
+                            <Banknote className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "business-permit" ? (
+                            <FileText className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "business-owner" ? (
+                            <BriefcaseBusiness className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "scoring" ? (
+                            <ChartNoAxesCombined className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "levels" ? (
+                            <Layers3 className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "analytics" ? (
+                            <ChartPie className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "confidence-up" ? (
+                            <TrendingUp className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "current-access" ? (
+                            <KeyRound className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "fraud" ? (
+                            <ShieldAlert className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "received-guidance" ? (
+                            <MessageCircleCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "process" ? (
+                            <Workflow className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "financial-organization" ? (
+                            <Landmark className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "business-literacy" ? (
+                            <BookOpenCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "business-leverage" ? (
+                            <TrendingUp className="service-preset-symbol" size={20} aria-hidden="true" />
+                          ) : service.kind === "resolve-concern" ? (
+                            <CircleHelp className="service-preset-symbol" size={20} aria-hidden="true" />
                           ) : (
                             <Database className="service-preset-symbol" size={20} aria-hidden="true" />
                           )}
@@ -6068,6 +6743,36 @@ const persistPageIndex = (
                           <ShieldCheck className="service-preset-symbol" size={20} aria-hidden="true" />
                         ) : service.kind === "ai" ? (
                           <BrainCircuit className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "cashflow" ? (
+                          <Banknote className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "business-permit" ? (
+                          <FileText className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "business-owner" ? (
+                          <BriefcaseBusiness className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "scoring" ? (
+                          <ChartNoAxesCombined className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "levels" ? (
+                          <Layers3 className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "analytics" ? (
+                          <ChartPie className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "confidence-up" ? (
+                          <TrendingUp className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "current-access" ? (
+                          <KeyRound className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "fraud" ? (
+                          <ShieldAlert className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "received-guidance" ? (
+                          <MessageCircleCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "process" ? (
+                          <Workflow className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "financial-organization" ? (
+                          <Landmark className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "business-literacy" ? (
+                          <BookOpenCheck className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "business-leverage" ? (
+                          <TrendingUp className="service-preset-symbol" size={20} aria-hidden="true" />
+                        ) : service.kind === "resolve-concern" ? (
+                          <CircleHelp className="service-preset-symbol" size={20} aria-hidden="true" />
                         ) : (
                           <Database className="service-preset-symbol" size={20} aria-hidden="true" />
                         )}
