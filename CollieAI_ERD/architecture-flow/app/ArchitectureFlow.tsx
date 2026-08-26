@@ -749,7 +749,7 @@ function TextNodeCard({
             {Number.isInteger(displayedFontSize) ? displayedFontSize : displayedFontSize.toFixed(1)}px <ChevronDown size={14} />
           </button>
           {formatMenu === "size" ? <div className="text-format-menu-list" role="menu" aria-label="Text size options">
-            {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72].map((size) => (
+            {[8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48, 56, 64, 72, 80, 96, 112, 128].map((size) => (
               <button key={size} type="button" role="menuitem" onMouseDown={(event) => { event.preventDefault(); saveSelection(); }} onClick={() => { applyFormat("fontSize", `${size}px`); setFormatMenu(null); }}>{size}px</button>
             ))}
           </div> : null}
@@ -1080,8 +1080,8 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
       } ${isServiceNode ? "service-node" : ""} ${!showTitle && !showDescription ? "no-text" : ""} ${data.fillColor || data.outlineColor || data.outlineStyle ? "has-component-style" : ""} ${animState ? `anim-${animState}` : ""}`}
       style={
         {
-          "--node-title-size": `${data.titleSize ?? 13}px`,
-          "--node-description-size": `${data.descriptionSize ?? 10}px`,
+          "--node-title-size": `${data.titleSize || 13}px`,
+          "--node-description-size": `${data.descriptionSize || 10}px`,
           "--service-icon-size": `${serviceIconSize}px`,
           "--shape-fill": `color-mix(in srgb, ${data.fillColor ?? "#ffffff"} ${data.fillOpacity ?? 100}%, transparent)`,
           "--shape-outline": data.outlineColor ?? data.legendColor ?? "var(--node)",
@@ -1229,7 +1229,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           style={{ backgroundColor: data.headerColor ?? "#f59e0b" }}
           onDoubleClick={(event) => { event.stopPropagation(); data.onTextEditingChange?.("header"); }}
           title="Double-click to edit header text"
-        ><span style={{ ...headerTextStyle, fontSize: `${data.headerSize ?? 11}px` }}>{data.headerText ?? "Header"}</span></div> : null}
+        ><span style={{ ...headerTextStyle, fontSize: `${data.headerSize || 11}px` }}>{data.headerText ?? "Header"}</span></div> : null}
         {data.shape === "side-panel" || data.shape === "left-panel" ? <div className="segmented-side segmented-side-left" style={{ backgroundColor: data.leftPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
         <div className="node-inner">
           {(componentCategory === "service" || componentCategory === "flowchart") && data.shape !== "decision" && !data.hideIcon ? (
@@ -1297,6 +1297,218 @@ const nodeSize = (node: ArchitectureNode) => {
   };
 };
 
+const cleanOrthogonalPoints = (pts: EdgeBend[]): EdgeBend[] => {
+  if (pts.length <= 2) return pts;
+  const result: EdgeBend[] = [pts[0]];
+  for (let i = 1; i < pts.length - 1; i++) {
+    const prev = result[result.length - 1];
+    const curr = pts[i];
+    const next = pts[i + 1];
+    if (Math.hypot(curr.x - prev.x, curr.y - prev.y) < 1) continue;
+    const isCollinearX = Math.abs(prev.x - curr.x) < 1 && Math.abs(curr.x - next.x) < 1;
+    const isCollinearY = Math.abs(prev.y - curr.y) < 1 && Math.abs(curr.y - next.y) < 1;
+    if (isCollinearX || isCollinearY) continue;
+    result.push(curr);
+  }
+  const last = pts[pts.length - 1];
+  if (result.length > 0 && Math.hypot(result[result.length - 1].x - last.x, result[result.length - 1].y - last.y) >= 1) {
+    result.push(last);
+  } else if (result.length === 0) {
+    result.push(last);
+  }
+  return result;
+};
+
+const computeDefaultOrthogonalPoints = (
+  sourceX: number,
+  sourceY: number,
+  sourcePosition: Position,
+  targetX: number,
+  targetY: number,
+  targetPosition: Position,
+): EdgeBend[] => {
+  const isHorizontalSource = sourcePosition === Position.Left || sourcePosition === Position.Right;
+  const isHorizontalTarget = targetPosition === Position.Left || targetPosition === Position.Right;
+  const isVerticalSource = sourcePosition === Position.Top || sourcePosition === Position.Bottom;
+  const isVerticalTarget = targetPosition === Position.Top || targetPosition === Position.Bottom;
+
+  if (Math.abs(sourceX - targetX) < 1 && (isVerticalSource || isVerticalTarget)) {
+    return [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }];
+  }
+  if (Math.abs(sourceY - targetY) < 1 && (isHorizontalSource || isHorizontalTarget)) {
+    return [{ x: sourceX, y: sourceY }, { x: targetX, y: targetY }];
+  }
+
+  if (isHorizontalSource && isHorizontalTarget) {
+    const midX = (sourceX + targetX) / 2;
+    return [
+      { x: sourceX, y: sourceY },
+      { x: midX, y: sourceY },
+      { x: midX, y: targetY },
+      { x: targetX, y: targetY },
+    ];
+  }
+
+  if (isVerticalSource && isVerticalTarget) {
+    const midY = (sourceY + targetY) / 2;
+    return [
+      { x: sourceX, y: sourceY },
+      { x: sourceX, y: midY },
+      { x: targetX, y: midY },
+      { x: targetX, y: targetY },
+    ];
+  }
+
+  if (isHorizontalSource && isVerticalTarget) {
+    return [
+      { x: sourceX, y: sourceY },
+      { x: targetX, y: sourceY },
+      { x: targetX, y: targetY },
+    ];
+  }
+
+  if (isVerticalSource && isHorizontalTarget) {
+    return [
+      { x: sourceX, y: sourceY },
+      { x: sourceX, y: targetY },
+      { x: targetX, y: targetY },
+    ];
+  }
+
+  const midX = (sourceX + targetX) / 2;
+  return [
+    { x: sourceX, y: sourceY },
+    { x: midX, y: sourceY },
+    { x: midX, y: targetY },
+    { x: targetX, y: targetY },
+  ];
+};
+
+const enforceOrthogonal = (pts: EdgeBend[]): EdgeBend[] => {
+  if (pts.length <= 1) return pts;
+  const result: EdgeBend[] = [pts[0]];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const a = result[result.length - 1];
+    const b = pts[i + 1];
+    const dx = Math.abs(b.x - a.x);
+    const dy = Math.abs(b.y - a.y);
+    if (dx > 1 && dy > 1) {
+      const prevWasHorizontal = result.length >= 2 && Math.abs(result[result.length - 2].y - a.y) < 1;
+      if (prevWasHorizontal) {
+        result.push({ x: a.x, y: b.y });
+      } else {
+        result.push({ x: b.x, y: a.y });
+      }
+    }
+    result.push(b);
+  }
+  return cleanOrthogonalPoints(result);
+};
+
+const computeMovedSegmentPoints = (
+  pts: EdgeBend[],
+  k: number,
+  isVertical: boolean,
+  flowPos: EdgeBend,
+  sourcePos: Position,
+  targetPos: Position,
+): EdgeBend[] => {
+  if (pts.length < 2 || k < 0 || k >= pts.length - 1) return pts;
+  const isHorizontalSource = sourcePos === Position.Left || sourcePos === Position.Right;
+  const isHorizontalTarget = targetPos === Position.Left || targetPos === Position.Right;
+  const A = pts[k];
+  const B = pts[k + 1];
+
+  if (isVertical) {
+    const newX = flowPos.x;
+    // Case 1: Single vertical segment (P0 -> P1)
+    if (pts.length === 2 && k === 0) {
+      const dy = pts[1].y - pts[0].y;
+      const offset1 = Math.min(40, Math.max(20, Math.abs(dy) * 0.2)) * (dy >= 0 ? 1 : -1);
+      const offset2 = Math.min(40, Math.max(20, Math.abs(dy) * 0.2)) * (dy >= 0 ? -1 : 1);
+      const stepY1 = pts[0].y + (!isHorizontalSource ? offset1 : 0);
+      const stepY2 = pts[1].y + (!isHorizontalTarget ? offset2 : 0);
+      if (isHorizontalSource && isHorizontalTarget) {
+        return [pts[0], { x: newX, y: pts[0].y }, { x: newX, y: pts[1].y }, pts[1]];
+      }
+      return [pts[0], { x: pts[0].x, y: stepY1 }, { x: newX, y: stepY1 }, { x: newX, y: stepY2 }, { x: pts[1].x, y: stepY2 }, pts[1]];
+    }
+
+    // Case 2: First segment of multi-segment edge
+    if (k === 0) {
+      if (!isHorizontalSource) {
+        const offset = Math.min(40, Math.max(20, Math.abs(B.y - pts[0].y) * 0.3)) * (B.y >= pts[0].y ? 1 : -1);
+        const stepY = pts[0].y + offset;
+        return [pts[0], { x: pts[0].x, y: stepY }, { x: newX, y: stepY }, { x: newX, y: B.y }, ...pts.slice(2)];
+      }
+      return [pts[0], { x: newX, y: pts[0].y }, { x: newX, y: B.y }, ...pts.slice(2)];
+    }
+
+    // Case 3: Last segment of multi-segment edge
+    if (k + 1 === pts.length - 1) {
+      const targetPt = pts[pts.length - 1];
+      if (!isHorizontalTarget) {
+        const offset = Math.min(40, Math.max(20, Math.abs(targetPt.y - A.y) * 0.3)) * (targetPt.y >= A.y ? -1 : 1);
+        const stepY = targetPt.y + offset;
+        return [...pts.slice(0, k), { x: newX, y: A.y }, { x: newX, y: stepY }, { x: targetPt.x, y: stepY }, targetPt];
+      }
+      return [...pts.slice(0, k), { x: newX, y: A.y }, { x: newX, y: targetPt.y }, targetPt];
+    }
+
+    // Case 4: Internal vertical segment
+    return [...pts.slice(0, k), { x: newX, y: A.y }, { x: newX, y: B.y }, ...pts.slice(k + 2)];
+  } else {
+    const newY = flowPos.y;
+    // Case 1: Single horizontal segment (P0 -> P1)
+    if (pts.length === 2 && k === 0) {
+      const dx = pts[1].x - pts[0].x;
+      const offset1 = Math.min(40, Math.max(20, Math.abs(dx) * 0.2)) * (dx >= 0 ? 1 : -1);
+      const offset2 = Math.min(40, Math.max(20, Math.abs(dx) * 0.2)) * (dx >= 0 ? -1 : 1);
+      const stepX1 = pts[0].x + (isHorizontalSource ? offset1 : 0);
+      const stepX2 = pts[1].x + (isHorizontalTarget ? offset2 : 0);
+      if (!isHorizontalSource && !isHorizontalTarget) {
+        return [pts[0], { x: pts[0].x, y: newY }, { x: pts[1].x, y: newY }, pts[1]];
+      }
+      return [pts[0], { x: stepX1, y: pts[0].y }, { x: stepX1, y: newY }, { x: stepX2, y: newY }, { x: stepX2, y: pts[1].y }, pts[1]];
+    }
+
+    // Case 2: First segment of multi-segment edge
+    if (k === 0) {
+      if (isHorizontalSource) {
+        const offset = Math.min(40, Math.max(20, Math.abs(B.x - pts[0].x) * 0.3)) * (B.x >= pts[0].x ? 1 : -1);
+        const stepX = pts[0].x + offset;
+        return [pts[0], { x: stepX, y: pts[0].y }, { x: stepX, y: newY }, { x: B.x, y: newY }, ...pts.slice(2)];
+      }
+      return [pts[0], { x: pts[0].x, y: newY }, { x: B.x, y: newY }, ...pts.slice(2)];
+    }
+
+    // Case 3: Last segment of multi-segment edge
+    if (k + 1 === pts.length - 1) {
+      const targetPt = pts[pts.length - 1];
+      if (isHorizontalTarget) {
+        const offset = Math.min(40, Math.max(20, Math.abs(targetPt.x - A.x) * 0.3)) * (targetPt.x >= A.x ? -1 : 1);
+        const stepX = targetPt.x + offset;
+        return [...pts.slice(0, k), { x: A.x, y: newY }, { x: stepX, y: newY }, { x: stepX, y: targetPt.y }, targetPt];
+      }
+      return [...pts.slice(0, k), { x: A.x, y: newY }, { x: targetPt.x, y: newY }, targetPt];
+    }
+
+    // Case 4: Internal horizontal segment
+    return [...pts.slice(0, k), { x: A.x, y: newY }, { x: B.x, y: newY }, ...pts.slice(k + 2)];
+  }
+};
+
+type LegSegment = {
+  id: string;
+  fromIndex: number;
+  toIndex: number;
+  from: EdgeBend;
+  to: EdgeBend;
+  isVertical: boolean;
+  midpoint: EdgeBend;
+  length: number;
+};
+
 function FlowingConnectorEdge({
   id,
   sourceX,
@@ -1305,8 +1517,8 @@ function FlowingConnectorEdge({
   targetY,
   sourcePosition,
   targetPosition,
-  markerEnd,
   style,
+  markerEnd,
   label,
   labelStyle,
   labelBgStyle,
@@ -1327,105 +1539,95 @@ function FlowingConnectorEdge({
     targetCardinality?: ErdCardinality;
     labelBackground?: boolean;
   };
+  const { screenToFlowPosition } = useReactFlow();
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
-  // Keep one editable elbow control, like a classic orthogonal diagram line.
-  const storedJoint = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))[0];
-  // A bad value from a previous drag must never be allowed into an SVG path.
-  // SVG silently renders malformed path geometry as large, opaque wedges.
-  const joint = storedJoint && Number.isFinite(storedJoint.x) && Number.isFinite(storedJoint.y)
-    ? storedJoint
-    : undefined;
-  // A connector only counts as straight when its endpoints are genuinely on
-  // the same axis. Small placement differences still need a usable elbow.
-  const portsAreAligned =
-    Math.abs(targetX - sourceX) < 1 || Math.abs(targetY - sourceY) < 1;
-  const useDirectPath = portsAreAligned;
-  const hasHorizontalHandles =
-    (sourcePosition === Position.Left || sourcePosition === Position.Right)
-    && (targetPosition === Position.Left || targetPosition === Position.Right);
-  const hasVerticalHandles =
-    (sourcePosition === Position.Top || sourcePosition === Position.Bottom)
-    && (targetPosition === Position.Top || targetPosition === Position.Bottom);
-  const useHorizontalLane = !useDirectPath && hasHorizontalHandles;
-  const useVerticalLane = !useDirectPath && hasVerticalHandles;
-  const laneX = joint?.x ?? (sourceX + targetX) / 2;
-  const laneY = joint?.y ?? (sourceY + targetY) / 2;
-  const [d, mx, my] = useHorizontalLane
-    ? [
-        `M${sourceX},${sourceY} L${laneX},${sourceY} L${laneX},${targetY} L${targetX},${targetY}`,
-        laneX,
-        (sourceY + targetY) / 2,
-      ]
-    : useVerticalLane
-    ? [
-        `M${sourceX},${sourceY} L${sourceX},${laneY} L${targetX},${laneY} L${targetX},${targetY}`,
-        (sourceX + targetX) / 2,
-        laneY,
-      ]
-    : joint
-    ? [
-        `M${sourceX},${sourceY} L${sourceX},${joint.y} L${joint.x},${joint.y} L${joint.x},${targetY} L${targetX},${targetY}`,
-        joint.x,
-        joint.y,
-      ]
-    : useDirectPath
-    ? [
-        `M${sourceX},${sourceY} L${targetX},${targetY}`,
-        (sourceX + targetX) / 2,
-        (sourceY + targetY) / 2,
-      ]
-    : getSmoothStepPath({
-        sourceX,
-        sourceY,
-        targetX,
-        targetY,
+  const validSavedJoints = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))
+    .filter((j) => Number.isFinite(j.x) && Number.isFinite(j.y));
+
+  const routePoints = useMemo(() => {
+    if (validSavedJoints.length > 0) {
+      const raw = [{ x: sourceX, y: sourceY }, ...validSavedJoints, { x: targetX, y: targetY }];
+      return enforceOrthogonal(raw);
+    }
+    return computeDefaultOrthogonalPoints(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition);
+  }, [validSavedJoints, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition]);
+
+  const d = useMemo(() => {
+    return routePoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  }, [routePoints]);
+
+  const segments = useMemo<LegSegment[]>(() => {
+    const list: LegSegment[] = [];
+    for (let i = 0; i < routePoints.length - 1; i++) {
+      const p1 = routePoints[i];
+      const p2 = routePoints[i + 1];
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+      const len = Math.hypot(dx, dy);
+      if (len >= 6) {
+        const isVertical = Math.abs(dx) <= Math.abs(dy);
+        list.push({
+          id: `seg-${i}`,
+          fromIndex: i,
+          toIndex: i + 1,
+          from: p1,
+          to: p2,
+          isVertical,
+          midpoint: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
+          length: len,
+        });
+      }
+    }
+    return list;
+  }, [routePoints]);
+
+  const dragLeg = (event: ReactPointerEvent<SVGCircleElement>, seg: LegSegment) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!edgeData.onJointsChange) return;
+
+    const initialPoints = routePoints.map((p) => ({ ...p }));
+    const k = seg.fromIndex;
+    const isVert = seg.isVertical;
+
+    const move = (moveEvent: PointerEvent) => {
+      moveEvent.preventDefault();
+      moveEvent.stopPropagation();
+      const flowPos = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY });
+      if (!Number.isFinite(flowPos.x) || !Number.isFinite(flowPos.y)) return;
+
+      const updated = computeMovedSegmentPoints(
+        initialPoints,
+        k,
+        isVert,
+        flowPos,
         sourcePosition,
         targetPosition,
-        borderRadius: 8,
-      });
-  const dragJoint = (event: ReactPointerEvent<SVGCircleElement>) => {
-    event.stopPropagation();
-    const control = event.currentTarget;
-    if (!edgeData.onJointsChange) return;
-    const toFlowPoint = (clientX: number, clientY: number): EdgeBend => {
-      // The React Flow canvas pan/zoom transform lives below the root SVG.
-      // Use the control's CTM so drag coordinates stay in diagram space.
-      const matrix = control.getScreenCTM();
-      if (!matrix) return { x: clientX, y: clientY };
-      const svg = control.ownerSVGElement;
-      if (!svg) return { x: clientX, y: clientY };
-      const point = svg.createSVGPoint();
-      point.x = clientX;
-      point.y = clientY;
-      const converted = point.matrixTransform(matrix.inverse());
-      return Number.isFinite(converted.x) && Number.isFinite(converted.y)
-        ? { x: converted.x, y: converted.y }
-        : { x: clientX, y: clientY };
+      );
+      const cleaned = cleanOrthogonalPoints(updated);
+      const newJoints = cleaned.slice(1, -1);
+      edgeData.onJointsChange?.(newJoints);
     };
-    const move = (moveEvent: PointerEvent) => {
-      const point = toFlowPoint(moveEvent.clientX, moveEvent.clientY);
-      edgeData.onJointsChange?.([
-        useHorizontalLane
-          ? { x: point.x, y: (sourceY + targetY) / 2 }
-          : useVerticalLane
-          ? { x: (sourceX + targetX) / 2, y: point.y }
-          : point,
-      ]);
+
+    const stop = (upEvent: PointerEvent) => {
+      upEvent.preventDefault();
+      upEvent.stopPropagation();
+      window.removeEventListener("pointermove", move, { capture: true });
+      window.removeEventListener("pointerup", stop, { capture: true });
     };
-    const stop = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", stop);
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", stop, { once: true });
+
+    window.addEventListener("pointermove", move, { capture: true });
+    window.addEventListener("pointerup", stop, { capture: true });
   };
-  const jointControl = joint ?? { x: mx, y: my };
-  const labelPosition = edgeData.labelPosition ?? { x: mx, y: my };
+
+  const midSegment = segments[Math.floor(segments.length / 2)];
+  const labelDefaultPosition = midSegment ? midSegment.midpoint : { x: (sourceX + targetX) / 2, y: (sourceY + targetY) / 2 };
+  const labelPosition = edgeData.labelPosition ?? labelDefaultPosition;
   const labelBackgroundEnabled = edgeData.labelBackground !== false;
   const labelBackgroundColor = typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff";
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
   const labelPaddingY = labelBgPadding?.[1] ?? 4;
-  const labelFontSize = typeof labelStyle?.fontSize === "number" ? labelStyle.fontSize : 12;
+  const labelFontSize = typeof labelStyle?.fontSize === "number" && labelStyle.fontSize > 0 ? labelStyle.fontSize : 12;
   const labelMaskWidth = Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10);
   const labelMaskHeight = Math.max(22, labelFontSize * 1.2 + labelPaddingY * 2);
   const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
@@ -1565,10 +1767,10 @@ function FlowingConnectorEdge({
   return (
     <>
       <BaseEdge
-      id={id}
-      path={d}
-      style={{ ...style, strokeOpacity: 0 }}
-        interactionWidth={24}
+        id={id}
+        path={d}
+        style={{ ...style, strokeOpacity: 0 }}
+        interactionWidth={14}
       />
       <path
         className="react-flow__edge-path edge-visible-path"
@@ -1607,7 +1809,7 @@ function FlowingConnectorEdge({
               title="Drag to reposition · Double-click to reset"
               style={{
                 color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
-                fontSize: labelStyle?.fontSize,
+                fontSize: `${labelFontSize}px`,
                 fontWeight: labelStyle?.fontWeight,
                 background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-cutout, #f6f8fb)",
                 opacity: 1,
@@ -1635,19 +1837,23 @@ function FlowingConnectorEdge({
           <animateMotion key={d} dur="2.35s" repeatCount="indefinite" path={d} />
         </circle>
       ) : null}
-      {selected ? (
-        <circle
-          className="edge-bend-control"
-          cx={jointControl.x}
-          cy={jointControl.y}
-          r={7}
-          onPointerDown={dragJoint}
-          onContextMenu={(event) => {
-            event.preventDefault();
-            edgeData.onJointsChange?.([]);
-          }}
-        />
-      ) : null}
+      {selected
+        ? segments.map((seg, idx) => (
+            <circle
+              key={`${id}-leg-${idx}`}
+              className="edge-bend-control"
+              cx={seg.midpoint.x}
+              cy={seg.midpoint.y}
+              r={7}
+              style={{ cursor: seg.isVertical ? "ew-resize" : "ns-resize" }}
+              onPointerDown={(event) => dragLeg(event, seg)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                edgeData.onJointsChange?.([]);
+              }}
+            />
+          ))
+        : null}
     </>
   );
 }
@@ -2737,9 +2943,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         const base = defaultShapeSize(node.data.shape);
         const textScale = Math.max(
           1,
-          (nextData.titleSize ?? 13) / 13,
-          (nextData.descriptionSize ?? 10) / 10,
-          (nextData.headerSize ?? 11) / 11,
+          (nextData.titleSize || 13) / 13,
+          (nextData.descriptionSize || 10) / 10,
+          (nextData.headerSize || 11) / 11,
         );
         const shapeScale = 1 + (textScale - 1) * 0.55;
         const requiredWidth = Math.ceil(base.width * shapeScale);
@@ -2781,7 +2987,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       const nextData = { ...node.data, autoGrowWithText: enabled };
       if (!enabled) return { ...node, data: nextData };
       const base = defaultShapeSize(node.data.shape);
-      const textScale = Math.max(1, (nextData.titleSize ?? 13) / 13, (nextData.descriptionSize ?? 10) / 10, (nextData.headerSize ?? 11) / 11);
+      const textScale = Math.max(1, (nextData.titleSize || 13) / 13, (nextData.descriptionSize || 10) / 10, (nextData.headerSize || 11) / 11);
       const shapeScale = 1 + (textScale - 1) * 0.55;
       const width = Math.ceil(base.width * shapeScale);
       const height = Math.ceil(base.height * shapeScale);
@@ -2849,8 +3055,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const updateEdgeJoints = useCallback(
     (edgeId: string, joints: EdgeBend[]) => {
       const validJoints = joints
-        .filter((joint) => Number.isFinite(joint.x) && Number.isFinite(joint.y))
-        .slice(0, 1);
+        .filter((joint) => Number.isFinite(joint.x) && Number.isFinite(joint.y));
       setEdges((current) =>
         current.map((edgeItem) =>
           edgeItem.id === edgeId
@@ -4105,7 +4310,7 @@ const persistPageIndex = (
 
   const changeDocsInspectZoom = (change: number) => {
     setDocsInspectZoom((current) =>
-      Math.min(4, Math.max(0.75, Math.round((current + change) * 10) / 10)),
+      Math.min(4, Math.max(0.1, Math.round((current + change) * 10) / 10)),
     );
   };
 
@@ -5383,8 +5588,8 @@ const persistPageIndex = (
            className={`${commentPlacementMode ? "comment-placement-active" : textPlacementMode ? "text-placement-active" : ""} ${drawPresentationOpen ? `presentation-${presentationInteraction}-mode` : canvasMode === "move" ? "canvas-move-mode" : "canvas-select-mode"}`}
           fitView
           fitViewOptions={{ padding: 0.08 }}
-          minZoom={0.18}
-          maxZoom={1.5}
+          minZoom={0.01}
+          maxZoom={2.5}
           elevateNodesOnSelect={false}
           deleteKeyCode={animationMode === "presentation" ? [] : ["Backspace", "Delete"]}
           proOptions={{ hideAttribution: true }}
@@ -5865,7 +6070,7 @@ const persistPageIndex = (
                     }}>{[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
                     <label><span>Branch position</span><select value={nodeDraft.fishboneSide ?? "top"} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneSide: event.target.value as "top" | "bottom" })}><option value="top">Above main spine</option><option value="bottom">Below main spine</option></select></label>
                     <label><span>Line endpoint</span><select value={nodeDraft.fishboneEndMarker ?? "arrow"} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneEndMarker: event.target.value as "arrow" | "circle" })}><option value="arrow">Arrow</option><option value="circle">Circle</option></select></label>
-                    <label><span>Cause text size (px)</span><input type="number" min="8" max="32" value={nodeDraft.fishboneTextSize ?? 11} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneTextSize: Number(event.target.value) })} onBlur={(event) => setNodeDraft({ ...nodeDraft, fishboneTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 11)) })} /></label>
+                    <label><span>Cause text size (px)</span><input type="number" min="8" max="128" placeholder="11" value={nodeDraft.fishboneTextSize || ""} onFocus={(event) => event.target.select()} onChange={(event) => { const raw = event.target.value; if (raw === "") { setNodeDraft({ ...nodeDraft, fishboneTextSize: 0 }); return; } const parsed = parseInt(raw, 10); if (!Number.isNaN(parsed)) setNodeDraft({ ...nodeDraft, fishboneTextSize: Math.min(128, Math.max(0, parsed)) }); }} onBlur={(event) => { const parsed = parseInt(event.target.value, 10); setNodeDraft({ ...nodeDraft, fishboneTextSize: Number.isNaN(parsed) || parsed < 8 ? 11 : Math.min(128, parsed) }); }} /></label>
                     <label className="description-toggle inspector-apply-toggle"><span><strong>Link all line lengths</strong><small>Adjusting one length updates every cause line.</small></span><input type="checkbox" checked={linkFishboneLineLengths} onChange={(event) => setLinkFishboneLineLengths(event.target.checked)} /><i aria-hidden="true" /></label>
                     <div className="fishbone-label-fields">
                       {Array.from({ length: nodeDraft.fishboneLineCount ?? 3 }, (_, index) => <div className="fishbone-line-editor" key={index}>
@@ -5876,7 +6081,7 @@ const persistPageIndex = (
                   </fieldset> : null}
                   {nodeDraft.shape === "fishbone-circle" ? <fieldset className="fishbone-creator-controls">
                     <legend>Category circle</legend>
-                    <label><span>Category text size (px)</span><input type="number" min="8" max="32" value={nodeDraft.fishboneCircleTextSize ?? 10} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Number(event.target.value) })} onBlur={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 10)) })} /></label>
+                    <label><span>Category text size (px)</span><input type="number" min="8" max="128" placeholder="10" value={nodeDraft.fishboneCircleTextSize || ""} onFocus={(event) => event.target.select()} onChange={(event) => { const raw = event.target.value; if (raw === "") { setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: 0 }); return; } const parsed = parseInt(raw, 10); if (!Number.isNaN(parsed)) setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Math.min(128, Math.max(0, parsed)) }); }} onBlur={(event) => { const parsed = parseInt(event.target.value, 10); setNodeDraft({ ...nodeDraft, fishboneCircleTextSize: Number.isNaN(parsed) || parsed < 8 ? 10 : Math.min(128, parsed) }); }} /></label>
                     <label className="description-toggle inspector-apply-toggle"><span><strong>Bold category text</strong><small>Applies inside or beside the circle.</small></span><input type="checkbox" checked={nodeDraft.fishboneCircleTextBold !== false} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleTextBold: event.target.checked })} /><i aria-hidden="true" /></label>
                     <label className="description-toggle inspector-apply-toggle"><span><strong>Use a Fishbone icon</strong><small>Places the title beside the circle.</small></span><input type="checkbox" checked={Boolean(nodeDraft.fishboneCircleIconMode)} onChange={(event) => setNodeDraft({ ...nodeDraft, fishboneCircleIconMode: event.target.checked, icon: event.target.checked ? (fishboneIconOptions.some((option) => option.value === nodeDraft.icon) ? nodeDraft.icon : fishboneIconOptions[0].value) : nodeDraft.icon, hideIcon: !event.target.checked })} /><i aria-hidden="true" /></label>
                     {nodeDraft.fishboneCircleIconMode ? <div className="fishbone-icon-picker option-grid icon-grid" aria-label="Fishbone category icons">
@@ -6095,12 +6300,27 @@ const persistPageIndex = (
                 <label>
                   <span>Font size (px)</span>
                   <input
-                    type="range"
-                    min="10"
-                    max="48"
-                    step="1"
-                    value={textDraft.titleSize ?? 16}
-                    onChange={(event) => setTextDraft({ ...textDraft, titleSize: Number(event.target.value) })}
+                    type="number"
+                    min="6"
+                    max="128"
+                    placeholder="16"
+                    value={textDraft.titleSize || ""}
+                    onFocus={(event) => event.target.select()}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      if (raw === "") {
+                        setTextDraft({ ...textDraft, titleSize: 0 });
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      if (!Number.isNaN(parsed)) {
+                        setTextDraft({ ...textDraft, titleSize: Math.min(128, Math.max(0, parsed)) });
+                      }
+                    }}
+                    onBlur={(event) => {
+                      const parsed = parseInt(event.target.value, 10);
+                      setTextDraft({ ...textDraft, titleSize: Number.isNaN(parsed) || parsed < 6 ? 16 : Math.min(128, parsed) });
+                    }}
                   />
                 </label>
                 <fieldset>
@@ -6600,7 +6820,45 @@ const persistPageIndex = (
                   <label><span>Header background</span><input type="color" value={selectedNode.data.headerColor ?? "#f59e0b"} onChange={(event) => updateSelected({ headerColor: event.target.value })} /></label>
                   <label><span>Header text</span><input type="color" value={selectedTextStyle.color ?? "#ffffff"} onChange={(event) => updateSelectedTextStyle({ color: event.target.value })} /></label>
                 </div> : null}
-                <label className="line-label-size"><span>Font size</span><div><input type="range" min={selectedTextTarget === "title" ? "8" : "7"} max={selectedTextTarget === "title" ? "42" : "32"} value={selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)} onChange={(event) => updateTextSize(selectedTextTarget === "title" ? "titleSize" : selectedTextTarget === "header" ? "headerSize" : "descriptionSize", Number(event.target.value), false)} /><output>{selectedTextTarget === "title" ? (selectedNode.data.titleSize ?? 13) : selectedTextTarget === "header" ? (selectedNode.data.headerSize ?? 11) : (selectedNode.data.descriptionSize ?? 10)}px</output></div></label>
+                <label>
+                  <span>Font size (px)</span>
+                  <input
+                    type="number"
+                    min="6"
+                    max="128"
+                    placeholder={String(selectedTextTarget === "title" ? 13 : selectedTextTarget === "header" ? 11 : 10)}
+                    value={
+                      (() => {
+                        const val = selectedTextTarget === "title"
+                          ? selectedNode.data.titleSize
+                          : selectedTextTarget === "header"
+                            ? selectedNode.data.headerSize
+                            : selectedNode.data.descriptionSize;
+                        return val === undefined || val === null || val === 0 ? "" : val;
+                      })()
+                    }
+                    onFocus={(event) => event.target.select()}
+                    onChange={(event) => {
+                      const raw = event.target.value;
+                      const targetKey = selectedTextTarget === "title" ? "titleSize" : selectedTextTarget === "header" ? "headerSize" : "descriptionSize";
+                      if (raw === "") {
+                        updateTextSize(targetKey, 0, false);
+                        return;
+                      }
+                      const parsed = parseInt(raw, 10);
+                      if (!Number.isNaN(parsed)) {
+                        updateTextSize(targetKey, Math.min(128, Math.max(0, parsed)), false);
+                      }
+                    }}
+                    onBlur={(event) => {
+                      const targetKey = selectedTextTarget === "title" ? "titleSize" : selectedTextTarget === "header" ? "headerSize" : "descriptionSize";
+                      const fallback = selectedTextTarget === "title" ? 13 : selectedTextTarget === "header" ? 11 : 10;
+                      const parsed = parseInt(event.target.value, 10);
+                      const clamped = Number.isNaN(parsed) || parsed < 6 ? fallback : Math.min(128, parsed);
+                      updateTextSize(targetKey, clamped, false);
+                    }}
+                  />
+                </label>
                 <label className="description-toggle inspector-apply-toggle"><span><strong>Grow box with text</strong><small>Increase the node size as its text gets larger.</small></span><input type="checkbox" checked={Boolean(selectedNode.data.autoGrowWithText)} onChange={(event) => updateAutoGrowWithText(event.target.checked)} /><i aria-hidden="true" /></label>
                 <div className="text-style-actions" role="group" aria-label="Text style">
                   <button type="button" title="Bold" className={selectedTextStyle.fontWeight === 700 ? "active" : ""} onClick={() => updateSelectedTextStyle({ fontWeight: selectedTextStyle.fontWeight === 700 ? 400 : 700 })}><strong>B</strong></button>
@@ -6671,7 +6929,7 @@ const persistPageIndex = (
                   <label><span>Number of cause lines</span><select value={selectedNode.data.fishboneLineCount ?? 3} onChange={(event) => updateSelectedFishbone({ fishboneLineCount: Number(event.target.value) })}>{[1, 2, 3, 4, 5, 6, 7, 8].map((count) => <option key={count} value={count}>{count}</option>)}</select></label>
                   <label className="inspector-select-label"><span>Branch position</span><select value={selectedNode.data.fishboneSide ?? "top"} onChange={(event) => updateSelectedFishbone({ fishboneSide: event.target.value as "top" | "bottom" })}><option value="top">Above main spine</option><option value="bottom">Below main spine</option></select></label>
                   <label className="inspector-select-label"><span>Line endpoint</span><select value={selectedNode.data.fishboneEndMarker ?? "arrow"} onChange={(event) => updateSelectedFishbone({ fishboneEndMarker: event.target.value as "arrow" | "circle" })}><option value="arrow">Arrow</option><option value="circle">Circle</option></select></label>
-                  <label><span>Cause text size (px)</span><input type="number" min="8" max="32" value={selectedNode.data.fishboneTextSize ?? 11} onChange={(event) => updateSelectedFishbone({ fishboneTextSize: Number(event.target.value) })} onBlur={(event) => updateSelectedFishbone({ fishboneTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 11)) })} /></label>
+                  <label><span>Cause text size (px)</span><input type="number" min="8" max="128" placeholder="11" value={selectedNode.data.fishboneTextSize || ""} onFocus={(event) => event.target.select()} onChange={(event) => { const raw = event.target.value; if (raw === "") { updateSelectedFishbone({ fishboneTextSize: 0 }); return; } const parsed = parseInt(raw, 10); if (!Number.isNaN(parsed)) updateSelectedFishbone({ fishboneTextSize: Math.min(128, Math.max(0, parsed)) }); }} onBlur={(event) => { const parsed = parseInt(event.target.value, 10); updateSelectedFishbone({ fishboneTextSize: Number.isNaN(parsed) || parsed < 8 ? 11 : Math.min(128, parsed) }); }} /></label>
                   <label className="description-toggle inspector-apply-toggle"><span><strong>Link all line lengths</strong><small>Adjusting one length updates every cause line.</small></span><input type="checkbox" checked={linkFishboneLineLengths} onChange={(event) => setLinkFishboneLineLengths(event.target.checked)} /><i aria-hidden="true" /></label>
                   <div className="fishbone-label-fields">
                     {Array.from({ length: selectedNode.data.fishboneLineCount ?? 3 }, (_, index) => <div className="fishbone-line-editor" key={index}>
@@ -6682,7 +6940,7 @@ const persistPageIndex = (
                   <small>The branch only grows vertically when lines are added. Text never changes its width; adjust each line manually when needed.</small>
                 </> : selectedNode.data.shape === "fishbone-circle" ? <>
                   <label><span>Circle text</span><input value={selectedNode.data.label} onChange={(event) => updateSelectedFishbone({ label: event.target.value })} /></label>
-                  <label><span>Category text size (px)</span><input type="number" min="8" max="32" value={selectedNode.data.fishboneCircleTextSize ?? 10} onChange={(event) => updateSelectedFishbone({ fishboneCircleTextSize: Number(event.target.value) })} onBlur={(event) => updateSelectedFishbone({ fishboneCircleTextSize: Math.max(8, Math.min(32, Number(event.target.value) || 10)) })} /></label>
+                  <label><span>Category text size (px)</span><input type="number" min="8" max="128" placeholder="10" value={selectedNode.data.fishboneCircleTextSize || ""} onFocus={(event) => event.target.select()} onChange={(event) => { const raw = event.target.value; if (raw === "") { updateSelectedFishbone({ fishboneCircleTextSize: 0 }); return; } const parsed = parseInt(raw, 10); if (!Number.isNaN(parsed)) updateSelectedFishbone({ fishboneCircleTextSize: Math.min(128, Math.max(0, parsed)) }); }} onBlur={(event) => { const parsed = parseInt(event.target.value, 10); updateSelectedFishbone({ fishboneCircleTextSize: Number.isNaN(parsed) || parsed < 8 ? 10 : Math.min(128, parsed) }); }} /></label>
                   <label className="description-toggle inspector-apply-toggle"><span><strong>Bold category text</strong><small>Applies inside or beside the circle.</small></span><input type="checkbox" checked={selectedNode.data.fishboneCircleTextBold !== false} onChange={(event) => updateSelectedFishbone({ fishboneCircleTextBold: event.target.checked })} /><i aria-hidden="true" /></label>
                   <label className="description-toggle inspector-apply-toggle"><span><strong>Use a Fishbone icon</strong><small>Show the title beside the circle.</small></span><input type="checkbox" checked={Boolean(selectedNode.data.fishboneCircleIconMode)} onChange={(event) => updateSelectedFishbone({ fishboneCircleIconMode: event.target.checked, icon: event.target.checked && !fishboneIconOptions.some((option) => option.value === selectedNode.data.icon) ? fishboneIconOptions[0].value : selectedNode.data.icon })} /><i aria-hidden="true" /></label>
                   {selectedNode.data.fishboneCircleIconMode ? <div className="fishbone-icon-picker option-grid icon-grid" aria-label="Fishbone category icons">
@@ -6932,35 +7190,51 @@ const persistPageIndex = (
                 onChange={(event) => updateSelectedEdge({ label: event.target.value })}
               />
             </label>
-            <label className="line-label-size">
-              <span>Label text size</span>
-              <div>
-                <input
-                  type="range"
-                  min="8"
-                  max="36"
-                  step="1"
-                  value={
-                    typeof selectedEdge.labelStyle?.fontSize === "number"
-                      ? selectedEdge.labelStyle.fontSize
-                      : 12
-                  }
-                  onChange={(event) =>
+            <label>
+              <span>Label text size (px)</span>
+              <input
+                type="number"
+                min="6"
+                max="128"
+                placeholder="12"
+                value={
+                  typeof selectedEdge.labelStyle?.fontSize === "number" && selectedEdge.labelStyle.fontSize > 0
+                    ? selectedEdge.labelStyle.fontSize
+                    : ""
+                }
+                onFocus={(event) => event.target.select()}
+                onChange={(event) => {
+                  const raw = event.target.value;
+                  if (raw === "") {
                     updateSelectedEdge({
                       labelStyle: {
                         ...selectedEdge.labelStyle,
-                        fontSize: Number(event.target.value),
+                        fontSize: 0,
                       },
-                    })
+                    });
+                    return;
                   }
-                />
-                <output>
-                  {typeof selectedEdge.labelStyle?.fontSize === "number"
-                    ? selectedEdge.labelStyle.fontSize
-                    : 12}
-                  px
-                </output>
-              </div>
+                  const parsed = parseInt(raw, 10);
+                  if (!Number.isNaN(parsed)) {
+                    updateSelectedEdge({
+                      labelStyle: {
+                        ...selectedEdge.labelStyle,
+                        fontSize: Math.min(128, Math.max(0, parsed)),
+                      },
+                    });
+                  }
+                }}
+                onBlur={(event) => {
+                  const parsed = parseInt(event.target.value, 10);
+                  const clamped = Number.isNaN(parsed) || parsed < 6 ? 12 : Math.min(128, parsed);
+                  updateSelectedEdge({
+                    labelStyle: {
+                      ...selectedEdge.labelStyle,
+                      fontSize: clamped,
+                    },
+                  });
+                }}
+              />
               <small>Applies to this connection label only.</small>
             </label>
             <fieldset className="line-label-background inspector-control-card">
