@@ -1,0 +1,4258 @@
+{
+  "tables": {
+    "lib_countries": {
+      "name": "lib_countries",
+      "columns": {
+        "country_id": {
+          "name": "country_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "country_code": {
+          "name": "country_code",
+          "type": "bpchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "country_name": {
+          "name": "country_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_countries_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_countries_pkey",
+          "columnNames": [
+            "country_id"
+          ]
+        },
+        "lib_countries_country_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_countries_country_code_key",
+          "columnNames": [
+            "country_code"
+          ]
+        }
+      }
+    },
+    "lib_regions": {
+      "name": "lib_regions",
+      "columns": {
+        "region_id": {
+          "name": "region_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "country_id": {
+          "name": "country_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "region_name": {
+          "name": "region_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_regions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_regions_pkey",
+          "columnNames": [
+            "region_id"
+          ]
+        },
+        "fk_regions_country": {
+          "type": "FOREIGN KEY",
+          "name": "fk_regions_country",
+          "columnNames": [
+            "country_id"
+          ],
+          "targetTableName": "lib_countries",
+          "targetColumnNames": [
+            "country_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_provinces": {
+      "name": "lib_provinces",
+      "columns": {
+        "province_id": {
+          "name": "province_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "region_id": {
+          "name": "region_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "province_name": {
+          "name": "province_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_provinces_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_provinces_pkey",
+          "columnNames": [
+            "province_id"
+          ]
+        },
+        "fk_provinces_region": {
+          "type": "FOREIGN KEY",
+          "name": "fk_provinces_region",
+          "columnNames": [
+            "region_id"
+          ],
+          "targetTableName": "lib_regions",
+          "targetColumnNames": [
+            "region_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_cities": {
+      "name": "lib_cities",
+      "columns": {
+        "city_id": {
+          "name": "city_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "province_id": {
+          "name": "province_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "city_name": {
+          "name": "city_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "zip_code": {
+          "name": "zip_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_cities_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_cities_pkey",
+          "columnNames": [
+            "city_id"
+          ]
+        },
+        "fk_cities_province": {
+          "type": "FOREIGN KEY",
+          "name": "fk_cities_province",
+          "columnNames": [
+            "province_id"
+          ],
+          "targetTableName": "lib_provinces",
+          "targetColumnNames": [
+            "province_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_departments": {
+      "name": "lib_departments",
+      "columns": {
+        "department_id": {
+          "name": "department_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "department_code": {
+          "name": "department_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "department_name": {
+          "name": "department_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_departments_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_departments_pkey",
+          "columnNames": [
+            "department_id"
+          ]
+        },
+        "lib_departments_department_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_departments_department_code_key",
+          "columnNames": [
+            "department_code"
+          ]
+        }
+      }
+    },
+    "lib_positions": {
+      "name": "lib_positions",
+      "columns": {
+        "position_id": {
+          "name": "position_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "department_id": {
+          "name": "department_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "position_code": {
+          "name": "position_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "position_title": {
+          "name": "position_title",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "pay_grade": {
+          "name": "pay_grade",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_positions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_positions_pkey",
+          "columnNames": [
+            "position_id"
+          ]
+        },
+        "lib_positions_position_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_positions_position_code_key",
+          "columnNames": [
+            "position_code"
+          ]
+        },
+        "fk_positions_department": {
+          "type": "FOREIGN KEY",
+          "name": "fk_positions_department",
+          "columnNames": [
+            "department_id"
+          ],
+          "targetTableName": "lib_departments",
+          "targetColumnNames": [
+            "department_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_employment_types": {
+      "name": "lib_employment_types",
+      "columns": {
+        "employment_type_id": {
+          "name": "employment_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_employment_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_employment_types_pkey",
+          "columnNames": [
+            "employment_type_id"
+          ]
+        },
+        "lib_employment_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_employment_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "lib_employment_statuses": {
+      "name": "lib_employment_statuses",
+      "columns": {
+        "status_id": {
+          "name": "status_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status_code": {
+          "name": "status_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status_name": {
+          "name": "status_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_employment_statuses_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_employment_statuses_pkey",
+          "columnNames": [
+            "status_id"
+          ]
+        },
+        "lib_employment_statuses_status_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_employment_statuses_status_code_key",
+          "columnNames": [
+            "status_code"
+          ]
+        }
+      }
+    },
+    "lib_tax_brackets": {
+      "name": "lib_tax_brackets",
+      "columns": {
+        "bracket_id": {
+          "name": "bracket_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "country_id": {
+          "name": "country_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bracket_label": {
+          "name": "bracket_label",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "min_income": {
+          "name": "min_income",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "max_income": {
+          "name": "max_income",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "tax_rate_pct": {
+          "name": "tax_rate_pct",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_tax_brackets_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_tax_brackets_pkey",
+          "columnNames": [
+            "bracket_id"
+          ]
+        },
+        "fk_tax_country": {
+          "type": "FOREIGN KEY",
+          "name": "fk_tax_country",
+          "columnNames": [
+            "country_id"
+          ],
+          "targetTableName": "lib_countries",
+          "targetColumnNames": [
+            "country_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "lib_benefit_types": {
+      "name": "lib_benefit_types",
+      "columns": {
+        "benefit_type_id": {
+          "name": "benefit_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_mandatory": {
+          "name": "is_mandatory",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_benefit_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_benefit_types_pkey",
+          "columnNames": [
+            "benefit_type_id"
+          ]
+        },
+        "lib_benefit_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_benefit_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "lib_deduction_types": {
+      "name": "lib_deduction_types",
+      "columns": {
+        "deduction_type_id": {
+          "name": "deduction_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_statutory": {
+          "name": "is_statutory",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_deduction_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_deduction_types_pkey",
+          "columnNames": [
+            "deduction_type_id"
+          ]
+        },
+        "lib_deduction_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_deduction_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "lib_earning_types": {
+      "name": "lib_earning_types",
+      "columns": {
+        "earning_type_id": {
+          "name": "earning_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_taxable": {
+          "name": "is_taxable",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_earning_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_earning_types_pkey",
+          "columnNames": [
+            "earning_type_id"
+          ]
+        },
+        "lib_earning_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_earning_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "lib_leave_types": {
+      "name": "lib_leave_types",
+      "columns": {
+        "leave_type_id": {
+          "name": "leave_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_paid": {
+          "name": "is_paid",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "max_days": {
+          "name": "max_days",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_leave_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_leave_types_pkey",
+          "columnNames": [
+            "leave_type_id"
+          ]
+        },
+        "lib_leave_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_leave_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "lib_pay_frequencies": {
+      "name": "lib_pay_frequencies",
+      "columns": {
+        "frequency_id": {
+          "name": "frequency_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "frequency_code": {
+          "name": "frequency_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "frequency_name": {
+          "name": "frequency_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "periods_per_year": {
+          "name": "periods_per_year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_pay_frequencies_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_pay_frequencies_pkey",
+          "columnNames": [
+            "frequency_id"
+          ]
+        },
+        "lib_pay_frequencies_frequency_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_pay_frequencies_frequency_code_key",
+          "columnNames": [
+            "frequency_code"
+          ]
+        }
+      }
+    },
+    "lib_banks": {
+      "name": "lib_banks",
+      "columns": {
+        "bank_id": {
+          "name": "bank_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bank_code": {
+          "name": "bank_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bank_name": {
+          "name": "bank_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "swift_bic": {
+          "name": "swift_bic",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_banks_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_banks_pkey",
+          "columnNames": [
+            "bank_id"
+          ]
+        },
+        "lib_banks_bank_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_banks_bank_code_key",
+          "columnNames": [
+            "bank_code"
+          ]
+        }
+      }
+    },
+    "lib_currencies": {
+      "name": "lib_currencies",
+      "columns": {
+        "currency_id": {
+          "name": "currency_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_code": {
+          "name": "currency_code",
+          "type": "bpchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_name": {
+          "name": "currency_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "symbol": {
+          "name": "symbol",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_currencies_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_currencies_pkey",
+          "columnNames": [
+            "currency_id"
+          ]
+        },
+        "lib_currencies_currency_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_currencies_currency_code_key",
+          "columnNames": [
+            "currency_code"
+          ]
+        }
+      }
+    },
+    "lib_shift_types": {
+      "name": "lib_shift_types",
+      "columns": {
+        "shift_type_id": {
+          "name": "shift_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "shift_code": {
+          "name": "shift_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "shift_name": {
+          "name": "shift_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "time",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "time",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "night_diff": {
+          "name": "night_diff",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_shift_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_shift_types_pkey",
+          "columnNames": [
+            "shift_type_id"
+          ]
+        },
+        "lib_shift_types_shift_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_shift_types_shift_code_key",
+          "columnNames": [
+            "shift_code"
+          ]
+        }
+      }
+    },
+    "lib_holiday_types": {
+      "name": "lib_holiday_types",
+      "columns": {
+        "holiday_type_id": {
+          "name": "holiday_type_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_code": {
+          "name": "type_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "type_name": {
+          "name": "type_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "pay_multiplier": {
+          "name": "pay_multiplier",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "lib_holiday_types_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "lib_holiday_types_pkey",
+          "columnNames": [
+            "holiday_type_id"
+          ]
+        },
+        "lib_holiday_types_type_code_key": {
+          "type": "UNIQUE",
+          "name": "lib_holiday_types_type_code_key",
+          "columnNames": [
+            "type_code"
+          ]
+        }
+      }
+    },
+    "organizations": {
+      "name": "organizations",
+      "columns": {
+        "org_id": {
+          "name": "org_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "org_name": {
+          "name": "org_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "tax_id_num": {
+          "name": "tax_id_num",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "country_id": {
+          "name": "country_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "organizations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "organizations_pkey",
+          "columnNames": [
+            "org_id"
+          ]
+        },
+        "fk_org_country": {
+          "type": "FOREIGN KEY",
+          "name": "fk_org_country",
+          "columnNames": [
+            "country_id"
+          ],
+          "targetTableName": "lib_countries",
+          "targetColumnNames": [
+            "country_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_org_currency": {
+          "type": "FOREIGN KEY",
+          "name": "fk_org_currency",
+          "columnNames": [
+            "currency_id"
+          ],
+          "targetTableName": "lib_currencies",
+          "targetColumnNames": [
+            "currency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "org_branches": {
+      "name": "org_branches",
+      "columns": {
+        "branch_id": {
+          "name": "branch_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "branch_code": {
+          "name": "branch_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "branch_name": {
+          "name": "branch_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "address_line": {
+          "name": "address_line",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_hq": {
+          "name": "is_hq",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "org_branches_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "org_branches_pkey",
+          "columnNames": [
+            "branch_id"
+          ]
+        },
+        "fk_branch_org": {
+          "type": "FOREIGN KEY",
+          "name": "fk_branch_org",
+          "columnNames": [
+            "org_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "org_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_branch_city": {
+          "type": "FOREIGN KEY",
+          "name": "fk_branch_city",
+          "columnNames": [
+            "city_id"
+          ],
+          "targetTableName": "lib_cities",
+          "targetColumnNames": [
+            "city_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employees": {
+      "name": "employees",
+      "columns": {
+        "employee_id": {
+          "name": "employee_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_code": {
+          "name": "employee_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "middle_name": {
+          "name": "middle_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "suffix": {
+          "name": "suffix",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "date_of_birth": {
+          "name": "date_of_birth",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "gender": {
+          "name": "gender",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "marital_status": {
+          "name": "marital_status",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "nationality": {
+          "name": "nationality",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "tax_id": {
+          "name": "tax_id",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "sss_number": {
+          "name": "sss_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "philhealth_number": {
+          "name": "philhealth_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "pagibig_number": {
+          "name": "pagibig_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "contact_phone": {
+          "name": "contact_phone",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "contact_email": {
+          "name": "contact_email",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_emp_org": {
+          "name": "idx_emp_org",
+          "unique": false,
+          "columns": [
+            "org_id"
+          ],
+          "type": "btree"
+        },
+        "idx_emp_code": {
+          "name": "idx_emp_code",
+          "unique": false,
+          "columns": [
+            "employee_code"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "employees_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employees_pkey",
+          "columnNames": [
+            "employee_id"
+          ]
+        },
+        "employees_employee_code_key": {
+          "type": "UNIQUE",
+          "name": "employees_employee_code_key",
+          "columnNames": [
+            "employee_code"
+          ]
+        },
+        "fk_emp_org": {
+          "type": "FOREIGN KEY",
+          "name": "fk_emp_org",
+          "columnNames": [
+            "org_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "org_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_addresses": {
+      "name": "employee_addresses",
+      "columns": {
+        "address_id": {
+          "name": "address_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "address_type": {
+          "name": "address_type",
+          "type": "varchar",
+          "default": "PRIMARY",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "address_line_1": {
+          "name": "address_line_1",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "address_line_2": {
+          "name": "address_line_2",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "city_id": {
+          "name": "city_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_current": {
+          "name": "is_current",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "employee_addresses_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_addresses_pkey",
+          "columnNames": [
+            "address_id"
+          ]
+        },
+        "fk_addr_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_addr_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_addr_city": {
+          "type": "FOREIGN KEY",
+          "name": "fk_addr_city",
+          "columnNames": [
+            "city_id"
+          ],
+          "targetTableName": "lib_cities",
+          "targetColumnNames": [
+            "city_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_employment": {
+      "name": "employee_employment",
+      "columns": {
+        "employment_id": {
+          "name": "employment_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "position_id": {
+          "name": "position_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employment_type_id": {
+          "name": "employment_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status_id": {
+          "name": "status_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "pay_frequency_id": {
+          "name": "pay_frequency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "shift_type_id": {
+          "name": "shift_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hire_date": {
+          "name": "hire_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "regularization_date": {
+          "name": "regularization_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "separation_date": {
+          "name": "separation_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "base_salary": {
+          "name": "base_salary",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_current": {
+          "name": "is_current",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "effective_from": {
+          "name": "effective_from",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "effective_to": {
+          "name": "effective_to",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_ee_employee": {
+          "name": "idx_ee_employee",
+          "unique": false,
+          "columns": [
+            "employee_id"
+          ],
+          "type": "btree"
+        },
+        "idx_ee_current": {
+          "name": "idx_ee_current",
+          "unique": false,
+          "columns": [
+            "employee_id",
+            "is_current"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "employee_employment_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_employment_pkey",
+          "columnNames": [
+            "employment_id"
+          ]
+        },
+        "fk_ee_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_branch": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_branch",
+          "columnNames": [
+            "branch_id"
+          ],
+          "targetTableName": "org_branches",
+          "targetColumnNames": [
+            "branch_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_position": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_position",
+          "columnNames": [
+            "position_id"
+          ],
+          "targetTableName": "lib_positions",
+          "targetColumnNames": [
+            "position_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_type": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_type",
+          "columnNames": [
+            "employment_type_id"
+          ],
+          "targetTableName": "lib_employment_types",
+          "targetColumnNames": [
+            "employment_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_status": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_status",
+          "columnNames": [
+            "status_id"
+          ],
+          "targetTableName": "lib_employment_statuses",
+          "targetColumnNames": [
+            "status_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_freq": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_freq",
+          "columnNames": [
+            "pay_frequency_id"
+          ],
+          "targetTableName": "lib_pay_frequencies",
+          "targetColumnNames": [
+            "frequency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_shift": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_shift",
+          "columnNames": [
+            "shift_type_id"
+          ],
+          "targetTableName": "lib_shift_types",
+          "targetColumnNames": [
+            "shift_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ee_currency": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ee_currency",
+          "columnNames": [
+            "currency_id"
+          ],
+          "targetTableName": "lib_currencies",
+          "targetColumnNames": [
+            "currency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_bank_accounts": {
+      "name": "employee_bank_accounts",
+      "columns": {
+        "bank_account_id": {
+          "name": "bank_account_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bank_id": {
+          "name": "bank_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "account_number": {
+          "name": "account_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "account_type": {
+          "name": "account_type",
+          "type": "varchar",
+          "default": "SAVINGS",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "employee_bank_accounts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_bank_accounts_pkey",
+          "columnNames": [
+            "bank_account_id"
+          ]
+        },
+        "fk_ba_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ba_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ba_bank": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ba_bank",
+          "columnNames": [
+            "bank_id"
+          ],
+          "targetTableName": "lib_banks",
+          "targetColumnNames": [
+            "bank_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_dependents": {
+      "name": "employee_dependents",
+      "columns": {
+        "dependent_id": {
+          "name": "dependent_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "relationship": {
+          "name": "relationship",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "date_of_birth": {
+          "name": "date_of_birth",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_beneficiary": {
+          "name": "is_beneficiary",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "employee_dependents_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_dependents_pkey",
+          "columnNames": [
+            "dependent_id"
+          ]
+        },
+        "fk_dep_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_dep_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_emergency_contacts": {
+      "name": "employee_emergency_contacts",
+      "columns": {
+        "contact_id": {
+          "name": "contact_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "contact_name": {
+          "name": "contact_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "relationship": {
+          "name": "relationship",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "phone_number": {
+          "name": "phone_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "employee_emergency_contacts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_emergency_contacts_pkey",
+          "columnNames": [
+            "contact_id"
+          ]
+        },
+        "fk_ec_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ec_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_benefits": {
+      "name": "employee_benefits",
+      "columns": {
+        "enrollment_id": {
+          "name": "enrollment_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "benefit_type_id": {
+          "name": "benefit_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "plan_name": {
+          "name": "plan_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "employer_share": {
+          "name": "employer_share",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_share": {
+          "name": "employee_share",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "coverage_start": {
+          "name": "coverage_start",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "coverage_end": {
+          "name": "coverage_end",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "employee_benefits_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_benefits_pkey",
+          "columnNames": [
+            "enrollment_id"
+          ]
+        },
+        "fk_eb_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_eb_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_eb_benefit": {
+          "type": "FOREIGN KEY",
+          "name": "fk_eb_benefit",
+          "columnNames": [
+            "benefit_type_id"
+          ],
+          "targetTableName": "lib_benefit_types",
+          "targetColumnNames": [
+            "benefit_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "attendance_records": {
+      "name": "attendance_records",
+      "columns": {
+        "attendance_id": {
+          "name": "attendance_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "work_date": {
+          "name": "work_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "shift_type_id": {
+          "name": "shift_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "clock_in": {
+          "name": "clock_in",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "clock_out": {
+          "name": "clock_out",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hours_worked": {
+          "name": "hours_worked",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "overtime_hours": {
+          "name": "overtime_hours",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_absent": {
+          "name": "is_absent",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_late": {
+          "name": "is_late",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "late_minutes": {
+          "name": "late_minutes",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "undertime_min": {
+          "name": "undertime_min",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "remarks": {
+          "name": "remarks",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_att_employee_date": {
+          "name": "idx_att_employee_date",
+          "unique": false,
+          "columns": [
+            "employee_id",
+            "work_date"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "attendance_records_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "attendance_records_pkey",
+          "columnNames": [
+            "attendance_id"
+          ]
+        },
+        "fk_att_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_att_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_att_shift": {
+          "type": "FOREIGN KEY",
+          "name": "fk_att_shift",
+          "columnNames": [
+            "shift_type_id"
+          ],
+          "targetTableName": "lib_shift_types",
+          "targetColumnNames": [
+            "shift_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "uq_att_emp_date": {
+          "type": "UNIQUE",
+          "name": "uq_att_emp_date",
+          "columnNames": [
+            "employee_id",
+            "work_date"
+          ]
+        }
+      }
+    },
+    "leave_requests": {
+      "name": "leave_requests",
+      "columns": {
+        "leave_id": {
+          "name": "leave_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "leave_type_id": {
+          "name": "leave_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_days": {
+          "name": "total_days",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "PENDING",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_lr_employee": {
+          "name": "idx_lr_employee",
+          "unique": false,
+          "columns": [
+            "employee_id"
+          ],
+          "type": "btree"
+        },
+        "idx_lr_status": {
+          "name": "idx_lr_status",
+          "unique": false,
+          "columns": [
+            "status"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "leave_requests_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "leave_requests_pkey",
+          "columnNames": [
+            "leave_id"
+          ]
+        },
+        "fk_lr_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lr_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_lr_leave": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lr_leave",
+          "columnNames": [
+            "leave_type_id"
+          ],
+          "targetTableName": "lib_leave_types",
+          "targetColumnNames": [
+            "leave_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_lr_approver": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lr_approver",
+          "columnNames": [
+            "approved_by"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "leave_balances": {
+      "name": "leave_balances",
+      "columns": {
+        "balance_id": {
+          "name": "balance_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "leave_type_id": {
+          "name": "leave_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "fiscal_year": {
+          "name": "fiscal_year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "entitled_days": {
+          "name": "entitled_days",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "used_days": {
+          "name": "used_days",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "pending_days": {
+          "name": "pending_days",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "carried_over": {
+          "name": "carried_over",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "leave_balances_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "leave_balances_pkey",
+          "columnNames": [
+            "balance_id"
+          ]
+        },
+        "fk_lb_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lb_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_lb_leave": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lb_leave",
+          "columnNames": [
+            "leave_type_id"
+          ],
+          "targetTableName": "lib_leave_types",
+          "targetColumnNames": [
+            "leave_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "uq_lb_emp_type_yr": {
+          "type": "UNIQUE",
+          "name": "uq_lb_emp_type_yr",
+          "columnNames": [
+            "employee_id",
+            "leave_type_id",
+            "fiscal_year"
+          ]
+        }
+      }
+    },
+    "holidays": {
+      "name": "holidays",
+      "columns": {
+        "holiday_id": {
+          "name": "holiday_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "holiday_type_id": {
+          "name": "holiday_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "country_id": {
+          "name": "country_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "holiday_name": {
+          "name": "holiday_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "holiday_date": {
+          "name": "holiday_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_recurring": {
+          "name": "is_recurring",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "holidays_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "holidays_pkey",
+          "columnNames": [
+            "holiday_id"
+          ]
+        },
+        "fk_hol_type": {
+          "type": "FOREIGN KEY",
+          "name": "fk_hol_type",
+          "columnNames": [
+            "holiday_type_id"
+          ],
+          "targetTableName": "lib_holiday_types",
+          "targetColumnNames": [
+            "holiday_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_hol_country": {
+          "type": "FOREIGN KEY",
+          "name": "fk_hol_country",
+          "columnNames": [
+            "country_id"
+          ],
+          "targetTableName": "lib_countries",
+          "targetColumnNames": [
+            "country_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payroll_periods": {
+      "name": "payroll_periods",
+      "columns": {
+        "period_id": {
+          "name": "period_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "frequency_id": {
+          "name": "frequency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "period_label": {
+          "name": "period_label",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "pay_date": {
+          "name": "pay_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "DRAFT",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "approved_by": {
+          "name": "approved_by",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_pp_org_dates": {
+          "name": "idx_pp_org_dates",
+          "unique": false,
+          "columns": [
+            "org_id",
+            "start_date",
+            "end_date"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "payroll_periods_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payroll_periods_pkey",
+          "columnNames": [
+            "period_id"
+          ]
+        },
+        "fk_pp_org": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pp_org",
+          "columnNames": [
+            "org_id"
+          ],
+          "targetTableName": "organizations",
+          "targetColumnNames": [
+            "org_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pp_freq": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pp_freq",
+          "columnNames": [
+            "frequency_id"
+          ],
+          "targetTableName": "lib_pay_frequencies",
+          "targetColumnNames": [
+            "frequency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pp_creator": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pp_creator",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pp_approver": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pp_approver",
+          "columnNames": [
+            "approved_by"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payroll_runs": {
+      "name": "payroll_runs",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "period_id": {
+          "name": "period_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "run_number": {
+          "name": "run_number",
+          "type": "int4",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_gross": {
+          "name": "total_gross",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_deductions": {
+          "name": "total_deductions",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_net": {
+          "name": "total_net",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_count": {
+          "name": "employee_count",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "DRAFT",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "run_at": {
+          "name": "run_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "finalized_at": {
+          "name": "finalized_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_pr_period": {
+          "name": "idx_pr_period",
+          "unique": false,
+          "columns": [
+            "period_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "payroll_runs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payroll_runs_pkey",
+          "columnNames": [
+            "run_id"
+          ]
+        },
+        "fk_pr_period": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pr_period",
+          "columnNames": [
+            "period_id"
+          ],
+          "targetTableName": "payroll_periods",
+          "targetColumnNames": [
+            "period_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payslips": {
+      "name": "payslips",
+      "columns": {
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employment_id": {
+          "name": "employment_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "base_salary": {
+          "name": "base_salary",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_earnings": {
+          "name": "total_earnings",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_deductions": {
+          "name": "total_deductions",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "net_pay": {
+          "name": "net_pay",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "GENERATED",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "released_at": {
+          "name": "released_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_ps_run": {
+          "name": "idx_ps_run",
+          "unique": false,
+          "columns": [
+            "run_id"
+          ],
+          "type": "btree"
+        },
+        "idx_ps_employee": {
+          "name": "idx_ps_employee",
+          "unique": false,
+          "columns": [
+            "employee_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "payslips_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payslips_pkey",
+          "columnNames": [
+            "payslip_id"
+          ]
+        },
+        "fk_ps_run": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ps_run",
+          "columnNames": [
+            "run_id"
+          ],
+          "targetTableName": "payroll_runs",
+          "targetColumnNames": [
+            "run_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ps_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ps_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ps_employment": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ps_employment",
+          "columnNames": [
+            "employment_id"
+          ],
+          "targetTableName": "employee_employment",
+          "targetColumnNames": [
+            "employment_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ps_currency": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ps_currency",
+          "columnNames": [
+            "currency_id"
+          ],
+          "targetTableName": "lib_currencies",
+          "targetColumnNames": [
+            "currency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payslip_earnings": {
+      "name": "payslip_earnings",
+      "columns": {
+        "earning_id": {
+          "name": "earning_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "earning_type_id": {
+          "name": "earning_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "hours": {
+          "name": "hours",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rate": {
+          "name": "rate",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_taxable": {
+          "name": "is_taxable",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "payslip_earnings_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payslip_earnings_pkey",
+          "columnNames": [
+            "earning_id"
+          ]
+        },
+        "fk_pe_payslip": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pe_payslip",
+          "columnNames": [
+            "payslip_id"
+          ],
+          "targetTableName": "payslips",
+          "targetColumnNames": [
+            "payslip_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pe_type": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pe_type",
+          "columnNames": [
+            "earning_type_id"
+          ],
+          "targetTableName": "lib_earning_types",
+          "targetColumnNames": [
+            "earning_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payslip_deductions": {
+      "name": "payslip_deductions",
+      "columns": {
+        "deduction_id": {
+          "name": "deduction_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "deduction_type_id": {
+          "name": "deduction_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_statutory": {
+          "name": "is_statutory",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reference_number": {
+          "name": "reference_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "payslip_deductions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payslip_deductions_pkey",
+          "columnNames": [
+            "deduction_id"
+          ]
+        },
+        "fk_pd_payslip": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pd_payslip",
+          "columnNames": [
+            "payslip_id"
+          ],
+          "targetTableName": "payslips",
+          "targetColumnNames": [
+            "payslip_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pd_type": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pd_type",
+          "columnNames": [
+            "deduction_type_id"
+          ],
+          "targetTableName": "lib_deduction_types",
+          "targetColumnNames": [
+            "deduction_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "payslip_taxes": {
+      "name": "payslip_taxes",
+      "columns": {
+        "tax_id": {
+          "name": "tax_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bracket_id": {
+          "name": "bracket_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "taxable_income": {
+          "name": "taxable_income",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "tax_amount": {
+          "name": "tax_amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ytd_tax": {
+          "name": "ytd_tax",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "payslip_taxes_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "payslip_taxes_pkey",
+          "columnNames": [
+            "tax_id"
+          ]
+        },
+        "fk_pt_payslip": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pt_payslip",
+          "columnNames": [
+            "payslip_id"
+          ],
+          "targetTableName": "payslips",
+          "targetColumnNames": [
+            "payslip_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_pt_bracket": {
+          "type": "FOREIGN KEY",
+          "name": "fk_pt_bracket",
+          "columnNames": [
+            "bracket_id"
+          ],
+          "targetTableName": "lib_tax_brackets",
+          "targetColumnNames": [
+            "bracket_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "employee_loans": {
+      "name": "employee_loans",
+      "columns": {
+        "loan_id": {
+          "name": "loan_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "deduction_type_id": {
+          "name": "deduction_type_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "loan_reference": {
+          "name": "loan_reference",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "principal_amount": {
+          "name": "principal_amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "interest_rate_pct": {
+          "name": "interest_rate_pct",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "total_amortization": {
+          "name": "total_amortization",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "monthly_deduction": {
+          "name": "monthly_deduction",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "remaining_balance": {
+          "name": "remaining_balance",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "ACTIVE",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_loan_employee": {
+          "name": "idx_loan_employee",
+          "unique": false,
+          "columns": [
+            "employee_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "employee_loans_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "employee_loans_pkey",
+          "columnNames": [
+            "loan_id"
+          ]
+        },
+        "fk_loan_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_loan_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_loan_ded_type": {
+          "type": "FOREIGN KEY",
+          "name": "fk_loan_ded_type",
+          "columnNames": [
+            "deduction_type_id"
+          ],
+          "targetTableName": "lib_deduction_types",
+          "targetColumnNames": [
+            "deduction_type_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "loan_payments": {
+      "name": "loan_payments",
+      "columns": {
+        "payment_id": {
+          "name": "payment_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "loan_id": {
+          "name": "loan_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "payment_date": {
+          "name": "payment_date",
+          "type": "date",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "amount_paid": {
+          "name": "amount_paid",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "running_balance": {
+          "name": "running_balance",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "loan_payments_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "loan_payments_pkey",
+          "columnNames": [
+            "payment_id"
+          ]
+        },
+        "fk_lp_loan": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lp_loan",
+          "columnNames": [
+            "loan_id"
+          ],
+          "targetTableName": "employee_loans",
+          "targetColumnNames": [
+            "loan_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_lp_payslip": {
+          "type": "FOREIGN KEY",
+          "name": "fk_lp_payslip",
+          "columnNames": [
+            "payslip_id"
+          ],
+          "targetTableName": "payslips",
+          "targetColumnNames": [
+            "payslip_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "ytd_summaries": {
+      "name": "ytd_summaries",
+      "columns": {
+        "ytd_id": {
+          "name": "ytd_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "fiscal_year": {
+          "name": "fiscal_year",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_gross": {
+          "name": "total_gross",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_taxable": {
+          "name": "total_taxable",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_tax": {
+          "name": "total_tax",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_sss": {
+          "name": "total_sss",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_philhealth": {
+          "name": "total_philhealth",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_pagibig": {
+          "name": "total_pagibig",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_other_ded": {
+          "name": "total_other_ded",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "total_net": {
+          "name": "total_net",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_ytd_employee_year": {
+          "name": "idx_ytd_employee_year",
+          "unique": false,
+          "columns": [
+            "employee_id",
+            "fiscal_year"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "ytd_summaries_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "ytd_summaries_pkey",
+          "columnNames": [
+            "ytd_id"
+          ]
+        },
+        "fk_ytd_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ytd_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "uq_ytd_emp_year": {
+          "type": "UNIQUE",
+          "name": "uq_ytd_emp_year",
+          "columnNames": [
+            "employee_id",
+            "fiscal_year"
+          ]
+        }
+      }
+    },
+    "disbursements": {
+      "name": "disbursements",
+      "columns": {
+        "disbursement_id": {
+          "name": "disbursement_id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "run_id": {
+          "name": "run_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payslip_id": {
+          "name": "payslip_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "employee_id": {
+          "name": "employee_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "bank_account_id": {
+          "name": "bank_account_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "varchar",
+          "default": "BANK_TRANSFER",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reference_number": {
+          "name": "reference_number",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "default": "PENDING",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "disbursed_at": {
+          "name": "disbursed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_disb_run": {
+          "name": "idx_disb_run",
+          "unique": false,
+          "columns": [
+            "run_id"
+          ],
+          "type": "btree"
+        },
+        "idx_disb_employee": {
+          "name": "idx_disb_employee",
+          "unique": false,
+          "columns": [
+            "employee_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "disbursements_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "disbursements_pkey",
+          "columnNames": [
+            "disbursement_id"
+          ]
+        },
+        "fk_disb_run": {
+          "type": "FOREIGN KEY",
+          "name": "fk_disb_run",
+          "columnNames": [
+            "run_id"
+          ],
+          "targetTableName": "payroll_runs",
+          "targetColumnNames": [
+            "run_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_disb_payslip": {
+          "type": "FOREIGN KEY",
+          "name": "fk_disb_payslip",
+          "columnNames": [
+            "payslip_id"
+          ],
+          "targetTableName": "payslips",
+          "targetColumnNames": [
+            "payslip_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_disb_employee": {
+          "type": "FOREIGN KEY",
+          "name": "fk_disb_employee",
+          "columnNames": [
+            "employee_id"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_disb_bank": {
+          "type": "FOREIGN KEY",
+          "name": "fk_disb_bank",
+          "columnNames": [
+            "bank_account_id"
+          ],
+          "targetTableName": "employee_bank_accounts",
+          "targetColumnNames": [
+            "bank_account_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_disb_currency": {
+          "type": "FOREIGN KEY",
+          "name": "fk_disb_currency",
+          "columnNames": [
+            "currency_id"
+          ],
+          "targetTableName": "lib_currencies",
+          "targetColumnNames": [
+            "currency_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "audit_logs": {
+      "name": "audit_logs",
+      "columns": {
+        "log_id": {
+          "name": "log_id",
+          "type": "bigserial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "action": {
+          "name": "action",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "changed_by": {
+          "name": "changed_by",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "old_values": {
+          "name": "old_values",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "new_values": {
+          "name": "new_values",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "inet",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {
+        "idx_audit_entity": {
+          "name": "idx_audit_entity",
+          "unique": false,
+          "columns": [
+            "entity_type",
+            "entity_id"
+          ],
+          "type": "btree"
+        },
+        "idx_audit_changed_by": {
+          "name": "idx_audit_changed_by",
+          "unique": false,
+          "columns": [
+            "changed_by"
+          ],
+          "type": "btree"
+        },
+        "idx_audit_created": {
+          "name": "idx_audit_created",
+          "unique": false,
+          "columns": [
+            "created_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "audit_logs_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "audit_logs_pkey",
+          "columnNames": [
+            "log_id"
+          ]
+        },
+        "fk_audit_user": {
+          "type": "FOREIGN KEY",
+          "name": "fk_audit_user",
+          "columnNames": [
+            "changed_by"
+          ],
+          "targetTableName": "employees",
+          "targetColumnNames": [
+            "employee_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}
