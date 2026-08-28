@@ -54,7 +54,11 @@ CREATE TABLE student_profiles
  current_streak INT,
  learning_status TEXT NOT NULL DEFAULT 'not_assessed',
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
- updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ interests TEXT[],
+ first_name TEXT,
+ last_name TEXT,
+ birthdate TEXT
 );
 
 CREATE TABLE parent_profiles
@@ -64,7 +68,12 @@ CREATE TABLE parent_profiles
  contact_number SMALLINT,
  preferred_notification_channel TEXT,
  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
- updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ first_name TEXT,
+ last_name TEXT,
+ relationship TEXT,
+ notification_channels TEXT[],
+ setup_complete BOOLEAN
  );
 
  CREATE TABLE student_parent_links

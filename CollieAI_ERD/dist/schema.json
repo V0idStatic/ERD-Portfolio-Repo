@@ -370,7 +370,7 @@
           "type": "text",
           "default": null,
           "check": null,
-          "notNull": true,
+          "notNull": false,
           "comment": null
         },
         "avatar_id": {
@@ -419,6 +419,30 @@
           "default": null,
           "check": null,
           "notNull": true,
+          "comment": null
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "birthdate": {
+          "name": "birthdate",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
           "comment": null
         }
       },
@@ -529,6 +553,46 @@
           "default": null,
           "check": null,
           "notNull": true,
+          "comment": null
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "relationship": {
+          "name": "relationship",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "notification_channels": {
+          "name": "notification_channels",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "setup_complete": {
+          "name": "setup_complete",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
           "comment": null
         }
       },
