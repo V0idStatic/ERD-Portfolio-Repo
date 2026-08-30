@@ -73,7 +73,7 @@ CREATE TABLE parent_profiles
  last_name TEXT,
  relationship TEXT,
  notification_channels TEXT[],
- setup_complete BOOLEAN
+ issetup_complete BOOLEAN
  );
 
  CREATE TABLE student_parent_links
@@ -954,7 +954,12 @@ REFERENCES teacher_profiles(teacher_id);
  ALTER TABLE ai_sessions
  ADD CONSTRAINT fk_ai_sessions_problem_id_math_problems_problem_id
  FOREIGN KEY (problem_id)
- REFERENCES math_problems(problem_id);
+ REFERENCES math_problems(problem_id),
+
+ADD CONSTRAINT fk_ai_sessions_student_id_student_profiles_student_id
+FOREIGN KEY (student_id)
+REFERENCES public.student_profiles(student_id)
+ON DELETE RESTRICT;
 
  ALTER TABLE file_assets
  ADD CONSTRAINT fk_file_assets_owner_user_id_users_user_id

@@ -587,8 +587,8 @@
           "notNull": false,
           "comment": null
         },
-        "setup_complete": {
-          "name": "setup_complete",
+        "issetup_complete": {
+          "name": "issetup_complete",
           "type": "bool",
           "default": null,
           "check": null,
@@ -2883,6 +2883,19 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
+        },
+        "fk_ai_sessions_student_id_student_profiles_student_id": {
+          "type": "FOREIGN KEY",
+          "name": "fk_ai_sessions_student_id_student_profiles_student_id",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "RESTRICT"
         }
       }
     },
