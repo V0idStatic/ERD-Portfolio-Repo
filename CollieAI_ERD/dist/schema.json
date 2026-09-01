@@ -2405,6 +2405,34 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_inputs_student": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_inputs_student",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "fk_student_inputs_session_student": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_inputs_session_student",
+          "columnNames": [
+            "session_id",
+            "student_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id",
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -2896,6 +2924,14 @@
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "RESTRICT"
+        },
+        "uq_ai_sessions_session_student": {
+          "type": "UNIQUE",
+          "name": "uq_ai_sessions_session_student",
+          "columnNames": [
+            "session_id",
+            "student_id"
+          ]
         }
       }
     },

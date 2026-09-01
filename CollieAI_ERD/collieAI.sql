@@ -959,7 +959,10 @@ REFERENCES teacher_profiles(teacher_id);
 ADD CONSTRAINT fk_ai_sessions_student_id_student_profiles_student_id
 FOREIGN KEY (student_id)
 REFERENCES public.student_profiles(student_id)
-ON DELETE RESTRICT;
+ON DELETE RESTRICT,
+
+ADD CONSTRAINT uq_ai_sessions_session_student
+UNIQUE (session_id, student_id);
 
  ALTER TABLE file_assets
  ADD CONSTRAINT fk_file_assets_owner_user_id_users_user_id
@@ -969,7 +972,17 @@ ON DELETE RESTRICT;
  ALTER TABLE student_inputs
  ADD CONSTRAINT fk_student_inputs_raw_file_id_file_assets_file_id
  FOREIGN KEY (raw_file_id)
- REFERENCES file_assets(file_id);
+ REFERENCES file_assets(file_id),
+
+ ADD CONSTRAINT fk_student_inputs_student
+ FOREIGN KEY (student_id)
+ REFERENCES public.student_profiles(student_id),
+
+ ADD CONSTRAINT fk_student_inputs_session_student
+ FOREIGN KEY (session_id, student_id)
+ REFERENCES public.ai_sessions(session_id, student_id);
+
+ 
 
  ALTER TABLE ocr_logs
  ADD CONSTRAINT fk_ocer_logs_input_id_student_inputs_input_id
