@@ -743,6 +743,13 @@ KAYA NAKA COMPOSITE KEY KA REMEMBER
 
  CREATE TABLE vector_records (
  vector_record_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ student_id INT,
+ session_id INT,
+ search_status TEXT NOT NULL DEFAULT 'pending',
+ indexed_at TIMESTAMPTZ,
+ last_error TEXT,
+ content_hast TEXT,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
  namespace TEXT NOT NULL,
  source_type TEXT NOT NULL,
  source_id INT NOT NULL,
@@ -1189,3 +1196,34 @@ REFERENCES users(user_id),
 ADD CONSTRAINT fk_notifications_student_id_student_profiles_student_id
 FOREIGN KEY (student_id)
 REFERENCES student_profiles(student_id);
+
+  -- 5.) Semantic Memory Search Pinecone
+
+
+ALTER TABLE public.vector_records
+ADD CONSTRAINT fk_vector_records_student
+FOREIGN KEY (student_id)
+REFERENCES public.student_profiles(student_id)
+ON DELETE RESTRICT;
+
+ALTER TABLE public.vector_records
+ADD CONSTRAINT fk_vector_records_session
+FOREIGN KEY (session_id)
+REFERENCES public.ai_sessions(session_id)
+ON DELETE RESTRICT;
+
+ALTER TABLE public.vector_records
+ADD CONSTRAINT vector_records_status_check
+CHECK (status IN ('pending', 'indexing', 'indexed', 'failed', 'deleted'));
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_vector_records_namespace_embedding
+ON public.vector_records (namespace, embedding_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_vector_records_source
+ON public.vector_records (source_type, source_id);
+
+CREATE INDEX IF NOT EXISTS idx_vector_records_student_status
+ON public.vector_records (student_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_vector_records_session
+ON public.vector_records (session_id);

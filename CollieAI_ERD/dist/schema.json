@@ -4920,6 +4920,62 @@
           "notNull": true,
           "comment": null
         },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "search_status": {
+          "name": "search_status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "indexed_at": {
+          "name": "indexed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "content_hast": {
+          "name": "content_hast",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "namespace": {
           "name": "namespace",
           "type": "text",
@@ -4970,7 +5026,43 @@
         }
       },
       "comment": null,
-      "indexes": {},
+      "indexes": {
+        "uq_vector_records_namespace_embedding": {
+          "name": "uq_vector_records_namespace_embedding",
+          "unique": true,
+          "columns": [
+            "namespace",
+            "embedding_id"
+          ],
+          "type": "btree"
+        },
+        "uq_vector_records_source": {
+          "name": "uq_vector_records_source",
+          "unique": true,
+          "columns": [
+            "source_type",
+            "source_id"
+          ],
+          "type": "btree"
+        },
+        "idx_vector_records_student_status": {
+          "name": "idx_vector_records_student_status",
+          "unique": false,
+          "columns": [
+            "student_id",
+            "status"
+          ],
+          "type": "btree"
+        },
+        "idx_vector_records_session": {
+          "name": "idx_vector_records_session",
+          "unique": false,
+          "columns": [
+            "session_id"
+          ],
+          "type": "btree"
+        }
+      },
       "constraints": {
         "vector_records_pkey": {
           "type": "PRIMARY KEY",
@@ -4978,6 +5070,37 @@
           "columnNames": [
             "vector_record_id"
           ]
+        },
+        "fk_vector_records_student": {
+          "type": "FOREIGN KEY",
+          "name": "fk_vector_records_student",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "RESTRICT"
+        },
+        "fk_vector_records_session": {
+          "type": "FOREIGN KEY",
+          "name": "fk_vector_records_session",
+          "columnNames": [
+            "session_id"
+          ],
+          "targetTableName": "ai_sessions",
+          "targetColumnNames": [
+            "session_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "RESTRICT"
+        },
+        "vector_records_status_check": {
+          "type": "CHECK",
+          "name": "vector_records_status_check",
+          "detail": "status IN ('pending', 'indexing', 'indexed', 'failed', 'deleted')"
         }
       }
     },
