@@ -5,7 +5,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
@@ -27,17 +27,78 @@
           "notNull": true,
           "comment": null
         },
-        "created_at": {
-          "name": "created_at",
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": "Password hash only; never plaintexmvt or reversible encryption."
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "active",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "email_verified_at": {
+          "name": "email_verified_at",
           "type": "timestamptz",
           "default": null,
           "check": null,
           "notNull": false,
           "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
         }
       },
-      "comment": null,
-      "indexes": {},
+      "comment": "1. Accounts: individual sign-in identities; never share a squad password.",
+      "indexes": {
+        "users_username_ci": {
+          "name": "users_username_ci",
+          "unique": true,
+          "columns": [],
+          "type": "btree"
+        },
+        "users_email_ci": {
+          "name": "users_email_ci",
+          "unique": true,
+          "columns": [],
+          "type": "btree"
+        }
+      },
       "constraints": {
         "users_pkey": {
           "type": "PRIMARY KEY",
@@ -46,28 +107,109 @@
             "id"
           ]
         },
-        "users_username_key": {
-          "type": "UNIQUE",
-          "name": "users_username_key",
-          "columnNames": [
-            "username"
-          ]
+        "username_check": {
+          "type": "CHECK",
+          "name": "username_check",
+          "detail": "length(trim(username)) > 0"
         },
-        "users_email_key": {
-          "type": "UNIQUE",
-          "name": "users_email_key",
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('active','suspended','closed')"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        }
+      }
+    },
+    "user_roles": {
+      "name": "user_roles",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "granted_by": {
+          "name": "granted_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "granted_at": {
+          "name": "granted_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "1. Platform roles. Guests have no account or guest role row.",
+      "indexes": {},
+      "constraints": {
+        "users_id_to_user_roles_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_user_roles_user_id",
           "columnNames": [
-            "email"
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "role_check": {
+          "type": "CHECK",
+          "name": "role_check",
+          "detail": "role IN ('representative','moderator','admin')"
+        },
+        "users_id_to_user_roles_granted_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_user_roles_granted_by",
+          "columnNames": [
+            "granted_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "user_roles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "user_roles_pkey",
+          "columnNames": [
+            "user_id",
+            "role"
           ]
         }
       }
     },
-    "squad_profiles": {
-      "name": "squad_profiles",
+    "auth_tokens": {
+      "name": "auth_tokens",
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
@@ -75,31 +217,471 @@
         },
         "user_id": {
           "name": "user_id",
-          "type": "int4",
+          "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
           "comment": null
         },
-        "squad_name": {
-          "name": "squad_name",
-          "type": "varchar",
+        "purpose": {
+          "name": "purpose",
+          "type": "text",
           "default": null,
           "check": null,
           "notNull": true,
           "comment": null
         },
-        "rank": {
-          "name": "rank",
-          "type": "varchar",
-          "default": "Novice",
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "consumed_at": {
+          "name": "consumed_at",
+          "type": "timestamptz",
+          "default": null,
           "check": null,
           "notNull": false,
           "comment": null
         },
-        "avatar_url": {
-          "name": "avatar_url",
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "1. Hashed session/reset/verification tokens; consume or rotate atomically.",
+      "indexes": {
+        "auth_tokens_user": {
+          "name": "auth_tokens_user",
+          "unique": false,
+          "columns": [
+            "user_id",
+            "purpose"
+          ],
+          "type": "btree"
+        },
+        "auth_tokens_expiry": {
+          "name": "auth_tokens_expiry",
+          "unique": false,
+          "columns": [
+            "expires_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "auth_tokens_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "auth_tokens_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_auth_tokens_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_auth_tokens_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "purpose_check": {
+          "type": "CHECK",
+          "name": "purpose_check",
+          "detail": "purpose IN ('refresh','verify_email','reset_password')"
+        },
+        "auth_tokens_token_hash_key": {
+          "type": "UNIQUE",
+          "name": "auth_tokens_token_hash_key",
+          "columnNames": [
+            "token_hash"
+          ]
+        },
+        "check_expires_at__created_": {
+          "type": "CHECK",
+          "name": "check_expires_at__created_",
+          "detail": "expires_at > created_at"
+        }
+      }
+    },
+    "regions": {
+      "name": "regions",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "default_timezone": {
+          "name": "default_timezone",
           "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Matchmaking regions and IANA timezone defaults.",
+      "indexes": {},
+      "constraints": {
+        "regions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "regions_pkey",
+          "columnNames": [
+            "code"
+          ]
+        }
+      }
+    },
+    "game_ranks": {
+      "name": "game_ranks",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. MLBB rank catalog; seed from an approved list rather than mockup values.",
+      "indexes": {},
+      "constraints": {
+        "game_ranks_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "game_ranks_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "game_ranks_name_key": {
+          "type": "UNIQUE",
+          "name": "game_ranks_name_key",
+          "columnNames": [
+            "name"
+          ]
+        },
+        "game_ranks_sort_order_key": {
+          "type": "UNIQUE",
+          "name": "game_ranks_sort_order_key",
+          "columnNames": [
+            "sort_order"
+          ]
+        }
+      }
+    },
+    "squad_levels": {
+      "name": "squad_levels",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "verification_required": {
+          "name": "verification_required",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Squad classification, e.g. Amateur or Collegiate, independent of MLBB rank.",
+      "indexes": {},
+      "constraints": {
+        "squad_levels_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_levels_pkey",
+          "columnNames": [
+            "code"
+          ]
+        }
+      }
+    },
+    "heroes": {
+      "name": "heroes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Hero catalog for player hero pools; maintained without game API integration.",
+      "indexes": {},
+      "constraints": {
+        "heroes_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "heroes_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "heroes_name_key": {
+          "type": "UNIQUE",
+          "name": "heroes_name_key",
+          "columnNames": [
+            "name"
+          ]
+        }
+      }
+    },
+    "media_assets": {
+      "name": "media_assets",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "uploaded_by": {
+          "name": "uploaded_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "byte_size": {
+          "name": "byte_size",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sha256": {
+          "name": "sha256",
+          "type": "bpchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "access_scope": {
+          "name": "access_scope",
+          "type": "text",
+          "default": "private",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scan_status": {
+          "name": "scan_status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Object-storage metadata for avatars, posts and evidence. No binary files or expiring signed URLs in SQL.",
+      "indexes": {},
+      "constraints": {
+        "media_assets_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "media_assets_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_media_assets_uploaded_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_media_assets_uploaded_by",
+          "columnNames": [
+            "uploaded_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_object_key_key": {
+          "type": "UNIQUE",
+          "name": "media_assets_object_key_key",
+          "columnNames": [
+            "object_key"
+          ]
+        },
+        "byte_size_check": {
+          "type": "CHECK",
+          "name": "byte_size_check",
+          "detail": "byte_size > 0"
+        },
+        "access_scope_check": {
+          "type": "CHECK",
+          "name": "access_scope_check",
+          "detail": "access_scope IN ('private','public')"
+        },
+        "scan_status_check": {
+          "type": "CHECK",
+          "name": "scan_status_check",
+          "detail": "scan_status IN ('pending','clean','rejected')"
+        }
+      }
+    },
+    "squads": {
+      "name": "squads",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "public_number": {
+          "name": "public_number",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": "Human-friendly ABYSS display ID, not the MLBB squad ID or an authorization secret."
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "acronym": {
+          "name": "acronym",
+          "type": "varchar",
           "default": null,
           "check": null,
           "notNull": false,
@@ -113,12 +695,68 @@
           "notNull": false,
           "comment": null
         },
+        "region_code": {
+          "name": "region_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "default": "Asia/Manila",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "level_code": {
+          "name": "level_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "avatar_asset_id": {
+          "name": "avatar_asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "banner_asset_id": {
+          "name": "banner_asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "active",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "verified_at": {
+          "name": "verified_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamptz",
           "default": null,
           "check": null,
-          "notNull": false,
+          "notNull": true,
           "comment": null
         },
         "updated_at": {
@@ -126,23 +764,274 @@
           "type": "timestamptz",
           "default": null,
           "check": null,
-          "notNull": false,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
           "comment": null
         }
       },
-      "comment": null,
-      "indexes": {},
+      "comment": "3. Squad profile: name, acronym, description, level, region and branding. Ownership is separate from coaching authority.",
+      "indexes": {
+        "squads_owner": {
+          "name": "squads_owner",
+          "unique": false,
+          "columns": [
+            "owner_user_id"
+          ],
+          "type": "btree"
+        }
+      },
       "constraints": {
-        "squad_profiles_pkey": {
+        "squads_pkey": {
           "type": "PRIMARY KEY",
-          "name": "squad_profiles_pkey",
+          "name": "squads_pkey",
           "columnNames": [
             "id"
           ]
         },
-        "users_id_to_squad_profiles_user_id": {
+        "squads_public_number_key": {
+          "type": "UNIQUE",
+          "name": "squads_public_number_key",
+          "columnNames": [
+            "public_number"
+          ]
+        },
+        "users_id_to_squads_owner_user_id": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_squad_profiles_user_id",
+          "name": "users_id_to_squads_owner_user_id",
+          "columnNames": [
+            "owner_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "name_check": {
+          "type": "CHECK",
+          "name": "name_check",
+          "detail": "length(trim(name)) > 0"
+        },
+        "squads_slug_key": {
+          "type": "UNIQUE",
+          "name": "squads_slug_key",
+          "columnNames": [
+            "slug"
+          ]
+        },
+        "regions_code_to_squads_region_code": {
+          "type": "FOREIGN KEY",
+          "name": "regions_code_to_squads_region_code",
+          "columnNames": [
+            "region_code"
+          ],
+          "targetTableName": "regions",
+          "targetColumnNames": [
+            "code"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squad_levels_code_to_squads_level_code": {
+          "type": "FOREIGN KEY",
+          "name": "squad_levels_code_to_squads_level_code",
+          "columnNames": [
+            "level_code"
+          ],
+          "targetTableName": "squad_levels",
+          "targetColumnNames": [
+            "code"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_squads_avatar_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_squads_avatar_asset_id",
+          "columnNames": [
+            "avatar_asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_squads_banner_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_squads_banner_asset_id",
+          "columnNames": [
+            "banner_asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('active','suspended','archived')"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "check_slug__lowerslug": {
+          "type": "CHECK",
+          "name": "check_slug__lowerslug",
+          "detail": "slug = lower(slug)"
+        }
+      }
+    },
+    "squad_coaches": {
+      "name": "squad_coaches",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "coach_role": {
+          "name": "coach_role",
+          "type": "text",
+          "default": "head_coach",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "can_manage_roster": {
+          "name": "can_manage_roster",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "can_manage_scrims": {
+          "name": "can_manage_scrims",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "can_message_opponents": {
+          "name": "can_message_opponents",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "3. Coaches are the authorized squad representatives. A primary coach manages the roster, matchmaking and coach-to-coach contact.",
+      "indexes": {
+        "squad_coaches_active": {
+          "name": "squad_coaches_active",
+          "unique": true,
+          "columns": [
+            "squad_id",
+            "user_id"
+          ],
+          "type": "btree"
+        },
+        "squad_coaches_one_primary": {
+          "name": "squad_coaches_one_primary",
+          "unique": true,
+          "columns": [
+            "squad_id"
+          ],
+          "type": "btree"
+        },
+        "squad_coaches_user": {
+          "name": "squad_coaches_user",
+          "unique": false,
+          "columns": [
+            "user_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "squad_coaches_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_coaches_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_squad_coaches_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_coaches_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_squad_coaches_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_squad_coaches_user_id",
           "columnNames": [
             "user_id"
           ],
@@ -151,9 +1040,4616 @@
             "id"
           ],
           "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "CASCADE"
+          "deleteConstraint": "NO_ACTION"
+        },
+        "coach_role_check": {
+          "type": "CHECK",
+          "name": "coach_role_check",
+          "detail": "coach_role IN ('head_coach','assistant_coach')"
+        },
+        "check_left_at_IS_NULL_OR_l": {
+          "type": "CHECK",
+          "name": "check_left_at_IS_NULL_OR_l",
+          "detail": "left_at IS NULL OR left_at >= joined_at"
+        },
+        "squad_coaches_id_user_id_squad_id_key": {
+          "type": "UNIQUE",
+          "name": "squad_coaches_id_user_id_squad_id_key",
+          "columnNames": [
+            "id",
+            "user_id",
+            "squad_id"
+          ]
+        },
+        "squad_coaches_id_squad_id_key": {
+          "type": "UNIQUE",
+          "name": "squad_coaches_id_squad_id_key",
+          "columnNames": [
+            "id",
+            "squad_id"
+          ]
         }
       }
+    },
+    "players": {
+      "name": "players",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "linked_user_id": {
+          "name": "linked_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "in_game_name": {
+          "name": "in_game_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "real_name": {
+          "name": "real_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": "Private optional roster detail; exclude from public projections."
+        },
+        "mlbb_account_id": {
+          "name": "mlbb_account_id",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "mlbb_zone_id": {
+          "name": "mlbb_zone_id",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": "Game account and zone stored separately as text, preserving identifiers exactly."
+        },
+        "current_rank_id": {
+          "name": "current_rank_id",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "current_stars": {
+          "name": "current_stars",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "highest_rank_id": {
+          "name": "highest_rank_id",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "highest_stars": {
+          "name": "highest_stars",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "preferred_role": {
+          "name": "preferred_role",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avatar_asset_id": {
+          "name": "avatar_asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "rank_reported_at": {
+          "name": "rank_reported_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. MLBB player profile, current/highest rank and stars. A roster player need not have an ABYSS login.",
+      "indexes": {},
+      "constraints": {
+        "players_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "players_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_players_linked_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_players_linked_user_id",
+          "columnNames": [
+            "linked_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "players_linked_user_id_key": {
+          "type": "UNIQUE",
+          "name": "players_linked_user_id_key",
+          "columnNames": [
+            "linked_user_id"
+          ]
+        },
+        "users_id_to_players_created_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_players_created_by",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_ranks_id_to_players_current_rank_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_ranks_id_to_players_current_rank_id",
+          "columnNames": [
+            "current_rank_id"
+          ],
+          "targetTableName": "game_ranks",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "current_stars_check": {
+          "type": "CHECK",
+          "name": "current_stars_check",
+          "detail": "current_stars >= 0"
+        },
+        "game_ranks_id_to_players_highest_rank_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_ranks_id_to_players_highest_rank_id",
+          "columnNames": [
+            "highest_rank_id"
+          ],
+          "targetTableName": "game_ranks",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "highest_stars_check": {
+          "type": "CHECK",
+          "name": "highest_stars_check",
+          "detail": "highest_stars >= 0"
+        },
+        "media_assets_id_to_players_avatar_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_players_avatar_asset_id",
+          "columnNames": [
+            "avatar_asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "players_mlbb_account_id_mlbb_zone_id_key": {
+          "type": "UNIQUE",
+          "name": "players_mlbb_account_id_mlbb_zone_id_key",
+          "columnNames": [
+            "mlbb_account_id",
+            "mlbb_zone_id"
+          ]
+        }
+      }
+    },
+    "player_heroes": {
+      "name": "player_heroes",
+      "columns": {
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "hero_id": {
+          "name": "hero_id",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "preference_order": {
+          "name": "preference_order",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. Player hero pool: one row per hero, not comma-separated values.",
+      "indexes": {},
+      "constraints": {
+        "players_id_to_player_heroes_player_id": {
+          "type": "FOREIGN KEY",
+          "name": "players_id_to_player_heroes_player_id",
+          "columnNames": [
+            "player_id"
+          ],
+          "targetTableName": "players",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "heroes_id_to_player_heroes_hero_id": {
+          "type": "FOREIGN KEY",
+          "name": "heroes_id_to_player_heroes_hero_id",
+          "columnNames": [
+            "hero_id"
+          ],
+          "targetTableName": "heroes",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "preference_order_check": {
+          "type": "CHECK",
+          "name": "preference_order_check",
+          "detail": "preference_order > 0"
+        },
+        "player_heroes_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "player_heroes_pkey",
+          "columnNames": [
+            "player_id",
+            "hero_id"
+          ]
+        },
+        "player_heroes_player_id_preference_order_key": {
+          "type": "UNIQUE",
+          "name": "player_heroes_player_id_preference_order_key",
+          "columnNames": [
+            "player_id",
+            "preference_order"
+          ]
+        }
+      }
+    },
+    "squad_roster": {
+      "name": "squad_roster",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "added_by_coach_id": {
+          "name": "added_by_coach_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "roster_role": {
+          "name": "roster_role",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "3. Membership history. A coach registers each player for their squad; no fixed player1/player2 columns.",
+      "indexes": {
+        "roster_one_active_squad": {
+          "name": "roster_one_active_squad",
+          "unique": true,
+          "columns": [
+            "player_id"
+          ],
+          "type": "btree"
+        },
+        "roster_one_active_captain": {
+          "name": "roster_one_active_captain",
+          "unique": true,
+          "columns": [
+            "squad_id"
+          ],
+          "type": "btree"
+        },
+        "roster_squad": {
+          "name": "roster_squad",
+          "unique": false,
+          "columns": [
+            "squad_id",
+            "joined_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "squad_roster_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_roster_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_squad_roster_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_roster_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "players_id_to_squad_roster_player_id": {
+          "type": "FOREIGN KEY",
+          "name": "players_id_to_squad_roster_player_id",
+          "columnNames": [
+            "player_id"
+          ],
+          "targetTableName": "players",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "roster_role_check": {
+          "type": "CHECK",
+          "name": "roster_role_check",
+          "detail": "roster_role IN ('captain','starter','substitute')"
+        },
+        "check_left_at_IS_NULL_OR_l": {
+          "type": "CHECK",
+          "name": "check_left_at_IS_NULL_OR_l",
+          "detail": "left_at IS NULL OR left_at >= joined_at"
+        },
+        "squad_coaches_id_to_squad_roster_added_by_coach_id": {
+          "type": "FOREIGN KEY",
+          "name": "squad_coaches_id_to_squad_roster_added_by_coach_id",
+          "columnNames": [
+            "added_by_coach_id",
+            "squad_id"
+          ],
+          "targetTableName": "squad_coaches",
+          "targetColumnNames": [
+            "id",
+            "squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "squad_availability": {
+      "name": "squad_availability",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "4. Optional concrete availability windows. A later service can expand recurring availability.",
+      "indexes": {
+        "availability_squad_time": {
+          "name": "availability_squad_time",
+          "unique": false,
+          "columns": [
+            "squad_id",
+            "starts_at",
+            "ends_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "squad_availability_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_availability_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_squad_availability_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_availability_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_ends_at__starts_at": {
+          "type": "CHECK",
+          "name": "check_ends_at__starts_at",
+          "detail": "ends_at > starts_at"
+        }
+      }
+    },
+    "scrim_invites": {
+      "name": "scrim_invites",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sender_squad_id": {
+          "name": "sender_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recipient_squad_id": {
+          "name": "recipient_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by_coach_id": {
+          "name": "created_by_coach_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proposed_start": {
+          "name": "proposed_start",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proposed_end": {
+          "name": "proposed_end",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "series_format": {
+          "name": "series_format",
+          "type": "text",
+          "default": "best_of",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_count": {
+          "name": "game_count",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "responded_by": {
+          "name": "responded_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "responded_at": {
+          "name": "responded_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "4. Received and sent invites query the same authoritative invitation.",
+      "indexes": {
+        "invites_inbox": {
+          "name": "invites_inbox",
+          "unique": false,
+          "columns": [
+            "recipient_squad_id",
+            "status",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        },
+        "invites_sent": {
+          "name": "invites_sent",
+          "unique": false,
+          "columns": [
+            "sender_squad_id",
+            "status",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        },
+        "invites_expiry": {
+          "name": "invites_expiry",
+          "unique": false,
+          "columns": [
+            "expires_at"
+          ],
+          "type": "btree"
+        },
+        "invites_pending_pair_slot": {
+          "name": "invites_pending_pair_slot",
+          "unique": true,
+          "columns": [
+            "proposed_start"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "scrim_invites_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "scrim_invites_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_scrim_invites_sender_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_invites_sender_squad_id",
+          "columnNames": [
+            "sender_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrim_invites_recipient_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_invites_recipient_squad_id",
+          "columnNames": [
+            "recipient_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_scrim_invites_created_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_scrim_invites_created_by",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "series_format_check": {
+          "type": "CHECK",
+          "name": "series_format_check",
+          "detail": "series_format IN ('best_of','fixed_games')"
+        },
+        "game_count_check": {
+          "type": "CHECK",
+          "name": "game_count_check",
+          "detail": "game_count BETWEEN 1 AND 99"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('pending','accepted','declined','cancelled','expired')"
+        },
+        "users_id_to_scrim_invites_responded_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_scrim_invites_responded_by",
+          "columnNames": [
+            "responded_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "scrim_invites_id_sender_squad_id_recipient_squad_id_key": {
+          "type": "UNIQUE",
+          "name": "scrim_invites_id_sender_squad_id_recipient_squad_id_key",
+          "columnNames": [
+            "id",
+            "sender_squad_id",
+            "recipient_squad_id"
+          ]
+        },
+        "squad_coaches_id_to_scrim_invites_created_by_coach_id": {
+          "type": "FOREIGN KEY",
+          "name": "squad_coaches_id_to_scrim_invites_created_by_coach_id",
+          "columnNames": [
+            "created_by_coach_id",
+            "created_by",
+            "sender_squad_id"
+          ],
+          "targetTableName": "squad_coaches",
+          "targetColumnNames": [
+            "id",
+            "user_id",
+            "squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_sender_squad_id__rec": {
+          "type": "CHECK",
+          "name": "check_sender_squad_id__rec",
+          "detail": "sender_squad_id <> recipient_squad_id"
+        },
+        "check_proposed_end__propos": {
+          "type": "CHECK",
+          "name": "check_proposed_end__propos",
+          "detail": "proposed_end > proposed_start"
+        },
+        "check_expires_at__created_": {
+          "type": "CHECK",
+          "name": "check_expires_at__created_",
+          "detail": "expires_at > created_at AND expires_at <= proposed_start"
+        },
+        "check_series_format__best_": {
+          "type": "CHECK",
+          "name": "check_series_format__best_",
+          "detail": "series_format <> 'best_of' OR game_count % 2 = 1"
+        },
+        "check_status__pending_AND_": {
+          "type": "CHECK",
+          "name": "check_status__pending_AND_",
+          "detail": "(status = 'pending' AND responded_at IS NULL) OR (status <> 'pending' AND responded_at IS NOT NULL)"
+        }
+      }
+    },
+    "scrims": {
+      "name": "scrims",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "invite_id": {
+          "name": "invite_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "home_squad_id": {
+          "name": "home_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "away_squad_id": {
+          "name": "away_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scheduled_start": {
+          "name": "scheduled_start",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scheduled_end": {
+          "name": "scheduled_end",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "series_format": {
+          "name": "series_format",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_count": {
+          "name": "game_count",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "scheduled",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "actual_start": {
+          "name": "actual_start",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "actual_end": {
+          "name": "actual_end",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "cancellation_reason": {
+          "name": "cancellation_reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "4. Two squads per series. Handler copies accepted terms atomically and locks both squads to prevent overlaps.",
+      "indexes": {
+        "scrims_home_schedule": {
+          "name": "scrims_home_schedule",
+          "unique": false,
+          "columns": [
+            "home_squad_id",
+            "scheduled_start",
+            "scheduled_end"
+          ],
+          "type": "btree"
+        },
+        "scrims_away_schedule": {
+          "name": "scrims_away_schedule",
+          "unique": false,
+          "columns": [
+            "away_squad_id",
+            "scheduled_start",
+            "scheduled_end"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "scrims_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "scrims_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "scrims_invite_id_key": {
+          "type": "UNIQUE",
+          "name": "scrims_invite_id_key",
+          "columnNames": [
+            "invite_id"
+          ]
+        },
+        "squads_id_to_scrims_home_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrims_home_squad_id",
+          "columnNames": [
+            "home_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrims_away_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrims_away_squad_id",
+          "columnNames": [
+            "away_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "series_format_check": {
+          "type": "CHECK",
+          "name": "series_format_check",
+          "detail": "series_format IN ('best_of','fixed_games')"
+        },
+        "game_count_check": {
+          "type": "CHECK",
+          "name": "game_count_check",
+          "detail": "game_count BETWEEN 1 AND 99"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('scheduled','in_progress','awaiting_result','disputed','completed','cancelled','no_show')"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "scrim_invites_id_to_scrims_invite_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrim_invites_id_to_scrims_invite_id",
+          "columnNames": [
+            "invite_id",
+            "home_squad_id",
+            "away_squad_id"
+          ],
+          "targetTableName": "scrim_invites",
+          "targetColumnNames": [
+            "id",
+            "sender_squad_id",
+            "recipient_squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_home_squad_id__away_": {
+          "type": "CHECK",
+          "name": "check_home_squad_id__away_",
+          "detail": "home_squad_id <> away_squad_id"
+        },
+        "check_scheduled_end__sched": {
+          "type": "CHECK",
+          "name": "check_scheduled_end__sched",
+          "detail": "scheduled_end > scheduled_start"
+        },
+        "check_actual_end_IS_NULL_O": {
+          "type": "CHECK",
+          "name": "check_actual_end_IS_NULL_O",
+          "detail": "actual_end IS NULL OR (actual_start IS NOT NULL AND actual_end >= actual_start)"
+        },
+        "check_series_format__best_": {
+          "type": "CHECK",
+          "name": "check_series_format__best_",
+          "detail": "series_format <> 'best_of' OR game_count % 2 = 1"
+        }
+      }
+    },
+    "scrim_reschedule_requests": {
+      "name": "scrim_reschedule_requests",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proposed_by_squad_id": {
+          "name": "proposed_by_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expected_scrim_version": {
+          "name": "expected_scrim_version",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proposed_start": {
+          "name": "proposed_start",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proposed_end": {
+          "name": "proposed_end",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "decided_by": {
+          "name": "decided_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "4. Opposing squad accepts negotiated changes; stale proposals cannot overwrite newer schedules.",
+      "indexes": {
+        "reschedule_one_pending": {
+          "name": "reschedule_one_pending",
+          "unique": true,
+          "columns": [
+            "scrim_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "scrim_reschedule_requests_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "scrim_reschedule_requests_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "scrims_id_to_scrim_reschedule_requests_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_scrim_reschedule_requests_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrim_reschedule_requests_proposed_by_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_reschedule_requests_proposed_by_squad_id",
+          "columnNames": [
+            "proposed_by_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_scrim_reschedule_requests_created_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_scrim_reschedule_requests_created_by",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "expected_scrim_version_check": {
+          "type": "CHECK",
+          "name": "expected_scrim_version_check",
+          "detail": "expected_scrim_version > 0"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('pending','accepted','declined','cancelled','expired')"
+        },
+        "users_id_to_scrim_reschedule_requests_decided_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_scrim_reschedule_requests_decided_by",
+          "columnNames": [
+            "decided_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_proposed_end__propos": {
+          "type": "CHECK",
+          "name": "check_proposed_end__propos",
+          "detail": "proposed_end > proposed_start"
+        },
+        "check_expires_at__created_": {
+          "type": "CHECK",
+          "name": "check_expires_at__created_",
+          "detail": "expires_at > created_at"
+        },
+        "check_status__pending_AND_": {
+          "type": "CHECK",
+          "name": "check_status__pending_AND_",
+          "detail": "(status = 'pending' AND decided_at IS NULL) OR (status <> 'pending' AND decided_at IS NOT NULL)"
+        }
+      }
+    },
+    "scrim_lineups": {
+      "name": "scrim_lineups",
+      "columns": {
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "in_game_name_snapshot": {
+          "name": "in_game_name_snapshot",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "role_snapshot": {
+          "name": "role_snapshot",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "4. Historical lineup snapshot; roster transfers cannot rewrite past participation.",
+      "indexes": {},
+      "constraints": {
+        "scrims_id_to_scrim_lineups_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_scrim_lineups_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrim_lineups_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_lineups_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "players_id_to_scrim_lineups_player_id": {
+          "type": "FOREIGN KEY",
+          "name": "players_id_to_scrim_lineups_player_id",
+          "columnNames": [
+            "player_id"
+          ],
+          "targetTableName": "players",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrim_lineups_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "scrim_lineups_pkey",
+          "columnNames": [
+            "scrim_id",
+            "player_id"
+          ]
+        }
+      }
+    },
+    "result_submissions": {
+      "name": "result_submissions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "submitted_by_squad_id": {
+          "name": "submitted_by_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "home_wins": {
+          "name": "home_wins",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "away_wins": {
+          "name": "away_wins",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "review_note": {
+          "name": "review_note",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "5. Preserve submitted claims; corrections are new rows. Only approved claims become canonical results.",
+      "indexes": {
+        "results_scrim_time": {
+          "name": "results_scrim_time",
+          "unique": false,
+          "columns": [
+            "scrim_id",
+            "created_at"
+          ],
+          "type": "btree"
+        },
+        "result_one_pending_per_squad": {
+          "name": "result_one_pending_per_squad",
+          "unique": true,
+          "columns": [
+            "scrim_id",
+            "submitted_by_squad_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "result_submissions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "result_submissions_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "scrims_id_to_result_submissions_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_result_submissions_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_result_submissions_submitted_by_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_result_submissions_submitted_by_squad_id",
+          "columnNames": [
+            "submitted_by_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_result_submissions_submitted_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_result_submissions_submitted_by",
+          "columnNames": [
+            "submitted_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "home_wins_check": {
+          "type": "CHECK",
+          "name": "home_wins_check",
+          "detail": "home_wins >= 0"
+        },
+        "away_wins_check": {
+          "type": "CHECK",
+          "name": "away_wins_check",
+          "detail": "away_wins >= 0"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('pending','confirmed','disputed','rejected','superseded')"
+        },
+        "users_id_to_result_submissions_reviewed_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_result_submissions_reviewed_by",
+          "columnNames": [
+            "reviewed_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "result_submissions_scrim_id_id_key": {
+          "type": "UNIQUE",
+          "name": "result_submissions_scrim_id_id_key",
+          "columnNames": [
+            "scrim_id",
+            "id"
+          ]
+        }
+      }
+    },
+    "result_evidence": {
+      "name": "result_evidence",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "submission_id": {
+          "name": "submission_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_number": {
+          "name": "game_number",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ocr_status": {
+          "name": "ocr_status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ocr_extracted": {
+          "name": "ocr_extracted",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ocr_confidence": {
+          "name": "ocr_confidence",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ocr_model_version": {
+          "name": "ocr_model_version",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "5. Screenshot proof and optional OCR output for moderator logs. OCR success does not establish result validity.",
+      "indexes": {},
+      "constraints": {
+        "result_evidence_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "result_evidence_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "result_submissions_id_to_result_evidence_submission_id": {
+          "type": "FOREIGN KEY",
+          "name": "result_submissions_id_to_result_evidence_submission_id",
+          "columnNames": [
+            "submission_id"
+          ],
+          "targetTableName": "result_submissions",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_result_evidence_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_result_evidence_asset_id",
+          "columnNames": [
+            "asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_number_check": {
+          "type": "CHECK",
+          "name": "game_number_check",
+          "detail": "game_number > 0"
+        },
+        "ocr_status_check": {
+          "type": "CHECK",
+          "name": "ocr_status_check",
+          "detail": "ocr_status IN ('pending','processing','succeeded','failed','not_requested')"
+        },
+        "ocr_confidence_check": {
+          "type": "CHECK",
+          "name": "ocr_confidence_check",
+          "detail": "ocr_confidence BETWEEN 0 AND 1"
+        },
+        "result_evidence_submission_id_asset_id_key": {
+          "type": "UNIQUE",
+          "name": "result_evidence_submission_id_asset_id_key",
+          "columnNames": [
+            "submission_id",
+            "asset_id"
+          ]
+        }
+      }
+    },
+    "scrim_results": {
+      "name": "scrim_results",
+      "columns": {
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "accepted_submission_id": {
+          "name": "accepted_submission_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "home_wins": {
+          "name": "home_wins",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "away_wins": {
+          "name": "away_wins",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "finalized_by": {
+          "name": "finalized_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "finalized_at": {
+          "name": "finalized_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "5. One canonical series result. FinalizeResult validates accepted claim, scores and series rules.",
+      "indexes": {},
+      "constraints": {
+        "scrims_id_to_scrim_results_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_scrim_results_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrim_results_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "scrim_results_pkey",
+          "columnNames": [
+            "scrim_id"
+          ]
+        },
+        "scrim_results_accepted_submission_id_key": {
+          "type": "UNIQUE",
+          "name": "scrim_results_accepted_submission_id_key",
+          "columnNames": [
+            "accepted_submission_id"
+          ]
+        },
+        "home_wins_check": {
+          "type": "CHECK",
+          "name": "home_wins_check",
+          "detail": "home_wins >= 0"
+        },
+        "away_wins_check": {
+          "type": "CHECK",
+          "name": "away_wins_check",
+          "detail": "away_wins >= 0"
+        },
+        "outcome_check": {
+          "type": "CHECK",
+          "name": "outcome_check",
+          "detail": "outcome IN ('home_win','away_win','draw','void')"
+        },
+        "users_id_to_scrim_results_finalized_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_scrim_results_finalized_by",
+          "columnNames": [
+            "finalized_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "result_submissions_scrim_id_to_scrim_results_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "result_submissions_scrim_id_to_scrim_results_scrim_id",
+          "columnNames": [
+            "scrim_id",
+            "accepted_submission_id"
+          ],
+          "targetTableName": "result_submissions",
+          "targetColumnNames": [
+            "scrim_id",
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_outcome__home_win_AN": {
+          "type": "CHECK",
+          "name": "check_outcome__home_win_AN",
+          "detail": "(outcome = 'home_win' AND home_wins > away_wins)\n        OR (outcome = 'away_win' AND away_wins > home_wins)\n        OR (outcome = 'draw' AND home_wins = away_wins) OR outcome = 'void'"
+        }
+      }
+    },
+    "rating_seasons": {
+      "name": "rating_seasons",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "algorithm_version": {
+          "name": "algorithm_version",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rules": {
+          "name": "rules",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "5. ABYSS rating periods and versioned rules, independent of official MLBB ranks/seasons.",
+      "indexes": {},
+      "constraints": {
+        "rating_seasons_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "rating_seasons_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "check_ends_at__starts_at": {
+          "type": "CHECK",
+          "name": "check_ends_at__starts_at",
+          "detail": "ends_at > starts_at"
+        }
+      }
+    },
+    "squad_ratings": {
+      "name": "squad_ratings",
+      "columns": {
+        "season_id": {
+          "name": "season_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rating": {
+          "name": "rating",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rated_series": {
+          "name": "rated_series",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "5. Authoritative platform rating for matchmaking, not a client-editable profile field.",
+      "indexes": {},
+      "constraints": {
+        "rating_seasons_id_to_squad_ratings_season_id": {
+          "type": "FOREIGN KEY",
+          "name": "rating_seasons_id_to_squad_ratings_season_id",
+          "columnNames": [
+            "season_id"
+          ],
+          "targetTableName": "rating_seasons",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_squad_ratings_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_ratings_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "rated_series_check": {
+          "type": "CHECK",
+          "name": "rated_series_check",
+          "detail": "rated_series >= 0"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "squad_ratings_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_ratings_pkey",
+          "columnNames": [
+            "season_id",
+            "squad_id"
+          ]
+        }
+      }
+    },
+    "rating_changes": {
+      "name": "rating_changes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "season_id": {
+          "name": "season_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "result_version": {
+          "name": "result_version",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rating_before": {
+          "name": "rating_before",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rating_after": {
+          "name": "rating_after",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "algorithm_version": {
+          "name": "algorithm_version",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "5. Auditable, deduplicated rating effects; corrections require a defined adjustment/recalculation policy.",
+      "indexes": {},
+      "constraints": {
+        "rating_changes_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "rating_changes_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "rating_seasons_id_to_rating_changes_season_id": {
+          "type": "FOREIGN KEY",
+          "name": "rating_seasons_id_to_rating_changes_season_id",
+          "columnNames": [
+            "season_id"
+          ],
+          "targetTableName": "rating_seasons",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_rating_changes_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_rating_changes_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrims_id_to_rating_changes_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_rating_changes_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "result_version_check": {
+          "type": "CHECK",
+          "name": "result_version_check",
+          "detail": "result_version > 0"
+        },
+        "reason_check": {
+          "type": "CHECK",
+          "name": "reason_check",
+          "detail": "reason IN ('result','correction')"
+        },
+        "rating_changes_season_id_squad_id_scrim_id_result_version_key": {
+          "type": "UNIQUE",
+          "name": "rating_changes_season_id_squad_id_scrim_id_result_version_key",
+          "columnNames": [
+            "season_id",
+            "squad_id",
+            "scrim_id",
+            "result_version"
+          ]
+        }
+      }
+    },
+    "squad_posts": {
+      "name": "squad_posts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "author_user_id": {
+          "name": "author_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "label": {
+          "name": "label",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "text",
+          "default": "public",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "6. Home/profile feed posts with optional label and public or squad-only visibility.",
+      "indexes": {
+        "posts_squad_feed": {
+          "name": "posts_squad_feed",
+          "unique": false,
+          "columns": [
+            "squad_id",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "squad_posts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_posts_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_squad_posts_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_posts_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_squad_posts_author_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_squad_posts_author_user_id",
+          "columnNames": [
+            "author_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "visibility_check": {
+          "type": "CHECK",
+          "name": "visibility_check",
+          "detail": "visibility IN ('public','squad')"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        }
+      }
+    },
+    "post_assets": {
+      "name": "post_assets",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "6. Ordered post attachments; handler requires text or at least one attachment.",
+      "indexes": {},
+      "constraints": {
+        "squad_posts_id_to_post_assets_post_id": {
+          "type": "FOREIGN KEY",
+          "name": "squad_posts_id_to_post_assets_post_id",
+          "columnNames": [
+            "post_id"
+          ],
+          "targetTableName": "squad_posts",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_post_assets_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_post_assets_asset_id",
+          "columnNames": [
+            "asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "sort_order_check": {
+          "type": "CHECK",
+          "name": "sort_order_check",
+          "detail": "sort_order >= 0"
+        },
+        "post_assets_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "post_assets_pkey",
+          "columnNames": [
+            "post_id",
+            "asset_id"
+          ]
+        },
+        "post_assets_post_id_sort_order_key": {
+          "type": "UNIQUE",
+          "name": "post_assets_post_id_sort_order_key",
+          "columnNames": [
+            "post_id",
+            "sort_order"
+          ]
+        }
+      }
+    },
+    "conversations": {
+      "name": "conversations",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "first_squad_id": {
+          "name": "first_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "second_squad_id": {
+          "name": "second_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "next_sequence": {
+          "name": "next_sequence",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "6. One direct conversation per unordered squad pair; UUID ordering canonicalizes the pair.",
+      "indexes": {},
+      "constraints": {
+        "conversations_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "conversations_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_conversations_first_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_conversations_first_squad_id",
+          "columnNames": [
+            "first_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_conversations_second_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_conversations_second_squad_id",
+          "columnNames": [
+            "second_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "next_sequence_check": {
+          "type": "CHECK",
+          "name": "next_sequence_check",
+          "detail": "next_sequence > 0"
+        },
+        "check_first_squad_id__seco": {
+          "type": "CHECK",
+          "name": "check_first_squad_id__seco",
+          "detail": "first_squad_id < second_squad_id"
+        },
+        "conversations_first_squad_id_second_squad_id_key": {
+          "type": "UNIQUE",
+          "name": "conversations_first_squad_id_second_squad_id_key",
+          "columnNames": [
+            "first_squad_id",
+            "second_squad_id"
+          ]
+        }
+      }
+    },
+    "messages": {
+      "name": "messages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "conversation_id": {
+          "name": "conversation_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sequence": {
+          "name": "sequence",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sender_user_id": {
+          "name": "sender_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sender_squad_id": {
+          "name": "sender_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "sender_coach_id": {
+          "name": "sender_coach_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "6. Coach-to-coach messages. The composite foreign key proves that the sender is a coach of the sending squad.",
+      "indexes": {},
+      "constraints": {
+        "messages_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "messages_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "conversations_id_to_messages_conversation_id": {
+          "type": "FOREIGN KEY",
+          "name": "conversations_id_to_messages_conversation_id",
+          "columnNames": [
+            "conversation_id"
+          ],
+          "targetTableName": "conversations",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "sequence_check": {
+          "type": "CHECK",
+          "name": "sequence_check",
+          "detail": "sequence > 0"
+        },
+        "users_id_to_messages_sender_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_messages_sender_user_id",
+          "columnNames": [
+            "sender_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_messages_sender_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_messages_sender_squad_id",
+          "columnNames": [
+            "sender_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "body_check": {
+          "type": "CHECK",
+          "name": "body_check",
+          "detail": "length(trim(body)) BETWEEN 1 AND 10000"
+        },
+        "messages_conversation_id_sequence_key": {
+          "type": "UNIQUE",
+          "name": "messages_conversation_id_sequence_key",
+          "columnNames": [
+            "conversation_id",
+            "sequence"
+          ]
+        },
+        "squad_coaches_id_to_messages_sender_coach_id": {
+          "type": "FOREIGN KEY",
+          "name": "squad_coaches_id_to_messages_sender_coach_id",
+          "columnNames": [
+            "sender_coach_id",
+            "sender_user_id",
+            "sender_squad_id"
+          ],
+          "targetTableName": "squad_coaches",
+          "targetColumnNames": [
+            "id",
+            "user_id",
+            "squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "conversation_reads": {
+      "name": "conversation_reads",
+      "columns": {
+        "conversation_id": {
+          "name": "conversation_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "last_read_sequence": {
+          "name": "last_read_sequence",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "6. Individual read cursor for each authorized representative; advance monotonically.",
+      "indexes": {},
+      "constraints": {
+        "conversations_id_to_conversation_reads_conversation_id": {
+          "type": "FOREIGN KEY",
+          "name": "conversations_id_to_conversation_reads_conversation_id",
+          "columnNames": [
+            "conversation_id"
+          ],
+          "targetTableName": "conversations",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_conversation_reads_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_conversation_reads_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "last_read_sequence_check": {
+          "type": "CHECK",
+          "name": "last_read_sequence_check",
+          "detail": "last_read_sequence >= 0"
+        },
+        "conversation_reads_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "conversation_reads_pkey",
+          "columnNames": [
+            "conversation_id",
+            "user_id"
+          ]
+        }
+      }
+    },
+    "notifications": {
+      "name": "notifications",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recipient_user_id": {
+          "name": "recipient_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "recipient_squad_id": {
+          "name": "recipient_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "source_event_id": {
+          "name": "source_event_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "kind": {
+          "name": "kind",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "7. Durable notification/read state; source-event ID deduplicates retries without FK to the prunable outbox.",
+      "indexes": {
+        "notifications_unread": {
+          "name": "notifications_unread",
+          "unique": false,
+          "columns": [
+            "recipient_user_id",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "notifications_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "notifications_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_notifications_recipient_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_notifications_recipient_user_id",
+          "columnNames": [
+            "recipient_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_notifications_recipient_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_notifications_recipient_squad_id",
+          "columnNames": [
+            "recipient_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "notifications_recipient_user_id_source_event_id_kind_key": {
+          "type": "UNIQUE",
+          "name": "notifications_recipient_user_id_source_event_id_kind_key",
+          "columnNames": [
+            "recipient_user_id",
+            "source_event_id",
+            "kind"
+          ]
+        }
+      }
+    },
+    "feedback": {
+      "name": "feedback",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "new",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "assigned_to": {
+          "name": "assigned_to",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "response": {
+          "name": "response",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "8. Platform feedback and optional scrim feedback; not an automatic disciplinary report.",
+      "indexes": {
+        "feedback_queue": {
+          "name": "feedback_queue",
+          "unique": false,
+          "columns": [
+            "status",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "feedback_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "feedback_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_feedback_submitted_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_feedback_submitted_by",
+          "columnNames": [
+            "submitted_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_feedback_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_feedback_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrims_id_to_feedback_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_feedback_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "body_check": {
+          "type": "CHECK",
+          "name": "body_check",
+          "detail": "length(trim(body)) > 0"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('new','reviewing','resolved','closed')"
+        },
+        "users_id_to_feedback_assigned_to": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_feedback_assigned_to",
+          "columnNames": [
+            "assigned_to"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        }
+      }
+    },
+    "reports": {
+      "name": "reports",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reporter_user_id": {
+          "name": "reporter_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reporter_squad_id": {
+          "name": "reporter_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reported_squad_id": {
+          "name": "reported_squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "open",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "assigned_to": {
+          "name": "assigned_to",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "resolved_by": {
+          "name": "resolved_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "resolution": {
+          "name": "resolution",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "8. Alleged misconduct requiring human review; a report is not proof of an offense.",
+      "indexes": {
+        "reports_queue": {
+          "name": "reports_queue",
+          "unique": false,
+          "columns": [
+            "status",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        },
+        "reports_target": {
+          "name": "reports_target",
+          "unique": false,
+          "columns": [
+            "reported_squad_id",
+            "created_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "reports_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "reports_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_reports_reporter_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_reports_reporter_user_id",
+          "columnNames": [
+            "reporter_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_reports_reporter_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_reports_reporter_squad_id",
+          "columnNames": [
+            "reporter_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_reports_reported_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_reports_reported_squad_id",
+          "columnNames": [
+            "reported_squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrims_id_to_reports_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_reports_scrim_id",
+          "columnNames": [
+            "scrim_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "description_check": {
+          "type": "CHECK",
+          "name": "description_check",
+          "detail": "length(trim(description)) > 0"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('open','investigating','resolved','dismissed')"
+        },
+        "users_id_to_reports_assigned_to": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_reports_assigned_to",
+          "columnNames": [
+            "assigned_to"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_reports_resolved_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_reports_resolved_by",
+          "columnNames": [
+            "resolved_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "check_reporter_squad_id__r": {
+          "type": "CHECK",
+          "name": "check_reporter_squad_id__r",
+          "detail": "reporter_squad_id <> reported_squad_id"
+        },
+        "check_status_IN_resolveddi": {
+          "type": "CHECK",
+          "name": "check_status_IN_resolveddi",
+          "detail": "(status IN ('resolved','dismissed') AND resolved_by IS NOT NULL AND resolved_at IS NOT NULL AND resolution IS NOT NULL)\n        OR (status IN ('open','investigating') AND resolved_at IS NULL)"
+        }
+      }
+    },
+    "report_evidence": {
+      "name": "report_evidence",
+      "columns": {
+        "report_id": {
+          "name": "report_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "8. Private attachments; check access before issuing signed object URLs.",
+      "indexes": {},
+      "constraints": {
+        "reports_id_to_report_evidence_report_id": {
+          "type": "FOREIGN KEY",
+          "name": "reports_id_to_report_evidence_report_id",
+          "columnNames": [
+            "report_id"
+          ],
+          "targetTableName": "reports",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_report_evidence_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_report_evidence_asset_id",
+          "columnNames": [
+            "asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "report_evidence_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "report_evidence_pkey",
+          "columnNames": [
+            "report_id",
+            "asset_id"
+          ]
+        }
+      }
+    },
+    "squad_verifications": {
+      "name": "squad_verifications",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "submitted_by": {
+          "name": "submitted_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "requested_level_code": {
+          "name": "requested_level_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proof_type": {
+          "name": "proof_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proof_asset_id": {
+          "name": "proof_asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "decision_reason": {
+          "name": "decision_reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "See the numbered SQL comment in abyss.sql.",
+      "indexes": {
+        "verification_one_pending": {
+          "name": "verification_one_pending",
+          "unique": true,
+          "columns": [
+            "squad_id"
+          ],
+          "type": "btree"
+        },
+        "verifications_queue": {
+          "name": "verifications_queue",
+          "unique": false,
+          "columns": [
+            "status",
+            "created_at",
+            "id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "squad_verifications_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_verifications_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "squads_id_to_squad_verifications_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_verifications_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_squad_verifications_submitted_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_squad_verifications_submitted_by",
+          "columnNames": [
+            "submitted_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squad_levels_code_to_squad_verifications_requested_level_code": {
+          "type": "FOREIGN KEY",
+          "name": "squad_levels_code_to_squad_verifications_requested_level_code",
+          "columnNames": [
+            "requested_level_code"
+          ],
+          "targetTableName": "squad_levels",
+          "targetColumnNames": [
+            "code"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "media_assets_id_to_squad_verifications_proof_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_squad_verifications_proof_asset_id",
+          "columnNames": [
+            "proof_asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('pending','approved','rejected','revoked')"
+        },
+        "users_id_to_squad_verifications_reviewed_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_squad_verifications_reviewed_by",
+          "columnNames": [
+            "reviewed_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "check_status__pending_AND_": {
+          "type": "CHECK",
+          "name": "check_status__pending_AND_",
+          "detail": "(status = 'pending' AND reviewed_at IS NULL)\n        OR (status <> 'pending' AND reviewed_by IS NOT NULL AND reviewed_at IS NOT NULL AND decision_reason IS NOT NULL)"
+        }
+      }
+    },
+    "sanctions": {
+      "name": "sanctions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "report_id": {
+          "name": "report_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "squad_id": {
+          "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "issued_by": {
+          "name": "issued_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "revoked_by": {
+          "name": "revoked_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "8. Warnings, suspensions and bans with expiry/revocation history; only authorized moderation commands create them.",
+      "indexes": {
+        "sanctions_squad": {
+          "name": "sanctions_squad",
+          "unique": false,
+          "columns": [
+            "squad_id",
+            "starts_at"
+          ],
+          "type": "btree"
+        },
+        "sanctions_user": {
+          "name": "sanctions_user",
+          "unique": false,
+          "columns": [
+            "user_id",
+            "starts_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "sanctions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "sanctions_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "reports_id_to_sanctions_report_id": {
+          "type": "FOREIGN KEY",
+          "name": "reports_id_to_sanctions_report_id",
+          "columnNames": [
+            "report_id"
+          ],
+          "targetTableName": "reports",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_sanctions_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_sanctions_squad_id",
+          "columnNames": [
+            "squad_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_sanctions_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_sanctions_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "action_check": {
+          "type": "CHECK",
+          "name": "action_check",
+          "detail": "action IN ('warning','suspension','ban')"
+        },
+        "users_id_to_sanctions_issued_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_sanctions_issued_by",
+          "columnNames": [
+            "issued_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_sanctions_revoked_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_sanctions_revoked_by",
+          "columnNames": [
+            "revoked_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_squad_id_IS_NOT_NULL": {
+          "type": "CHECK",
+          "name": "check_squad_id_IS_NOT_NULL",
+          "detail": "(squad_id IS NOT NULL AND user_id IS NULL) OR (squad_id IS NULL AND user_id IS NOT NULL)"
+        },
+        "check_ends_at_IS_NULL_OR_e": {
+          "type": "CHECK",
+          "name": "check_ends_at_IS_NULL_OR_e",
+          "detail": "ends_at IS NULL OR ends_at > starts_at"
+        },
+        "check_revoked_at_IS_NULL__": {
+          "type": "CHECK",
+          "name": "check_revoked_at_IS_NULL__",
+          "detail": "(revoked_at IS NULL) = (revoked_by IS NULL)"
+        }
+      }
+    },
+    "content_items": {
+      "name": "content_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "target_url": {
+          "name": "target_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "asset_id": {
+          "name": "asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "audience": {
+          "name": "audience",
+          "type": "text",
+          "default": "public",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "draft",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "display_order": {
+          "name": "display_order",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_by": {
+          "name": "updated_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "9. Separate records for events, videos, ads and internal notes; avoids one wide row per landing-page layout.",
+      "indexes": {},
+      "constraints": {
+        "content_items_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "content_items_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "kind_check": {
+          "type": "CHECK",
+          "name": "kind_check",
+          "detail": "kind IN ('event','video','advertisement','announcement','admin_note')"
+        },
+        "media_assets_id_to_content_items_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_content_items_asset_id",
+          "columnNames": [
+            "asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "audience_check": {
+          "type": "CHECK",
+          "name": "audience_check",
+          "detail": "audience IN ('public','staff')"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('draft','published','archived')"
+        },
+        "users_id_to_content_items_created_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_content_items_created_by",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_content_items_updated_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_content_items_updated_by",
+          "columnNames": [
+            "updated_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "check_ends_at_IS_NULL_OR_s": {
+          "type": "CHECK",
+          "name": "check_ends_at_IS_NULL_OR_s",
+          "detail": "ends_at IS NULL OR starts_at IS NULL OR ends_at > starts_at"
+        },
+        "check_kind__admin_note_OR_": {
+          "type": "CHECK",
+          "name": "check_kind__admin_note_OR_",
+          "detail": "kind <> 'admin_note' OR audience = 'staff'"
+        }
+      }
+    },
+    "audit_log": {
+      "name": "audit_log",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "action": {
+          "name": "action",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "correlation_id": {
+          "name": "correlation_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "details": {
+          "name": "details",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "9. Append-only scrim/invite/staff history. Allowlisted details exclude secrets and raw private evidence.",
+      "indexes": {
+        "audit_entity": {
+          "name": "audit_entity",
+          "unique": false,
+          "columns": [
+            "entity_type",
+            "entity_id",
+            "occurred_at",
+            "id"
+          ],
+          "type": "btree"
+        },
+        "audit_time": {
+          "name": "audit_time",
+          "unique": false,
+          "columns": [
+            "occurred_at",
+            "id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "audit_log_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "audit_log_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_audit_log_actor_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_audit_log_actor_user_id",
+          "columnNames": [
+            "actor_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "request_receipts": {
+      "name": "request_receipts",
+      "columns": {
+        "actor_user_id": {
+          "name": "actor_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "request_type": {
+          "name": "request_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "request_hash": {
+          "name": "request_hash",
+          "type": "bpchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "response": {
+          "name": "response",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "10. Completed request responses saved with changes; reject the same key with a different request.",
+      "indexes": {
+        "request_receipts_expiry": {
+          "name": "request_receipts_expiry",
+          "unique": false,
+          "columns": [
+            "expires_at"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "users_id_to_request_receipts_actor_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_request_receipts_actor_user_id",
+          "columnNames": [
+            "actor_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "request_receipts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "request_receipts_pkey",
+          "columnNames": [
+            "actor_user_id",
+            "idempotency_key"
+          ]
+        },
+        "check_expires_at__created_": {
+          "type": "CHECK",
+          "name": "check_expires_at__created_",
+          "detail": "expires_at > created_at"
+        }
+      }
+    },
+    "event_outbox": {
+      "name": "event_outbox",
+      "columns": {
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "aggregate_type": {
+          "name": "aggregate_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "aggregate_id": {
+          "name": "aggregate_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "aggregate_version": {
+          "name": "aggregate_version",
+          "type": "int8",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "event_index": {
+          "name": "event_index",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": "Multiple events can share one aggregate version; preserve order by version and event index."
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "int2",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "correlation_id": {
+          "name": "correlation_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "causation_id": {
+          "name": "causation_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "payload": {
+          "name": "payload",
+          "type": "jsonb",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "available_at": {
+          "name": "available_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "lease_owner": {
+          "name": "lease_owner",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "lease_expires_at": {
+          "name": "lease_expires_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "dead_lettered_at": {
+          "name": "dead_lettered_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": "10. Business changes/events commit together. Leased publisher retries with at-least-once delivery; not an event-sourcing store.",
+      "indexes": {
+        "outbox_pending": {
+          "name": "outbox_pending",
+          "unique": false,
+          "columns": [
+            "available_at",
+            "occurred_at",
+            "event_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "event_outbox_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "event_outbox_pkey",
+          "columnNames": [
+            "event_id"
+          ]
+        },
+        "aggregate_version_check": {
+          "type": "CHECK",
+          "name": "aggregate_version_check",
+          "detail": "aggregate_version > 0"
+        },
+        "event_index_check": {
+          "type": "CHECK",
+          "name": "event_index_check",
+          "detail": "event_index >= 0"
+        },
+        "schema_version_check": {
+          "type": "CHECK",
+          "name": "schema_version_check",
+          "detail": "schema_version > 0"
+        },
+        "attempts_check": {
+          "type": "CHECK",
+          "name": "attempts_check",
+          "detail": "attempts >= 0"
+        },
+        "event_outbox_aggregate_type_aggregate_id_aggregate_version_event_index_key": {
+          "type": "UNIQUE",
+          "name": "event_outbox_aggregate_type_aggregate_id_aggregate_version_event_index_key",
+          "columnNames": [
+            "aggregate_type",
+            "aggregate_id",
+            "aggregate_version",
+            "event_index"
+          ]
+        }
+      }
+    },
+    "event_receipts": {
+      "name": "event_receipts",
+      "columns": {
+        "projection_name": {
+          "name": "projection_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "projection_generation": {
+          "name": "projection_generation",
+          "type": "int4",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "10. One receipt per event consumer, preventing duplicated event handling.",
+      "indexes": {},
+      "constraints": {
+        "projection_generation_check": {
+          "type": "CHECK",
+          "name": "projection_generation_check",
+          "detail": "projection_generation > 0"
+        },
+        "event_receipts_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "event_receipts_pkey",
+          "columnNames": [
+            "projection_name",
+            "projection_generation",
+            "event_id"
+          ]
+        }
+      }
+    },
+    "mv_squad_statistics": {
+      "name": "mv_squad_statistics",
+      "columns": {},
+      "comment": "11A. Denormalized materialized display calculation.",
+      "indexes": {
+        "mv_squad_statistics_pk": {
+          "name": "mv_squad_statistics_pk",
+          "unique": true,
+          "columns": [
+            "squad_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {}
+    },
+    "mv_leaderboard": {
+      "name": "mv_leaderboard",
+      "columns": {},
+      "comment": "11A. Denormalized materialized display calculation.",
+      "indexes": {
+        "mv_leaderboard_pk": {
+          "name": "mv_leaderboard_pk",
+          "unique": true,
+          "columns": [
+            "season_id",
+            "squad_id"
+          ],
+          "type": "btree"
+        },
+        "mv_leaderboard_rank": {
+          "name": "mv_leaderboard_rank",
+          "unique": false,
+          "columns": [
+            "season_id",
+            "leaderboard_rank"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {}
+    },
+    "mv_admin_dashboard_metrics": {
+      "name": "mv_admin_dashboard_metrics",
+      "columns": {},
+      "comment": "11A. Denormalized materialized display calculation.",
+      "indexes": {
+        "mv_admin_dashboard_metrics_pk": {
+          "name": "mv_admin_dashboard_metrics_pk",
+          "unique": true,
+          "columns": [
+            "metric_name"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {}
     }
   },
   "enums": {},
