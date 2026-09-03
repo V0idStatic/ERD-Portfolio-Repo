@@ -1,0 +1,68 @@
+{
+  "tables": {
+    "users": {
+      "name": "users",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "users_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "users_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_username_key": {
+          "type": "UNIQUE",
+          "name": "users_username_key",
+          "columnNames": [
+            "username"
+          ]
+        },
+        "users_email_key": {
+          "type": "UNIQUE",
+          "name": "users_email_key",
+          "columnNames": [
+            "email"
+          ]
+        }
+      }
+    }
+  },
+  "enums": {},
+  "extensions": {}
+}

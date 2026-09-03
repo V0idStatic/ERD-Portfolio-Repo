@@ -9,6 +9,10 @@
     "payroll:check": "node -e \"const fs=require('fs');const p='./Payroll_Erd/payroll.sql';if(!fs.readFileSync(p,'utf8').trim()){console.error('ERROR: Payroll_Erd/payroll.sql is empty.');process.exit(1)}\"",
     "payroll:build": "npm run payroll:check && npx --yes @liam-hq/cli erd build --input ./Payroll_Erd/payroll.sql --format postgres --output-dir ./Payroll_Erd/dist",
     "payroll:serve": "npx --yes serve ./Payroll_Erd/dist",
-    "payroll:preview": "npm run payroll:build && npm run payroll:serve"
+    "payroll:preview": "npm run payroll:build && npm run payroll:serve",
+    "abyss:check": "node -e \"const fs=require('fs');const p='./Abyss_ERD/abyss.sql';if(!fs.readFileSync(p,'utf8').trim()){console.error('ERROR: Abyss_ERD/abyss.sql is empty.');process.exit(1)}\"",
+    "abyss:build": "npm run abyss:check && npx --yes @liam-hq/cli erd build --input ./Abyss_ERD/abyss.sql --format postgres --output-dir ./Abyss_ERD/dist",
+    "abyss:serve": "npx --yes serve ./Abyss_ERD/dist",
+    "abyss:preview": "npm run abyss:build && npm run abyss:serve"
   }
 }
