@@ -61,6 +61,99 @@
           ]
         }
       }
+    },
+    "squad_profiles": {
+      "name": "squad_profiles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_name": {
+          "name": "squad_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "rank": {
+          "name": "rank",
+          "type": "varchar",
+          "default": "Novice",
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "squad_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "squad_profiles_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_squad_profiles_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_squad_profiles_user_id",
+          "columnNames": [
+            "user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "CASCADE"
+        }
+      }
     }
   },
   "enums": {},
