@@ -37,6 +37,8 @@ import {
   AlignJustify,
   AlignLeft,
   AlignRight,
+  ArrowDown,
+  ArrowUp,
   Banknote,
   BellRing,
   BookOpenCheck,
@@ -153,6 +155,7 @@ type DiagramComment = {
 type DeleteIntent = { page: DiagramPage; mode: "trash" | "permanent" };
 type EdgeBend = { x: number; y: number };
 type ConnectorLineStyle = "solid" | "dashed" | "flow-dot";
+type EdgeLabelOrientation = "auto" | "horizontal" | "vertical" | "vertical-up" | "vertical-down";
 type ErdCardinality = "default" | "one" | "zero-or-one" | "many" | "one-or-many" | "zero-or-many";
 type ErdColumn = { id: string; name: string };
 type DiagramHistoryEntry = {
@@ -244,6 +247,11 @@ type ArchitectureNodeData = {
   fishboneTextSize?: number;
   fishboneCircleTextSize?: number;
   fishboneCircleTextBold?: boolean;
+  connectorCount?: number;
+  topConnectorCount?: number;
+  bottomConnectorCount?: number;
+  leftConnectorCount?: number;
+  rightConnectorCount?: number;
 };
 
 const normalizeErdColumns = (columns?: Array<ErdColumn | string>): ErdColumn[] =>
@@ -288,6 +296,8 @@ const ANNOTATION_COLORS = [
   "#facc15", "#34d399", "#7dd3fc", "#f0abfc", "#ec4899", "#f43f5e",
   "#8b5cf6", "#0ea5e9", "#f97316", "#eab308", "#10b981", "#d946ef",
 ];
+
+const CONNECTOR_COUNT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 20] as const;
 
 type AnimationStep = {
   id: string;
@@ -863,10 +873,23 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
   const showTitle = data.showTitle !== false;
   const showDescription = data.showDescription !== false;
   const serviceIconSize = Math.max(44, Math.min(180, Math.min(width ?? 190, height ?? 150) * 0.48));
-  const connectorStops = data.shape === "header-card" || (data.shape === "service" && componentCategory === "flowchart")
-    ? [6.25, 18.75, 31.25, 43.75, 56.25, 68.75, 81.25, 93.75]
-    : isServiceNode ? [25, 50, 75] : [10, 30, 50, 70, 90];
-  const connectorCenterIndex = Math.floor((connectorStops.length - 1) / 2);
+  const isLemmaNode = id === "service-1786427960546" || data.label === "LemmaAI Tutoring System";
+  const defaultStopsCount =
+    data.shape === "header-card" || (data.shape === "service" && componentCategory === "flowchart")
+      ? 8
+      : isServiceNode ? 3 : 5;
+  const getConnectorStops = (count?: number, sideDefault?: number): number[] => {
+    const fallback = sideDefault ?? defaultStopsCount;
+    const n = Math.max(1, count ?? data.connectorCount ?? fallback);
+    if (!count && !data.connectorCount && isServiceNode && fallback === 3) {
+      return [25, 50, 75];
+    }
+    return Array.from({ length: n }, (_, i) => ((i + 0.5) / n) * 100);
+  };
+  const topConnectorStops = getConnectorStops(data.topConnectorCount, isLemmaNode ? 12 : undefined);
+  const bottomConnectorStops = getConnectorStops(data.bottomConnectorCount);
+  const leftConnectorStops = getConnectorStops(data.leftConnectorCount);
+  const rightConnectorStops = getConnectorStops(data.rightConnectorCount);
   const serviceTileSize = Math.min((width ?? 112) * 0.96, (height ?? 142) - 32);
   if (data.shape === "group") {
     return (
@@ -1108,17 +1131,25 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
             {isServiceNode ? (
               data.shape === "service" ? (
                 <div className="service-connector-frame" aria-hidden="true">
-                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `${pct}%`, top: 0 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%`, top: "100%", bottom: "auto" }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ left: 0, top: `${pct}%` }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ left: "100%", top: `${pct}%`, right: "auto" }} />)}
+                  {topConnectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={`top-${i}`} style={{ left: `${pct}%`, top: 0 }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Top} id="top" style={{ left: "50%", top: 0, opacity: 0, pointerEvents: "none" }} />
+                  {bottomConnectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={`bottom-${i}`} style={{ left: `${pct}%`, top: "100%", bottom: "auto" }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Bottom} id="bottom" style={{ left: "50%", top: "100%", bottom: "auto", opacity: 0, pointerEvents: "none" }} />
+                  {leftConnectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={`left-${i}`} style={{ left: 0, top: `${pct}%` }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Left} id="left" style={{ left: 0, top: "50%", opacity: 0, pointerEvents: "none" }} />
+                  {rightConnectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={`right-${i}`} style={{ left: "100%", top: `${pct}%`, right: "auto" }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Right} id="right" style={{ left: "100%", top: "50%", right: "auto", opacity: 0, pointerEvents: "none" }} />
                 </div>
               ) : (
                 <>
-                  {connectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: 0 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: serviceTileSize, bottom: "auto" }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100 }} />)}
-                  {connectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
+                  {topConnectorStops.map((pct, i) => <Handle key={`service-top-${i}`} className="side-handle" type="source" position={Position.Top} id={`top-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: 0 }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Top} id="top" style={{ left: "50%", top: 0, opacity: 0, pointerEvents: "none" }} />
+                  {bottomConnectorStops.map((pct, i) => <Handle key={`service-bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={`bottom-${i}`} style={{ left: `calc(50% + ${(pct - 50) * serviceTileSize / 100}px)`, top: serviceTileSize, bottom: "auto" }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Bottom} id="bottom" style={{ left: "50%", top: serviceTileSize, bottom: "auto", opacity: 0, pointerEvents: "none" }} />
+                  {leftConnectorStops.map((pct, i) => <Handle key={`service-left-${i}`} className="side-handle" type="source" position={Position.Left} id={`left-${i}`} style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100 }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Left} id="left" style={{ left: `calc(50% - ${serviceTileSize / 2}px)`, top: serviceTileSize * 0.5, opacity: 0, pointerEvents: "none" }} />
+                  {rightConnectorStops.map((pct, i) => <Handle key={`service-right-${i}`} className="side-handle" type="source" position={Position.Right} id={`right-${i}`} style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * pct / 100, right: "auto" }} />)}
+                  <Handle className="side-handle fallback-handle" type="source" position={Position.Right} id="right" style={{ left: `calc(50% + ${serviceTileSize / 2}px)`, top: serviceTileSize * 0.5, right: "auto", opacity: 0, pointerEvents: "none" }} />
                 </>
               )
             ) : data.shape === "database" ? (
@@ -1168,9 +1199,14 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
               <Handle key="diamond-left" className="side-handle diamond-tip-handle" type="source" position={Position.Left} id="left" style={{ top: "50%" }} />,
             ];
           })()
-        : connectorStops.map((pct, i) => (
-            <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={i === connectorCenterIndex ? "top" : `top-${i}`} style={{ left: `${pct}%` }} />
-          ))}
+        : (
+          <>
+            {topConnectorStops.map((pct, i) => (
+              <Handle key={`top-${i}`} className="side-handle" type="source" position={Position.Top} id={`top-${i}`} style={{ left: `${pct}%` }} />
+            ))}
+            <Handle className="side-handle fallback-handle" type="source" position={Position.Top} id="top" style={{ left: "50%", opacity: 0, pointerEvents: "none" }} />
+          </>
+        )}
       {data.shape === "data-store" ? (
         <svg className="database-art" viewBox="0 0 260 112" preserveAspectRatio="none" aria-hidden="true">
           <path className="db-body" d="M3 16V94c0 10 57 16 127 16s127-6 127-16V16Z" />
@@ -1255,15 +1291,22 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         {data.shape === "side-panel" ? <div className="segmented-side segmented-side-right" style={{ backgroundColor: data.rightPanelColor ?? "#dbeafe" }} aria-hidden="true" /> : null}
         </>
       )}
-            {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={i === connectorCenterIndex ? "bottom" : `bottom-${i}`} style={{ left: `${pct}%` }} />
-      ))}
-      {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={i === connectorCenterIndex ? "right" : `right-${i}`} style={{ top: `${pct}%` }} />
-      ))}
-      {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && connectorStops.map((pct, i) => (
-        <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={i === connectorCenterIndex ? "left" : `left-${i}`} style={{ top: `${pct}%` }} />
-      ))}
+      {!isServiceNode && data.shape !== "decision" && data.shape !== "database" && (
+        <>
+          {bottomConnectorStops.map((pct, i) => (
+            <Handle key={`bottom-${i}`} className="side-handle" type="source" position={Position.Bottom} id={`bottom-${i}`} style={{ left: `${pct}%` }} />
+          ))}
+          <Handle className="side-handle fallback-handle" type="source" position={Position.Bottom} id="bottom" style={{ left: "50%", opacity: 0, pointerEvents: "none" }} />
+          {rightConnectorStops.map((pct, i) => (
+            <Handle key={`right-${i}`} className="side-handle" type="source" position={Position.Right} id={`right-${i}`} style={{ top: `${pct}%` }} />
+          ))}
+          <Handle className="side-handle fallback-handle" type="source" position={Position.Right} id="right" style={{ top: "50%", opacity: 0, pointerEvents: "none" }} />
+          {leftConnectorStops.map((pct, i) => (
+            <Handle key={`left-${i}`} className="side-handle" type="source" position={Position.Left} id={`left-${i}`} style={{ top: `${pct}%` }} />
+          ))}
+          <Handle className="side-handle fallback-handle" type="source" position={Position.Left} id="left" style={{ top: "50%", opacity: 0, pointerEvents: "none" }} />
+        </>
+      )}
     </div>
   );
 }
@@ -1498,6 +1541,36 @@ const computeMovedSegmentPoints = (
   }
 };
 
+let canvasMeasureCtx: CanvasRenderingContext2D | null = null;
+
+const measureLabelTextWidth = (text: string, fontSize: number, fontWeight?: string | number): number => {
+  if (typeof document !== "undefined") {
+    if (!canvasMeasureCtx) {
+      const canvas = document.createElement("canvas");
+      canvasMeasureCtx = canvas.getContext("2d");
+    }
+    if (canvasMeasureCtx) {
+      canvasMeasureCtx.font = `${fontWeight ?? "normal"} ${fontSize}px var(--font-geist-sans), Arial, sans-serif`;
+      const metrics = canvasMeasureCtx.measureText(text);
+      if (metrics && metrics.width > 0) {
+        return metrics.width;
+      }
+    }
+  }
+  let units = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if ("ijl|.,:;'! •".includes(ch)) units += 0.28;
+    else if ("frt-`()[]{}".includes(ch)) units += 0.35;
+    else if ("mwMW@#%&".includes(ch)) units += 0.82;
+    else if (ch >= "A" && ch <= "Z") units += 0.65;
+    else if (ch >= "0" && ch <= "9") units += 0.55;
+    else units += 0.50;
+  }
+  const isBold = fontWeight === 700 || fontWeight === "bold" || fontWeight === "800" || fontWeight === "900";
+  return isBold ? units * fontSize * 1.08 : units * fontSize;
+};
+
 type LegSegment = {
   id: string;
   fromIndex: number;
@@ -1507,6 +1580,8 @@ type LegSegment = {
   isVertical: boolean;
   midpoint: EdgeBend;
   length: number;
+  startDistance: number;
+  endDistance: number;
 };
 
 function FlowingConnectorEdge({
@@ -1533,6 +1608,8 @@ function FlowingConnectorEdge({
     onJointsChange?: (joints: EdgeBend[]) => void;
     labelPosition?: EdgeBend;
     onLabelPositionChange?: (position?: EdgeBend) => void;
+    labelOrientation?: EdgeLabelOrientation;
+    onSelect?: () => void;
     _flowDuration?: number;
     lineStyle?: ConnectorLineStyle;
     sourceCardinality?: ErdCardinality;
@@ -1558,12 +1635,16 @@ function FlowingConnectorEdge({
 
   const segments = useMemo<LegSegment[]>(() => {
     const list: LegSegment[] = [];
+    let cumulative = 0;
     for (let i = 0; i < routePoints.length - 1; i++) {
       const p1 = routePoints[i];
       const p2 = routePoints[i + 1];
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
       const len = Math.hypot(dx, dy);
+      const startDistance = cumulative;
+      cumulative += len;
+      const endDistance = cumulative;
       if (len >= 6) {
         const isVertical = Math.abs(dx) <= Math.abs(dy);
         list.push({
@@ -1575,6 +1656,8 @@ function FlowingConnectorEdge({
           isVertical,
           midpoint: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
           length: len,
+          startDistance,
+          endDistance,
         });
       }
     }
@@ -1628,49 +1711,73 @@ function FlowingConnectorEdge({
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
   const labelPaddingY = labelBgPadding?.[1] ?? 4;
   const labelFontSize = typeof labelStyle?.fontSize === "number" && labelStyle.fontSize > 0 ? labelStyle.fontSize : 12;
-  const labelMaskWidth = Math.max(34, String(label ?? "").length * labelFontSize * 0.59 + labelPaddingX * 2 + 10);
-  const labelMaskHeight = Math.max(22, labelFontSize * 1.2 + labelPaddingY * 2);
-  const [labelGap, setLabelGap] = useState<{ before: number; gap: number; after: number } | null>(null);
-  useLayoutEffect(() => {
-    if (!label || !pathMeasureRef.current) {
-      setLabelGap(null);
-      return;
-    }
-    const path = pathMeasureRef.current;
-    const totalLength = path.getTotalLength();
-    if (!totalLength) return;
-    let nearestLength = 0;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    for (let index = 0; index <= 128; index += 1) {
-      const length = totalLength * index / 128;
-      const point = path.getPointAtLength(length);
-      const distance = Math.hypot(point.x - labelPosition.x, point.y - labelPosition.y);
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestLength = length;
+  const measuredTextWidth = useMemo(() => {
+    return label ? measureLabelTextWidth(String(label), labelFontSize, labelStyle?.fontWeight) : 0;
+  }, [label, labelFontSize, labelStyle?.fontWeight]);
+
+  const closestSegmentInfo = useMemo(() => {
+    if (segments.length === 0) return null;
+    let bestSeg = segments[0];
+    let bestDist = Number.POSITIVE_INFINITY;
+    let bestT = 0.5;
+    for (const seg of segments) {
+      const dx = seg.to.x - seg.from.x;
+      const dy = seg.to.y - seg.from.y;
+      const lengthSq = dx * dx + dy * dy;
+      let t = lengthSq === 0 ? 0 : ((labelPosition.x - seg.from.x) * dx + (labelPosition.y - seg.from.y) * dy) / lengthSq;
+      t = Math.max(0, Math.min(1, t));
+      const projX = seg.from.x + t * dx;
+      const projY = seg.from.y + t * dy;
+      const dist = Math.hypot(labelPosition.x - projX, labelPosition.y - projY);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestSeg = seg;
+        bestT = t;
       }
     }
-    const tangentStep = Math.min(4, totalLength / 64);
-    const pointBefore = path.getPointAtLength(Math.max(0, nearestLength - tangentStep));
-    const pointAfter = path.getPointAtLength(Math.min(totalLength, nearestLength + tangentStep));
-    const isVertical = Math.abs(pointAfter.y - pointBefore.y) > Math.abs(pointAfter.x - pointBefore.x);
-    const gapLength = Math.min(totalLength * 0.9, (isVertical ? labelMaskHeight : labelMaskWidth) + 10);
-    const gapStart = Math.max(0, Math.min(totalLength - gapLength, nearestLength - gapLength / 2));
-    const next = {
-      before: gapStart / totalLength * 1000,
-      gap: gapLength / totalLength * 1000,
-      after: Math.max(0, (totalLength - gapStart - gapLength) / totalLength * 1000),
-    };
-    setLabelGap((current) => current
-      && Math.abs(current.before - next.before) < 0.1
-      && Math.abs(current.gap - next.gap) < 0.1
-      ? current
-      : next);
-  }, [d, label, labelMaskHeight, labelMaskWidth, labelPosition.x, labelPosition.y]);
-  const edgePathStyle = labelGap ? {
-    ...style,
-    strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000`,
-  } : style;
+    return { segment: bestSeg, distance: bestDist, t: bestT };
+  }, [segments, labelPosition.x, labelPosition.y]);
+
+  const closestSegment = closestSegmentInfo?.segment ?? null;
+
+  const isSegmentVertical = closestSegment
+    ? closestSegment.isVertical
+    : Math.abs(targetY - sourceY) >= Math.abs(targetX - sourceX);
+
+  const isSegmentFlowingDown = closestSegment
+    ? closestSegment.to.y > closestSegment.from.y
+    : targetY >= sourceY;
+
+  const labelOrientation: EdgeLabelOrientation = edgeData.labelOrientation ?? "auto";
+
+  const { isLabelVertical, rotationAngle } = useMemo(() => {
+    if (labelOrientation === "horizontal") {
+      return { isLabelVertical: false, rotationAngle: 0 };
+    }
+    if (labelOrientation === "vertical-up") {
+      return { isLabelVertical: true, rotationAngle: -90 };
+    }
+    if (labelOrientation === "vertical-down") {
+      return { isLabelVertical: true, rotationAngle: 90 };
+    }
+    if (labelOrientation === "vertical") {
+      return { isLabelVertical: true, rotationAngle: isSegmentFlowingDown ? 90 : -90 };
+    }
+    // "auto": align with line direction
+    if (isSegmentVertical) {
+      return { isLabelVertical: true, rotationAngle: isSegmentFlowingDown ? 90 : -90 };
+    }
+    return { isLabelVertical: false, rotationAngle: 0 };
+  }, [labelOrientation, isSegmentVertical, isSegmentFlowingDown]);
+
+  const maskId = `edge-mask-${id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
+  const cutoutWidth = labelBackgroundEnabled
+    ? measuredTextWidth + labelPaddingX * 2 + 2
+    : measuredTextWidth + 6;
+  const cutoutHeight = labelBackgroundEnabled
+    ? labelFontSize * 1.2 + labelPaddingY * 2 + 2
+    : labelFontSize * 1.25 + 4;
+
   const renderCardinalityMarker = (
     key: string,
     x: number,
@@ -1766,6 +1873,30 @@ function FlowingConnectorEdge({
   };
   return (
     <>
+      {label ? (
+        <defs>
+          <mask
+            id={maskId}
+            maskUnits="userSpaceOnUse"
+            maskContentUnits="userSpaceOnUse"
+            x="-50000"
+            y="-50000"
+            width="100000"
+            height="100000"
+          >
+            <rect x="-50000" y="-50000" width="100000" height="100000" fill="#ffffff" />
+            <rect
+              x={-cutoutWidth / 2}
+              y={-cutoutHeight / 2}
+              width={cutoutWidth}
+              height={cutoutHeight}
+              rx={labelBackgroundEnabled ? (labelBgBorderRadius ?? 4) : 2}
+              fill="#000000"
+              transform={`translate(${labelPosition.x}, ${labelPosition.y}) rotate(${rotationAngle})`}
+            />
+          </mask>
+        </defs>
+      ) : null}
       <BaseEdge
         id={id}
         path={d}
@@ -1777,9 +1908,9 @@ function FlowingConnectorEdge({
         d={d}
         fill="none"
         markerEnd={markerEnd}
-        pathLength={1000}
+        mask={label ? `url(#${maskId})` : undefined}
         style={{
-          ...edgePathStyle,
+          ...style,
           fill: "none",
           stroke: style?.stroke ?? "#64748b",
           strokeWidth: style?.strokeWidth ?? 1.7,
@@ -1803,19 +1934,28 @@ function FlowingConnectorEdge({
             }}
           >
             <div
-              className="edge-label-draggable nodrag nopan"
-              onPointerDown={dragLabel}
+              className={`edge-label-draggable nodrag nopan ${isLabelVertical ? "is-vertical" : ""} ${selected ? "is-selected" : ""}`}
+              onPointerDown={(event) => {
+                edgeData.onSelect?.();
+                dragLabel(event);
+              }}
+              onClick={(event) => {
+                event.stopPropagation();
+                edgeData.onSelect?.();
+              }}
               onDoubleClick={(event) => { event.stopPropagation(); edgeData.onLabelPositionChange?.(); }}
               title="Drag to reposition · Double-click to reset"
               style={{
                 color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
                 fontSize: `${labelFontSize}px`,
                 fontWeight: labelStyle?.fontWeight,
-                background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-cutout, #f6f8fb)",
+                background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-cutout, var(--paper, #f6f8fb))",
                 opacity: 1,
-                borderRadius: labelBgBorderRadius,
-                padding: `${labelPaddingY}px ${labelPaddingX}px`,
+                borderRadius: labelBackgroundEnabled ? (labelBgBorderRadius ?? 4) : 2,
+                padding: labelBackgroundEnabled ? `${labelPaddingY}px ${labelPaddingX}px` : "1px 3px",
                 boxShadow: "none",
+                transform: rotationAngle !== 0 ? `rotate(${rotationAngle}deg)` : undefined,
+                transformOrigin: "center center",
               }}
             >
               {label}
@@ -1827,8 +1967,8 @@ function FlowingConnectorEdge({
         <path
           d={d}
           className="connector-water-pulse"
-          pathLength={1000}
-          style={{ animationDuration: `${edgeData._flowDuration}ms`, ...(labelGap ? { strokeDasharray: `${labelGap.before} ${labelGap.gap} ${labelGap.after} 1000` } : {}) }}
+          mask={label ? `url(#${maskId})` : undefined}
+          style={{ animationDuration: `${edgeData._flowDuration}ms` }}
           aria-hidden="true"
         />
       ) : null}
@@ -2145,9 +2285,16 @@ const GCASH_LOGO_PATH = "/gcash-icon.png";
 const LEGACY_GCASH_LOGO_URL = "https://cdn.simpleicons.org/gcash/007DFE";
 
 const replaceLegacyServiceLogos = (nodes: ArchitectureNode[]): ArchitectureNode[] =>
-  nodes.map((node) => node.data.serviceLogo === LEGACY_GCASH_LOGO_URL
-    ? { ...node, data: { ...node.data, serviceLogo: GCASH_LOGO_PATH } }
-    : node);
+  nodes.map((node) => {
+    let next = node;
+    if (node.data.serviceLogo === LEGACY_GCASH_LOGO_URL) {
+      next = { ...next, data: { ...next.data, serviceLogo: GCASH_LOGO_PATH } };
+    }
+    if ((node.id === "service-1786427960546" || node.data.label === "LemmaAI Tutoring System") && node.data.topConnectorCount === undefined) {
+      next = { ...next, data: { ...next.data, topConnectorCount: 12 } };
+    }
+    return next;
+  });
 
 const servicePresets: { label: string; logo?: string; kind?: NonNullable<ArchitectureNodeData["serviceSymbol"]>; icon: NodeIcon; tone: NodeTone }[] = [
   { label: "Supabase", logo: "https://cdn.simpleicons.org/supabase/3FCF8E", icon: "database", tone: "emerald" },
@@ -3102,6 +3249,33 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         strokeDasharray: lineStyle === "dashed" ? "7 6" : undefined,
       },
     });
+  };
+
+  const selectedEdgeOrientation: EdgeLabelOrientation =
+    ((selectedEdge?.data as { labelOrientation?: EdgeLabelOrientation } | undefined)?.labelOrientation) ?? "auto";
+
+  const [applyOrientationToAll, setApplyOrientationToAll] = useState(false);
+
+  const setEdgeOrientation = (orientation: EdgeLabelOrientation) => {
+    if (!selectedEdge) return;
+    if (applyOrientationToAll) {
+      setEdges((current) =>
+        current.map((edgeItem) => ({
+          ...edgeItem,
+          data: {
+            ...edgeItem.data,
+            labelOrientation: orientation,
+          },
+        })),
+      );
+    } else {
+      updateSelectedEdge({
+        data: {
+          ...selectedEdge.data,
+          labelOrientation: orientation,
+        },
+      });
+    }
   };
 
   const removeSelectedEdge = () => {
@@ -5197,9 +5371,14 @@ const persistPageIndex = (
         } : {}),
         onJointsChange: (joints: EdgeBend[]) => updateEdgeJoints(edgeItem.id, joints),
         onLabelPositionChange: (position?: EdgeBend) => updateEdgeLabelPosition(edgeItem.id, position),
+        onSelect: () => {
+          setSelectedEdgeId(edgeItem.id);
+          setSelectedId(null);
+          setInspectorOpen(true);
+        },
       },
     };
-  }), [edges, nodes, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition]);
+  }), [edges, nodes, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition, setSelectedEdgeId, setSelectedId, setInspectorOpen]);
   const activeAnnotationConfig = annotationTool === "eraser" ? null : annotationConfig[annotationTool];
 
   return (
@@ -7175,6 +7354,119 @@ const persistPageIndex = (
                 ))}
               </div>
             </fieldset>
+            {selectedNode.data.shape !== "group" &&
+              selectedNode.data.shape !== "legend" &&
+              selectedNode.data.shape !== "legend-key" &&
+              selectedNode.data.shape !== "comment" &&
+              selectedNode.data.shape !== "database" &&
+              selectedNode.data.shape !== "decision" &&
+              selectedNode.data.shape !== "fishbone-spine" &&
+              selectedNode.data.shape !== "fishbone-branch" &&
+              selectedNode.data.shape !== "fishbone-circle" && (() => {
+                const isService = Boolean(selectedNode.data.serviceLogo || selectedNode.data.serviceSymbol);
+                const defaultCount =
+                  selectedNode.data.shape === "header-card" || (selectedNode.data.shape === "service" && componentCategoryFor(selectedNode.data) === "flowchart")
+                    ? 8
+                    : isService ? 3 : 5;
+                const isLemma = selectedNode.id === "service-1786427960546" || selectedNode.data.label === "LemmaAI Tutoring System";
+                const currentTop = selectedNode.data.topConnectorCount ?? (isLemma ? 12 : (selectedNode.data.connectorCount ?? defaultCount));
+                const currentBottom = selectedNode.data.bottomConnectorCount ?? selectedNode.data.connectorCount ?? defaultCount;
+                const currentLeft = selectedNode.data.leftConnectorCount ?? selectedNode.data.connectorCount ?? defaultCount;
+                const currentRight = selectedNode.data.rightConnectorCount ?? selectedNode.data.connectorCount ?? defaultCount;
+
+                return (
+                  <fieldset className="component-connectors-controls inspector-control-card">
+                    <legend>Connectors</legend>
+                    <div className="connector-counts-grid">
+                      <label>
+                        <span>Top</span>
+                        <select
+                          value={currentTop}
+                          onChange={(event) => {
+                            const val = Number(event.target.value);
+                            updateSelected({ topConnectorCount: val });
+                            window.setTimeout(() => updateNodeInternals(selectedNode.id), 0);
+                          }}
+                        >
+                          {CONNECTOR_COUNT_OPTIONS.map((count) => (
+                            <option key={count} value={count}>{count}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Bottom</span>
+                        <select
+                          value={currentBottom}
+                          onChange={(event) => {
+                            const val = Number(event.target.value);
+                            updateSelected({ bottomConnectorCount: val });
+                            window.setTimeout(() => updateNodeInternals(selectedNode.id), 0);
+                          }}
+                        >
+                          {CONNECTOR_COUNT_OPTIONS.map((count) => (
+                            <option key={count} value={count}>{count}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Left</span>
+                        <select
+                          value={currentLeft}
+                          onChange={(event) => {
+                            const val = Number(event.target.value);
+                            updateSelected({ leftConnectorCount: val });
+                            window.setTimeout(() => updateNodeInternals(selectedNode.id), 0);
+                          }}
+                        >
+                          {CONNECTOR_COUNT_OPTIONS.map((count) => (
+                            <option key={count} value={count}>{count}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span>Right</span>
+                        <select
+                          value={currentRight}
+                          onChange={(event) => {
+                            const val = Number(event.target.value);
+                            updateSelected({ rightConnectorCount: val });
+                            window.setTimeout(() => updateNodeInternals(selectedNode.id), 0);
+                          }}
+                        >
+                          {CONNECTOR_COUNT_OPTIONS.map((count) => (
+                            <option key={count} value={count}>{count}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <div className="connector-counts-actions">
+                      <label className="inspector-select-label">
+                        <span>Set all sides</span>
+                        <select
+                          value=""
+                          onChange={(event) => {
+                            if (!event.target.value) return;
+                            const val = Number(event.target.value);
+                            updateSelected({
+                              connectorCount: val,
+                              topConnectorCount: val,
+                              bottomConnectorCount: val,
+                              leftConnectorCount: val,
+                              rightConnectorCount: val,
+                            });
+                            window.setTimeout(() => updateNodeInternals(selectedNode.id), 0);
+                          }}
+                        >
+                          <option value="">Apply to all sides…</option>
+                          {CONNECTOR_COUNT_OPTIONS.map((count) => (
+                            <option key={count} value={count}>{count} connectors each</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </fieldset>
+                );
+              })()}
             <div className="inspector-tip">
               <CircleHelp size={16} />
               Changes stay in your browser when you choose Save layout.
@@ -7237,6 +7529,56 @@ const persistPageIndex = (
               />
               <small>Applies to this connection label only.</small>
             </label>
+            <fieldset className="line-label-orientation inspector-control-card">
+              <legend>Label orientation</legend>
+              <div className="line-orientation-grid">
+                <button
+                  type="button"
+                  className={selectedEdgeOrientation === "auto" ? "active" : ""}
+                  onClick={() => setEdgeOrientation("auto")}
+                  title="Auto-align with line direction"
+                >
+                  <Route size={14} />
+                  Auto
+                </button>
+                <button
+                  type="button"
+                  className={selectedEdgeOrientation === "horizontal" ? "active" : ""}
+                  onClick={() => setEdgeOrientation("horizontal")}
+                  title="Horizontal text (0°)"
+                >
+                  <Type size={14} />
+                  Horizontal
+                </button>
+                <button
+                  type="button"
+                  className={selectedEdgeOrientation === "vertical-down" ? "active" : ""}
+                  onClick={() => setEdgeOrientation("vertical-down")}
+                  title="Vertical text: Top to bottom (90°)"
+                >
+                  <ArrowDown size={14} />
+                  Vertical (↓)
+                </button>
+                <button
+                  type="button"
+                  className={selectedEdgeOrientation === "vertical-up" ? "active" : ""}
+                  onClick={() => setEdgeOrientation("vertical-up")}
+                  title="Vertical text: Bottom to top (-90°)"
+                >
+                  <ArrowUp size={14} />
+                  Vertical (↑)
+                </button>
+              </div>
+              <label className="description-toggle inspector-apply-toggle">
+                <span><strong>Apply to all lines</strong><small>Use this orientation across all connection labels.</small></span>
+                <input
+                  type="checkbox"
+                  checked={applyOrientationToAll}
+                  onChange={(event) => setApplyOrientationToAll(event.target.checked)}
+                />
+                <i aria-hidden="true" />
+              </label>
+            </fieldset>
             <fieldset className="line-label-background inspector-control-card">
               <legend>Label background</legend>
               <label className="description-toggle inspector-apply-toggle">
@@ -7332,6 +7674,15 @@ const persistPageIndex = (
             <button className="reset-connection-route" onClick={resetSelectedEdgeBend}>
               <Route size={16} /> Reset line route
             </button>
+            {((selectedEdge.data as { labelPosition?: EdgeBend } | undefined)?.labelPosition) ? (
+              <button
+                type="button"
+                className="reset-label-position"
+                onClick={() => updateEdgeLabelPosition(selectedEdge.id, undefined)}
+              >
+                <RotateCcw size={15} /> Center label on line
+              </button>
+            ) : null}
             <button className="delete-connection" onClick={removeSelectedEdge}>
               <Trash2 size={16} />
               Remove connection
