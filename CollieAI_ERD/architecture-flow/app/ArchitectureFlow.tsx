@@ -110,6 +110,12 @@ import { toBlob, toCanvas, toPng } from "html-to-image";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DashboardHome, { setLocalStorageItem } from "./DashboardHome";
+import {
+  DFD_PROCESS_3_1_PAGE_ID,
+  DFD_PROCESS_3_1_PAGE_NAME,
+  DFD_WORKSPACE_ID,
+  dfdProcess31Diagram,
+} from "./dfd-process-3-1";
 
 type NodeShape =
   | "service"
@@ -2844,13 +2850,43 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     };
     try {
       const savedIndex = window.localStorage.getItem(pageIndexKey(wsId));
-      const parsedIndex = savedIndex
+      let parsedIndex = savedIndex
         ? (JSON.parse(savedIndex) as {
             pages?: DiagramPage[];
             trashedPages?: DiagramPage[];
             activePageId?: string;
           })
         : null;
+      if (wsId === DFD_WORKSPACE_ID) {
+        const currentPages = parsedIndex?.pages?.length ? [...parsedIndex.pages] : [...defaultPages];
+        let processPage = currentPages.find(
+          (page) => page.id === DFD_PROCESS_3_1_PAGE_ID || page.name.trim() === DFD_PROCESS_3_1_PAGE_NAME,
+        );
+        if (!processPage) {
+          processPage = { id: DFD_PROCESS_3_1_PAGE_ID, name: DFD_PROCESS_3_1_PAGE_NAME };
+          currentPages.push(processPage);
+        }
+        const diagramKey = pageStorageKey(wsId, processPage.id);
+        const storedDiagram = window.localStorage.getItem(diagramKey);
+        let diagramIsBlank = true;
+        if (storedDiagram) {
+          try {
+            const parsed = JSON.parse(storedDiagram) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
+            diagramIsBlank = !(parsed.nodes?.length || parsed.edges?.length);
+          } catch {
+            diagramIsBlank = true;
+          }
+        }
+        if (diagramIsBlank) {
+          setLocalStorageItem(diagramKey, JSON.stringify(dfdProcess31Diagram));
+        }
+        parsedIndex = {
+          pages: currentPages,
+          trashedPages: parsedIndex?.trashedPages ?? [],
+          activePageId: parsedIndex?.activePageId ?? currentPages[0].id,
+        };
+        setLocalStorageItem(pageIndexKey(wsId), JSON.stringify(parsedIndex));
+      }
       const restoredPages = parsedIndex?.pages?.length ? parsedIndex.pages : defaultPages;
       const restoredActive =
         restoredPages.find((page) => page.id === parsedIndex?.activePageId)?.id ??

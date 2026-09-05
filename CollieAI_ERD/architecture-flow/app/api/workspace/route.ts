@@ -1,7 +1,5 @@
 import { env } from "cloudflare:workers";
-import { ensureDfdProcess31Page } from "../../dfd-process-3-1";
-
-const DFD_WORKSPACE_ID = "collie-workflow-workflow-1786271654768";
+import { DFD_WORKSPACE_ID, ensureDfdProcess31Page } from "../../dfd-process-3-1";
 
 const workspaceId = (request: Request) => new URL(request.url).searchParams.get("id")?.replace(/[^a-z0-9-]/g, "").slice(0, 48) || "collie";
 

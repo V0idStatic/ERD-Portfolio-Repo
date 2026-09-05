@@ -58,6 +58,7 @@ const processIds = ["p31", "p32", "p33", "p34", "p35", "p36"];
 
 export const DFD_PROCESS_3_1_PAGE_ID = "level-1-process-3-1";
 export const DFD_PROCESS_3_1_PAGE_NAME = "Level 1 | 3.1";
+export const DFD_WORKSPACE_ID = "collie-workflow-workflow-1786271654768";
 
 export const dfdProcess31Diagram = {
   nodes: [
