@@ -1,4 +1,7 @@
 import { env } from "cloudflare:workers";
+import { ensureDfdProcess31Page } from "../../dfd-process-3-1";
+
+const DFD_WORKSPACE_ID = "collie-workflow-workflow-1786271654768";
 
 const workspaceId = (request: Request) => new URL(request.url).searchParams.get("id")?.replace(/[^a-z0-9-]/g, "").slice(0, 48) || "collie";
 
@@ -17,12 +20,29 @@ async function initializeWorkspaceTable() {
 
 export async function GET(request: Request) {
   await initializeWorkspaceTable();
+  const id = workspaceId(request);
   const row = await env.DB
     .prepare("SELECT payload, updated_at FROM workspace_snapshots WHERE id = ?")
-    .bind(workspaceId(request))
+    .bind(id)
     .first<{ payload: string; updated_at: number }>();
 
-  return Response.json(row ? { data: JSON.parse(row.payload), updatedAt: row.updated_at } : { data: null }, { headers: responseHeaders(request) });
+  if (!row) return Response.json({ data: null }, { headers: responseHeaders(request) });
+
+  let data = JSON.parse(row.payload) as Record<string, unknown>;
+  let updatedAt = row.updated_at;
+  if (id === DFD_WORKSPACE_ID) {
+    const result = ensureDfdProcess31Page(data);
+    data = result.snapshot;
+    if (result.changed) {
+      updatedAt = Date.now();
+      await env.DB
+        .prepare("UPDATE workspace_snapshots SET payload = ?, updated_at = ? WHERE id = ?")
+        .bind(JSON.stringify(data), updatedAt, id)
+        .run();
+    }
+  }
+
+  return Response.json({ data, updatedAt }, { headers: responseHeaders(request) });
 }
 
 export async function PUT(request: Request) {
