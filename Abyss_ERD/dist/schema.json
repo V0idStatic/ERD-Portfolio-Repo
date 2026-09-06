@@ -332,6 +332,267 @@
         }
       }
     },
+    "games": {
+      "name": "games",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "publisher": {
+          "name": "publisher",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Supported games. Adding a game inserts catalog data and does not alter the ERD.",
+      "indexes": {},
+      "constraints": {
+        "games_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "games_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "games_code_key": {
+          "type": "UNIQUE",
+          "name": "games_code_key",
+          "columnNames": [
+            "code"
+          ]
+        },
+        "games_name_key": {
+          "type": "UNIQUE",
+          "name": "games_name_key",
+          "columnNames": [
+            "name"
+          ]
+        }
+      }
+    },
+    "game_modes": {
+      "name": "game_modes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "team_size": {
+          "name": "team_size",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Game-specific formats such as MLBB Custom 5v5 or Valorant Standard 5v5.",
+      "indexes": {},
+      "constraints": {
+        "game_modes_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "game_modes_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "games_id_to_game_modes_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_game_modes_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "team_size_check": {
+          "type": "CHECK",
+          "name": "team_size_check",
+          "detail": "team_size > 0"
+        },
+        "game_modes_game_id_code_key": {
+          "type": "UNIQUE",
+          "name": "game_modes_game_id_code_key",
+          "columnNames": [
+            "game_id",
+            "code"
+          ]
+        },
+        "game_modes_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "game_modes_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        }
+      }
+    },
+    "game_roles": {
+      "name": "game_roles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Game-specific player roles; examples are Tank, Mage, Duelist and Support.",
+      "indexes": {},
+      "constraints": {
+        "game_roles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "game_roles_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "games_id_to_game_roles_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_game_roles_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_roles_game_id_code_key": {
+          "type": "UNIQUE",
+          "name": "game_roles_game_id_code_key",
+          "columnNames": [
+            "game_id",
+            "code"
+          ]
+        },
+        "game_roles_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "game_roles_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        }
+      }
+    },
     "regions": {
       "name": "regions",
       "columns": {
@@ -383,6 +644,14 @@
           "notNull": true,
           "comment": null
         },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "name": {
           "name": "name",
           "type": "varchar",
@@ -400,7 +669,7 @@
           "comment": null
         }
       },
-      "comment": "2. MLBB rank catalog; seed from an approved list rather than mockup values.",
+      "comment": "2. Rank catalog scoped to a game; new games add rows rather than rank columns.",
       "indexes": {},
       "constraints": {
         "game_ranks_pkey": {
@@ -410,18 +679,41 @@
             "id"
           ]
         },
-        "game_ranks_name_key": {
-          "type": "UNIQUE",
-          "name": "game_ranks_name_key",
+        "games_id_to_game_ranks_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_game_ranks_game_id",
           "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_ranks_game_id_name_key": {
+          "type": "UNIQUE",
+          "name": "game_ranks_game_id_name_key",
+          "columnNames": [
+            "game_id",
             "name"
           ]
         },
-        "game_ranks_sort_order_key": {
+        "game_ranks_game_id_sort_order_key": {
           "type": "UNIQUE",
-          "name": "game_ranks_sort_order_key",
+          "name": "game_ranks_game_id_sort_order_key",
           "columnNames": [
+            "game_id",
             "sort_order"
+          ]
+        },
+        "game_ranks_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "game_ranks_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
           ]
         }
       }
@@ -466,12 +758,20 @@
         }
       }
     },
-    "heroes": {
-      "name": "heroes",
+    "game_characters": {
+      "name": "game_characters",
       "columns": {
         "id": {
           "name": "id",
-          "type": "int2",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
@@ -494,21 +794,162 @@
           "comment": null
         }
       },
-      "comment": "2. Hero catalog for player hero pools; maintained without game API integration.",
+      "comment": "2. Optional selectable characters: MLBB heroes, Valorant agents, or equivalent game entities.",
       "indexes": {},
       "constraints": {
-        "heroes_pkey": {
+        "game_characters_pkey": {
           "type": "PRIMARY KEY",
-          "name": "heroes_pkey",
+          "name": "game_characters_pkey",
           "columnNames": [
             "id"
           ]
         },
-        "heroes_name_key": {
-          "type": "UNIQUE",
-          "name": "heroes_name_key",
+        "games_id_to_game_characters_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_game_characters_game_id",
           "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_characters_game_id_name_key": {
+          "type": "UNIQUE",
+          "name": "game_characters_game_id_name_key",
+          "columnNames": [
+            "game_id",
             "name"
+          ]
+        },
+        "game_characters_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "game_characters_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        }
+      }
+    },
+    "stat_definitions": {
+      "name": "stat_definitions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "code": {
+          "name": "code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "display_name": {
+          "name": "display_name",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "value_type": {
+          "name": "value_type",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "aggregation": {
+          "name": "aggregation",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "unit": {
+          "name": "unit",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "2. Defines game-specific statistics without adding columns for each new game.",
+      "indexes": {},
+      "constraints": {
+        "stat_definitions_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "stat_definitions_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "games_id_to_stat_definitions_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_stat_definitions_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "value_type_check": {
+          "type": "CHECK",
+          "name": "value_type_check",
+          "detail": "value_type IN ('number','integer','boolean','text')"
+        },
+        "aggregation_check": {
+          "type": "CHECK",
+          "name": "aggregation_check",
+          "detail": "aggregation IN ('sum','average','maximum','minimum','latest','none')"
+        },
+        "stat_definitions_game_id_code_key": {
+          "type": "UNIQUE",
+          "name": "stat_definitions_game_id_code_key",
+          "columnNames": [
+            "game_id",
+            "code"
+          ]
+        },
+        "stat_definitions_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "stat_definitions_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
           ]
         }
       }
@@ -663,6 +1104,22 @@
           "notNull": true,
           "comment": null
         },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_mode_id": {
+          "name": "game_mode_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "name": {
           "name": "name",
           "type": "varchar",
@@ -776,7 +1233,7 @@
           "comment": null
         }
       },
-      "comment": "3. Squad profile: name, acronym, description, level, region and branding. Ownership is separate from coaching authority.",
+      "comment": "3. One competitive squad for one game and mode. Create another squad row for a different game without changing the ERD.",
       "indexes": {
         "squads_owner": {
           "name": "squads_owner",
@@ -809,6 +1266,19 @@
             "owner_user_id"
           ],
           "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "games_id_to_squads_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_squads_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -889,10 +1359,33 @@
           "name": "version_check",
           "detail": "version > 0"
         },
+        "game_modes_id_to_squads_game_mode_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_modes_id_to_squads_game_mode_id",
+          "columnNames": [
+            "game_mode_id",
+            "game_id"
+          ],
+          "targetTableName": "game_modes",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
         "check_slug__lowerslug": {
           "type": "CHECK",
           "name": "check_slug__lowerslug",
           "detail": "slug = lower(slug)"
+        },
+        "squads_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "squads_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
         }
       }
     },
@@ -1071,8 +1564,8 @@
         }
       }
     },
-    "players": {
-      "name": "players",
+    "player_profiles": {
+      "name": "player_profiles",
       "columns": {
         "id": {
           "name": "id",
@@ -1098,12 +1591,20 @@
           "notNull": true,
           "comment": null
         },
-        "in_game_name": {
-          "name": "in_game_name",
+        "ownership_status": {
+          "name": "ownership_status",
+          "type": "text",
+          "default": "unclaimed",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "public_name": {
+          "name": "public_name",
           "type": "varchar",
           "default": null,
           "check": null,
-          "notNull": true,
+          "notNull": false,
           "comment": null
         },
         "real_name": {
@@ -1112,23 +1613,151 @@
           "default": null,
           "check": null,
           "notNull": false,
-          "comment": "Private optional roster detail; exclude from public projections."
+          "comment": "Private optional identity detail; exclude from public display views."
         },
-        "mlbb_account_id": {
-          "name": "mlbb_account_id",
+        "claimed_at": {
+          "name": "claimed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "version": {
+          "name": "version",
+          "type": "int8",
+          "default": 1,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. Permanent platform player identity. Coach-created profiles remain unclaimed until the real player links a user account.",
+      "indexes": {},
+      "constraints": {
+        "player_profiles_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "player_profiles_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "users_id_to_player_profiles_linked_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_player_profiles_linked_user_id",
+          "columnNames": [
+            "linked_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "player_profiles_linked_user_id_key": {
+          "type": "UNIQUE",
+          "name": "player_profiles_linked_user_id_key",
+          "columnNames": [
+            "linked_user_id"
+          ]
+        },
+        "users_id_to_player_profiles_created_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_player_profiles_created_by",
+          "columnNames": [
+            "created_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "ownership_status_check": {
+          "type": "CHECK",
+          "name": "ownership_status_check",
+          "detail": "ownership_status IN ('unclaimed','claimed','merge_pending','disabled')"
+        },
+        "version_check": {
+          "type": "CHECK",
+          "name": "version_check",
+          "detail": "version > 0"
+        },
+        "check_ownership_status__cl": {
+          "type": "CHECK",
+          "name": "check_ownership_status__cl",
+          "detail": "(ownership_status = 'claimed' AND linked_user_id IS NOT NULL AND claimed_at IS NOT NULL)\n        OR ownership_status <> 'claimed'"
+        }
+      }
+    },
+    "player_game_profiles": {
+      "name": "player_game_profiles",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "player_profile_id": {
+          "name": "player_profile_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "in_game_name": {
+          "name": "in_game_name",
           "type": "varchar",
           "default": null,
           "check": null,
           "notNull": true,
           "comment": null
         },
-        "mlbb_zone_id": {
-          "name": "mlbb_zone_id",
+        "external_account_id": {
+          "name": "external_account_id",
           "type": "varchar",
           "default": null,
           "check": null,
           "notNull": true,
-          "comment": "Game account and zone stored separately as text, preserving identifiers exactly."
+          "comment": null
+        },
+        "external_region_id": {
+          "name": "external_region_id",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
         },
         "current_rank_id": {
           "name": "current_rank_id",
@@ -1157,14 +1786,6 @@
         "highest_stars": {
           "name": "highest_stars",
           "type": "int4",
-          "default": null,
-          "check": null,
-          "notNull": false,
-          "comment": null
-        },
-        "preferred_role": {
-          "name": "preferred_role",
-          "type": "varchar",
           "default": null,
           "check": null,
           "notNull": false,
@@ -1211,56 +1832,36 @@
           "comment": null
         }
       },
-      "comment": "3. MLBB player profile, current/highest rank and stars. A roster player need not have an ABYSS login.",
+      "comment": "3. A permanent player account within one game. It survives squad transfers and retains career statistics.",
       "indexes": {},
       "constraints": {
-        "players_pkey": {
+        "player_game_profiles_pkey": {
           "type": "PRIMARY KEY",
-          "name": "players_pkey",
+          "name": "player_game_profiles_pkey",
           "columnNames": [
             "id"
           ]
         },
-        "users_id_to_players_linked_user_id": {
+        "player_profiles_id_to_player_game_profiles_player_profile_id": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_players_linked_user_id",
+          "name": "player_profiles_id_to_player_game_profiles_player_profile_id",
           "columnNames": [
-            "linked_user_id"
+            "player_profile_id"
           ],
-          "targetTableName": "users",
+          "targetTableName": "player_profiles",
           "targetColumnNames": [
             "id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "players_linked_user_id_key": {
-          "type": "UNIQUE",
-          "name": "players_linked_user_id_key",
-          "columnNames": [
-            "linked_user_id"
-          ]
-        },
-        "users_id_to_players_created_by": {
+        "games_id_to_player_game_profiles_game_id": {
           "type": "FOREIGN KEY",
-          "name": "users_id_to_players_created_by",
+          "name": "games_id_to_player_game_profiles_game_id",
           "columnNames": [
-            "created_by"
+            "game_id"
           ],
-          "targetTableName": "users",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "game_ranks_id_to_players_current_rank_id": {
-          "type": "FOREIGN KEY",
-          "name": "game_ranks_id_to_players_current_rank_id",
-          "columnNames": [
-            "current_rank_id"
-          ],
-          "targetTableName": "game_ranks",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -1272,27 +1873,14 @@
           "name": "current_stars_check",
           "detail": "current_stars >= 0"
         },
-        "game_ranks_id_to_players_highest_rank_id": {
-          "type": "FOREIGN KEY",
-          "name": "game_ranks_id_to_players_highest_rank_id",
-          "columnNames": [
-            "highest_rank_id"
-          ],
-          "targetTableName": "game_ranks",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
         "highest_stars_check": {
           "type": "CHECK",
           "name": "highest_stars_check",
           "detail": "highest_stars >= 0"
         },
-        "media_assets_id_to_players_avatar_asset_id": {
+        "media_assets_id_to_player_game_profiles_avatar_asset_id": {
           "type": "FOREIGN KEY",
-          "name": "media_assets_id_to_players_avatar_asset_id",
+          "name": "media_assets_id_to_player_game_profiles_avatar_asset_id",
           "columnNames": [
             "avatar_asset_id"
           ],
@@ -1308,30 +1896,77 @@
           "name": "version_check",
           "detail": "version > 0"
         },
-        "players_mlbb_account_id_mlbb_zone_id_key": {
+        "player_game_profiles_game_id_external_account_id_external_region_id_key": {
           "type": "UNIQUE",
-          "name": "players_mlbb_account_id_mlbb_zone_id_key",
+          "name": "player_game_profiles_game_id_external_account_id_external_region_id_key",
           "columnNames": [
-            "mlbb_account_id",
-            "mlbb_zone_id"
+            "game_id",
+            "external_account_id",
+            "external_region_id"
           ]
+        },
+        "player_game_profiles_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "player_game_profiles_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        },
+        "game_ranks_id_to_player_game_profiles_current_rank_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_ranks_id_to_player_game_profiles_current_rank_id",
+          "columnNames": [
+            "current_rank_id",
+            "game_id"
+          ],
+          "targetTableName": "game_ranks",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_ranks_id_to_player_game_profiles_highest_rank_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_ranks_id_to_player_game_profiles_highest_rank_id",
+          "columnNames": [
+            "highest_rank_id",
+            "game_id"
+          ],
+          "targetTableName": "game_ranks",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
-    "player_heroes": {
-      "name": "player_heroes",
+    "player_game_roles": {
+      "name": "player_game_roles",
       "columns": {
-        "player_id": {
-          "name": "player_id",
+        "player_game_profile_id": {
+          "name": "player_game_profile_id",
           "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
           "comment": null
         },
-        "hero_id": {
-          "name": "hero_id",
-          "type": "int2",
+        "game_role_id": {
+          "name": "game_role_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
           "default": null,
           "check": null,
           "notNull": true,
@@ -1346,29 +1981,16 @@
           "comment": null
         }
       },
-      "comment": "3. Player hero pool: one row per hero, not comma-separated values.",
+      "comment": "3. Ordered role preferences for a player in a particular game.",
       "indexes": {},
       "constraints": {
-        "players_id_to_player_heroes_player_id": {
+        "games_id_to_player_game_roles_game_id": {
           "type": "FOREIGN KEY",
-          "name": "players_id_to_player_heroes_player_id",
+          "name": "games_id_to_player_game_roles_game_id",
           "columnNames": [
-            "player_id"
+            "game_id"
           ],
-          "targetTableName": "players",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "heroes_id_to_player_heroes_hero_id": {
-          "type": "FOREIGN KEY",
-          "name": "heroes_id_to_player_heroes_hero_id",
-          "columnNames": [
-            "hero_id"
-          ],
-          "targetTableName": "heroes",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -1380,26 +2002,161 @@
           "name": "preference_order_check",
           "detail": "preference_order > 0"
         },
-        "player_heroes_pkey": {
+        "player_game_roles_pkey": {
           "type": "PRIMARY KEY",
-          "name": "player_heroes_pkey",
+          "name": "player_game_roles_pkey",
           "columnNames": [
-            "player_id",
-            "hero_id"
+            "player_game_profile_id",
+            "game_role_id"
           ]
         },
-        "player_heroes_player_id_preference_order_key": {
+        "player_game_roles_player_game_profile_id_preference_order_key": {
           "type": "UNIQUE",
-          "name": "player_heroes_player_id_preference_order_key",
+          "name": "player_game_roles_player_game_profile_id_preference_order_key",
           "columnNames": [
-            "player_id",
+            "player_game_profile_id",
             "preference_order"
           ]
+        },
+        "player_game_profiles_id_to_player_game_roles_player_game_profile_id": {
+          "type": "FOREIGN KEY",
+          "name": "player_game_profiles_id_to_player_game_roles_player_game_profile_id",
+          "columnNames": [
+            "player_game_profile_id",
+            "game_id"
+          ],
+          "targetTableName": "player_game_profiles",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_roles_id_to_player_game_roles_game_role_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_roles_id_to_player_game_roles_game_role_id",
+          "columnNames": [
+            "game_role_id",
+            "game_id"
+          ],
+          "targetTableName": "game_roles",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
-    "squad_roster": {
-      "name": "squad_roster",
+    "player_character_pool": {
+      "name": "player_character_pool",
+      "columns": {
+        "player_game_profile_id": {
+          "name": "player_game_profile_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_character_id": {
+          "name": "game_character_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "preference_order": {
+          "name": "preference_order",
+          "type": "int2",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. Optional character pool for the player game profile; works for heroes, agents, or equivalent characters.",
+      "indexes": {},
+      "constraints": {
+        "games_id_to_player_character_pool_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_player_character_pool_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "preference_order_check": {
+          "type": "CHECK",
+          "name": "preference_order_check",
+          "detail": "preference_order > 0"
+        },
+        "player_character_pool_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "player_character_pool_pkey",
+          "columnNames": [
+            "player_game_profile_id",
+            "game_character_id"
+          ]
+        },
+        "player_character_pool_player_game_profile_id_preference_order_key": {
+          "type": "UNIQUE",
+          "name": "player_character_pool_player_game_profile_id_preference_order_key",
+          "columnNames": [
+            "player_game_profile_id",
+            "preference_order"
+          ]
+        },
+        "player_game_profiles_id_to_player_character_pool_player_game_profile_id": {
+          "type": "FOREIGN KEY",
+          "name": "player_game_profiles_id_to_player_character_pool_player_game_profile_id",
+          "columnNames": [
+            "player_game_profile_id",
+            "game_id"
+          ],
+          "targetTableName": "player_game_profiles",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "game_characters_id_to_player_character_pool_game_character_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_characters_id_to_player_character_pool_game_character_id",
+          "columnNames": [
+            "game_character_id",
+            "game_id"
+          ],
+          "targetTableName": "game_characters",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "squad_memberships": {
+      "name": "squad_memberships",
       "columns": {
         "id": {
           "name": "id",
@@ -1417,8 +2174,16 @@
           "notNull": true,
           "comment": null
         },
-        "player_id": {
-          "name": "player_id",
+        "player_game_profile_id": {
+          "name": "player_game_profile_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -1458,26 +2223,26 @@
           "comment": null
         }
       },
-      "comment": "3. Membership history. A coach registers each player for their squad; no fixed player1/player2 columns.",
+      "comment": "3. Historical squad membership. Leaving sets left_at; the player game profile and match history are never deleted.",
       "indexes": {
-        "roster_one_active_squad": {
-          "name": "roster_one_active_squad",
+        "membership_one_active_squad": {
+          "name": "membership_one_active_squad",
           "unique": true,
           "columns": [
-            "player_id"
+            "player_game_profile_id"
           ],
           "type": "btree"
         },
-        "roster_one_active_captain": {
-          "name": "roster_one_active_captain",
+        "membership_one_active_captain": {
+          "name": "membership_one_active_captain",
           "unique": true,
           "columns": [
             "squad_id"
           ],
           "type": "btree"
         },
-        "roster_squad": {
-          "name": "roster_squad",
+        "memberships_squad": {
+          "name": "memberships_squad",
           "unique": false,
           "columns": [
             "squad_id",
@@ -1487,33 +2252,20 @@
         }
       },
       "constraints": {
-        "squad_roster_pkey": {
+        "squad_memberships_pkey": {
           "type": "PRIMARY KEY",
-          "name": "squad_roster_pkey",
+          "name": "squad_memberships_pkey",
           "columnNames": [
             "id"
           ]
         },
-        "squads_id_to_squad_roster_squad_id": {
+        "games_id_to_squad_memberships_game_id": {
           "type": "FOREIGN KEY",
-          "name": "squads_id_to_squad_roster_squad_id",
+          "name": "games_id_to_squad_memberships_game_id",
           "columnNames": [
-            "squad_id"
+            "game_id"
           ],
-          "targetTableName": "squads",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "players_id_to_squad_roster_player_id": {
-          "type": "FOREIGN KEY",
-          "name": "players_id_to_squad_roster_player_id",
-          "columnNames": [
-            "player_id"
-          ],
-          "targetTableName": "players",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -1530,9 +2282,19 @@
           "name": "check_left_at_IS_NULL_OR_l",
           "detail": "left_at IS NULL OR left_at >= joined_at"
         },
-        "squad_coaches_id_to_squad_roster_added_by_coach_id": {
+        "squad_memberships_id_game_id_squad_id_player_game_profile_id_key": {
+          "type": "UNIQUE",
+          "name": "squad_memberships_id_game_id_squad_id_player_game_profile_id_key",
+          "columnNames": [
+            "id",
+            "game_id",
+            "squad_id",
+            "player_game_profile_id"
+          ]
+        },
+        "squad_coaches_id_to_squad_memberships_added_by_coach_id": {
           "type": "FOREIGN KEY",
-          "name": "squad_coaches_id_to_squad_roster_added_by_coach_id",
+          "name": "squad_coaches_id_to_squad_memberships_added_by_coach_id",
           "columnNames": [
             "added_by_coach_id",
             "squad_id"
@@ -1541,6 +2303,314 @@
           "targetColumnNames": [
             "id",
             "squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_squad_memberships_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_memberships_squad_id",
+          "columnNames": [
+            "squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "player_game_profiles_id_to_squad_memberships_player_game_profile_id": {
+          "type": "FOREIGN KEY",
+          "name": "player_game_profiles_id_to_squad_memberships_player_game_profile_id",
+          "columnNames": [
+            "player_game_profile_id",
+            "game_id"
+          ],
+          "targetTableName": "player_game_profiles",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "player_profile_claims": {
+      "name": "player_profile_claims",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "player_profile_id": {
+          "name": "player_profile_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "claimant_user_id": {
+          "name": "claimant_user_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "default": "pending",
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "proof_asset_id": {
+          "name": "proof_asset_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "review_note": {
+          "name": "review_note",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. A player can claim a coach-created profile. Approval links the existing profile to the user instead of creating a duplicate.",
+      "indexes": {
+        "player_profile_one_pending_claim": {
+          "name": "player_profile_one_pending_claim",
+          "unique": true,
+          "columns": [
+            "player_profile_id"
+          ],
+          "type": "btree"
+        }
+      },
+      "constraints": {
+        "player_profile_claims_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "player_profile_claims_pkey",
+          "columnNames": [
+            "id"
+          ]
+        },
+        "player_profiles_id_to_player_profile_claims_player_profile_id": {
+          "type": "FOREIGN KEY",
+          "name": "player_profiles_id_to_player_profile_claims_player_profile_id",
+          "columnNames": [
+            "player_profile_id"
+          ],
+          "targetTableName": "player_profiles",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_player_profile_claims_claimant_user_id": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_player_profile_claims_claimant_user_id",
+          "columnNames": [
+            "claimant_user_id"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "status_check": {
+          "type": "CHECK",
+          "name": "status_check",
+          "detail": "status IN ('pending','approved','rejected','cancelled')"
+        },
+        "media_assets_id_to_player_profile_claims_proof_asset_id": {
+          "type": "FOREIGN KEY",
+          "name": "media_assets_id_to_player_profile_claims_proof_asset_id",
+          "columnNames": [
+            "proof_asset_id"
+          ],
+          "targetTableName": "media_assets",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "users_id_to_player_profile_claims_reviewed_by": {
+          "type": "FOREIGN KEY",
+          "name": "users_id_to_player_profile_claims_reviewed_by",
+          "columnNames": [
+            "reviewed_by"
+          ],
+          "targetTableName": "users",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_status__pending_AND_": {
+          "type": "CHECK",
+          "name": "check_status__pending_AND_",
+          "detail": "(status = 'pending' AND reviewed_at IS NULL)\n        OR (status IN ('approved','rejected') AND reviewed_at IS NOT NULL)\n        OR status = 'cancelled'"
+        }
+      }
+    },
+    "player_team_preferences": {
+      "name": "player_team_preferences",
+      "columns": {
+        "player_game_profile_id": {
+          "name": "player_game_profile_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "is_looking_for_squad": {
+          "name": "is_looking_for_squad",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "preferred_region_code": {
+          "name": "preferred_region_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "desired_squad_level_code": {
+          "name": "desired_squad_level_code",
+          "type": "varchar",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "availability_note": {
+          "name": "availability_note",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "introduction": {
+          "name": "introduction",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "visible_to_coaches": {
+          "name": "visible_to_coaches",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "3. Opt-in free-agent preferences. Public discovery only includes claimed profiles without an active squad membership.",
+      "indexes": {},
+      "constraints": {
+        "player_game_profiles_id_to_player_team_preferences_player_game_profile_id": {
+          "type": "FOREIGN KEY",
+          "name": "player_game_profiles_id_to_player_team_preferences_player_game_profile_id",
+          "columnNames": [
+            "player_game_profile_id"
+          ],
+          "targetTableName": "player_game_profiles",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "player_team_preferences_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "player_team_preferences_pkey",
+          "columnNames": [
+            "player_game_profile_id"
+          ]
+        },
+        "regions_code_to_player_team_preferences_preferred_region_code": {
+          "type": "FOREIGN KEY",
+          "name": "regions_code_to_player_team_preferences_preferred_region_code",
+          "columnNames": [
+            "preferred_region_code"
+          ],
+          "targetTableName": "regions",
+          "targetColumnNames": [
+            "code"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squad_levels_code_to_player_team_preferences_desired_squad_level_code": {
+          "type": "FOREIGN KEY",
+          "name": "squad_levels_code_to_player_team_preferences_desired_squad_level_code",
+          "columnNames": [
+            "desired_squad_level_code"
+          ],
+          "targetTableName": "squad_levels",
+          "targetColumnNames": [
+            "code"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
@@ -1637,6 +2707,14 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -1813,26 +2891,13 @@
             "id"
           ]
         },
-        "squads_id_to_scrim_invites_sender_squad_id": {
+        "games_id_to_scrim_invites_game_id": {
           "type": "FOREIGN KEY",
-          "name": "squads_id_to_scrim_invites_sender_squad_id",
+          "name": "games_id_to_scrim_invites_game_id",
           "columnNames": [
-            "sender_squad_id"
+            "game_id"
           ],
-          "targetTableName": "squads",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "squads_id_to_scrim_invites_recipient_squad_id": {
-          "type": "FOREIGN KEY",
-          "name": "squads_id_to_scrim_invites_recipient_squad_id",
-          "columnNames": [
-            "recipient_squad_id"
-          ],
-          "targetTableName": "squads",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -1885,14 +2950,45 @@
           "name": "version_check",
           "detail": "version > 0"
         },
-        "scrim_invites_id_sender_squad_id_recipient_squad_id_key": {
+        "scrim_invites_id_game_id_sender_squad_id_recipient_squad_id_key": {
           "type": "UNIQUE",
-          "name": "scrim_invites_id_sender_squad_id_recipient_squad_id_key",
+          "name": "scrim_invites_id_game_id_sender_squad_id_recipient_squad_id_key",
           "columnNames": [
             "id",
+            "game_id",
             "sender_squad_id",
             "recipient_squad_id"
           ]
+        },
+        "squads_id_to_scrim_invites_sender_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_invites_sender_squad_id",
+          "columnNames": [
+            "sender_squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrim_invites_recipient_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrim_invites_recipient_squad_id",
+          "columnNames": [
+            "recipient_squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         },
         "squad_coaches_id_to_scrim_invites_created_by_coach_id": {
           "type": "FOREIGN KEY",
@@ -1943,6 +3039,14 @@
       "columns": {
         "id": {
           "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -2093,38 +3197,25 @@
             "id"
           ]
         },
+        "games_id_to_scrims_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_scrims_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
         "scrims_invite_id_key": {
           "type": "UNIQUE",
           "name": "scrims_invite_id_key",
           "columnNames": [
             "invite_id"
           ]
-        },
-        "squads_id_to_scrims_home_squad_id": {
-          "type": "FOREIGN KEY",
-          "name": "squads_id_to_scrims_home_squad_id",
-          "columnNames": [
-            "home_squad_id"
-          ],
-          "targetTableName": "squads",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "squads_id_to_scrims_away_squad_id": {
-          "type": "FOREIGN KEY",
-          "name": "squads_id_to_scrims_away_squad_id",
-          "columnNames": [
-            "away_squad_id"
-          ],
-          "targetTableName": "squads",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
         },
         "series_format_check": {
           "type": "CHECK",
@@ -2146,19 +3237,59 @@
           "name": "version_check",
           "detail": "version > 0"
         },
+        "scrims_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "scrims_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        },
         "scrim_invites_id_to_scrims_invite_id": {
           "type": "FOREIGN KEY",
           "name": "scrim_invites_id_to_scrims_invite_id",
           "columnNames": [
             "invite_id",
+            "game_id",
             "home_squad_id",
             "away_squad_id"
           ],
           "targetTableName": "scrim_invites",
           "targetColumnNames": [
             "id",
+            "game_id",
             "sender_squad_id",
             "recipient_squad_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrims_home_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrims_home_squad_id",
+          "columnNames": [
+            "home_squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_scrims_away_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_scrims_away_squad_id",
+          "columnNames": [
+            "away_squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
@@ -2391,11 +3522,35 @@
         }
       }
     },
-    "scrim_lineups": {
-      "name": "scrim_lineups",
+    "match_participants": {
+      "name": "match_participants",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "scrim_id": {
           "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "squad_membership_id": {
+          "name": "squad_membership_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -2410,8 +3565,8 @@
           "notNull": true,
           "comment": null
         },
-        "player_id": {
-          "name": "player_id",
+        "player_game_profile_id": {
+          "name": "player_game_profile_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -2433,57 +3588,239 @@
           "check": null,
           "notNull": false,
           "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
         }
       },
-      "comment": "4. Historical lineup snapshot; roster transfers cannot rewrite past participation.",
+      "comment": "4. Historical match lineup. It records the membership and game profile used at match time, so transfers cannot rewrite prior participation.",
       "indexes": {},
       "constraints": {
-        "scrims_id_to_scrim_lineups_scrim_id": {
-          "type": "FOREIGN KEY",
-          "name": "scrims_id_to_scrim_lineups_scrim_id",
+        "match_participants_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "match_participants_pkey",
           "columnNames": [
-            "scrim_id"
+            "id"
+          ]
+        },
+        "games_id_to_match_participants_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_match_participants_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "match_participants_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "match_participants_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        },
+        "match_participants_scrim_id_player_game_profile_id_key": {
+          "type": "UNIQUE",
+          "name": "match_participants_scrim_id_player_game_profile_id_key",
+          "columnNames": [
+            "scrim_id",
+            "player_game_profile_id"
+          ]
+        },
+        "scrims_id_to_match_participants_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_match_participants_scrim_id",
+          "columnNames": [
+            "scrim_id",
+            "game_id"
           ],
           "targetTableName": "scrims",
           "targetColumnNames": [
-            "id"
+            "id",
+            "game_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "squads_id_to_scrim_lineups_squad_id": {
+        "squads_id_to_match_participants_squad_id": {
           "type": "FOREIGN KEY",
-          "name": "squads_id_to_scrim_lineups_squad_id",
+          "name": "squads_id_to_match_participants_squad_id",
           "columnNames": [
-            "squad_id"
+            "squad_id",
+            "game_id"
           ],
           "targetTableName": "squads",
           "targetColumnNames": [
-            "id"
+            "id",
+            "game_id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "players_id_to_scrim_lineups_player_id": {
+        "player_game_profiles_id_to_match_participants_player_game_profile_id": {
           "type": "FOREIGN KEY",
-          "name": "players_id_to_scrim_lineups_player_id",
+          "name": "player_game_profiles_id_to_match_participants_player_game_profile_id",
           "columnNames": [
-            "player_id"
+            "player_game_profile_id",
+            "game_id"
           ],
-          "targetTableName": "players",
+          "targetTableName": "player_game_profiles",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squad_memberships_id_to_match_participants_squad_membership_id": {
+          "type": "FOREIGN KEY",
+          "name": "squad_memberships_id_to_match_participants_squad_membership_id",
+          "columnNames": [
+            "squad_membership_id",
+            "game_id",
+            "squad_id",
+            "player_game_profile_id"
+          ],
+          "targetTableName": "squad_memberships",
+          "targetColumnNames": [
+            "id",
+            "game_id",
+            "squad_id",
+            "player_game_profile_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        }
+      }
+    },
+    "participant_stat_values": {
+      "name": "participant_stat_values",
+      "columns": {
+        "match_participant_id": {
+          "name": "match_participant_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "stat_definition_id": {
+          "name": "stat_definition_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "numeric_value": {
+          "name": "numeric_value",
+          "type": "numeric",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "text_value": {
+          "name": "text_value",
+          "type": "text",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "boolean_value": {
+          "name": "boolean_value",
+          "type": "bool",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "recorded_at": {
+          "name": "recorded_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": "4. Game-defined participant statistics. New games and metrics add definition/value rows without ERD changes.",
+      "indexes": {},
+      "constraints": {
+        "games_id_to_participant_stat_values_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_participant_stat_values_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
           "updateConstraint": "NO_ACTION",
           "deleteConstraint": "NO_ACTION"
         },
-        "scrim_lineups_pkey": {
+        "participant_stat_values_pkey": {
           "type": "PRIMARY KEY",
-          "name": "scrim_lineups_pkey",
+          "name": "participant_stat_values_pkey",
           "columnNames": [
-            "scrim_id",
-            "player_id"
+            "match_participant_id",
+            "stat_definition_id"
           ]
+        },
+        "match_participants_id_to_participant_stat_values_match_participant_id": {
+          "type": "FOREIGN KEY",
+          "name": "match_participants_id_to_participant_stat_values_match_participant_id",
+          "columnNames": [
+            "match_participant_id",
+            "game_id"
+          ],
+          "targetTableName": "match_participants",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "stat_definitions_id_to_participant_stat_values_stat_definition_id": {
+          "type": "FOREIGN KEY",
+          "name": "stat_definitions_id_to_participant_stat_values_stat_definition_id",
+          "columnNames": [
+            "stat_definition_id",
+            "game_id"
+          ],
+          "targetTableName": "stat_definitions",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "check_num_nonnullsnumeric_": {
+          "type": "CHECK",
+          "name": "check_num_nonnullsnumeric_",
+          "detail": "num_nonnulls(numeric_value, text_value, boolean_value) = 1"
         }
       }
     },
@@ -2986,6 +4323,22 @@
           "notNull": true,
           "comment": null
         },
+        "game_id": {
+          "name": "game_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_mode_id": {
+          "name": "game_mode_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
         "name": {
           "name": "name",
           "type": "varchar",
@@ -3027,7 +4380,7 @@
           "comment": null
         }
       },
-      "comment": "5. ABYSS rating periods and versioned rules, independent of official MLBB ranks/seasons.",
+      "comment": "5. ABYSS rating periods and versioned rules scoped to a game mode, independent of official game ranks.",
       "indexes": {},
       "constraints": {
         "rating_seasons_pkey": {
@@ -3036,6 +4389,51 @@
           "columnNames": [
             "id"
           ]
+        },
+        "games_id_to_rating_seasons_game_id": {
+          "type": "FOREIGN KEY",
+          "name": "games_id_to_rating_seasons_game_id",
+          "columnNames": [
+            "game_id"
+          ],
+          "targetTableName": "games",
+          "targetColumnNames": [
+            "id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "rating_seasons_id_game_id_key": {
+          "type": "UNIQUE",
+          "name": "rating_seasons_id_game_id_key",
+          "columnNames": [
+            "id",
+            "game_id"
+          ]
+        },
+        "rating_seasons_game_id_game_mode_id_name_key": {
+          "type": "UNIQUE",
+          "name": "rating_seasons_game_id_game_mode_id_name_key",
+          "columnNames": [
+            "game_id",
+            "game_mode_id",
+            "name"
+          ]
+        },
+        "game_modes_id_to_rating_seasons_game_mode_id": {
+          "type": "FOREIGN KEY",
+          "name": "game_modes_id_to_rating_seasons_game_mode_id",
+          "columnNames": [
+            "game_mode_id",
+            "game_id"
+          ],
+          "targetTableName": "game_modes",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         },
         "check_ends_at__starts_at": {
           "type": "CHECK",
@@ -3057,6 +4455,14 @@
         },
         "squad_id": {
           "name": "squad_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -3099,26 +4505,13 @@
       "comment": "5. Authoritative platform rating for matchmaking, not a client-editable profile field.",
       "indexes": {},
       "constraints": {
-        "rating_seasons_id_to_squad_ratings_season_id": {
+        "games_id_to_squad_ratings_game_id": {
           "type": "FOREIGN KEY",
-          "name": "rating_seasons_id_to_squad_ratings_season_id",
+          "name": "games_id_to_squad_ratings_game_id",
           "columnNames": [
-            "season_id"
+            "game_id"
           ],
-          "targetTableName": "rating_seasons",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "squads_id_to_squad_ratings_squad_id": {
-          "type": "FOREIGN KEY",
-          "name": "squads_id_to_squad_ratings_squad_id",
-          "columnNames": [
-            "squad_id"
-          ],
-          "targetTableName": "squads",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -3142,6 +4535,36 @@
             "season_id",
             "squad_id"
           ]
+        },
+        "rating_seasons_id_to_squad_ratings_season_id": {
+          "type": "FOREIGN KEY",
+          "name": "rating_seasons_id_to_squad_ratings_season_id",
+          "columnNames": [
+            "season_id",
+            "game_id"
+          ],
+          "targetTableName": "rating_seasons",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_squad_ratings_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_squad_ratings_squad_id",
+          "columnNames": [
+            "squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -3174,6 +4597,14 @@
         },
         "scrim_id": {
           "name": "scrim_id",
+          "type": "uuid",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "game_id": {
+          "name": "game_id",
           "type": "uuid",
           "default": null,
           "check": null,
@@ -3239,39 +4670,13 @@
             "id"
           ]
         },
-        "rating_seasons_id_to_rating_changes_season_id": {
+        "games_id_to_rating_changes_game_id": {
           "type": "FOREIGN KEY",
-          "name": "rating_seasons_id_to_rating_changes_season_id",
+          "name": "games_id_to_rating_changes_game_id",
           "columnNames": [
-            "season_id"
+            "game_id"
           ],
-          "targetTableName": "rating_seasons",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "squads_id_to_rating_changes_squad_id": {
-          "type": "FOREIGN KEY",
-          "name": "squads_id_to_rating_changes_squad_id",
-          "columnNames": [
-            "squad_id"
-          ],
-          "targetTableName": "squads",
-          "targetColumnNames": [
-            "id"
-          ],
-          "updateConstraint": "NO_ACTION",
-          "deleteConstraint": "NO_ACTION"
-        },
-        "scrims_id_to_rating_changes_scrim_id": {
-          "type": "FOREIGN KEY",
-          "name": "scrims_id_to_rating_changes_scrim_id",
-          "columnNames": [
-            "scrim_id"
-          ],
-          "targetTableName": "scrims",
+          "targetTableName": "games",
           "targetColumnNames": [
             "id"
           ],
@@ -3297,6 +4702,51 @@
             "scrim_id",
             "result_version"
           ]
+        },
+        "rating_seasons_id_to_rating_changes_season_id": {
+          "type": "FOREIGN KEY",
+          "name": "rating_seasons_id_to_rating_changes_season_id",
+          "columnNames": [
+            "season_id",
+            "game_id"
+          ],
+          "targetTableName": "rating_seasons",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "squads_id_to_rating_changes_squad_id": {
+          "type": "FOREIGN KEY",
+          "name": "squads_id_to_rating_changes_squad_id",
+          "columnNames": [
+            "squad_id",
+            "game_id"
+          ],
+          "targetTableName": "squads",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
+        },
+        "scrims_id_to_rating_changes_scrim_id": {
+          "type": "FOREIGN KEY",
+          "name": "scrims_id_to_rating_changes_scrim_id",
+          "columnNames": [
+            "scrim_id",
+            "game_id"
+          ],
+          "targetTableName": "scrims",
+          "targetColumnNames": [
+            "id",
+            "game_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "NO_ACTION"
         }
       }
     },
@@ -4591,7 +6041,7 @@
           "comment": null
         }
       },
-      "comment": "See the numbered SQL comment in abyss.sql.",
+      "comment": "8. Squad-level proof and decision history. Approval updates squad level/verification in the same transaction.",
       "indexes": {
         "verification_one_pending": {
           "name": "verification_one_pending",

@@ -31,42 +31,61 @@ try {
   await reject('case-insensitive email uniqueness', `INSERT INTO users(username,email,password_hash) VALUES ('Gamma','A@EXAMPLE.TEST','x')`, [], '23505');
   await db.exec(`INSERT INTO regions VALUES ('PH','Philippines','Asia/Manila');
     INSERT INTO squad_levels VALUES ('amateur','Amateur',false);`);
-  const sa = (await one(`INSERT INTO squads(owner_user_id,name,slug,region_code,level_code) VALUES ($1,'A','a','PH','amateur') RETURNING id`, [a])).id;
-  const sb = (await one(`INSERT INTO squads(owner_user_id,name,slug,region_code,level_code) VALUES ($1,'B','b','PH','amateur') RETURNING id`, [b])).id;
+  const game = (await one(`INSERT INTO games(code,name,publisher) VALUES ('test-game','Test Game','Test Publisher') RETURNING id`)).id;
+  const mode = (await one(`INSERT INTO game_modes(game_id,code,name,team_size) VALUES ($1,'standard','Standard 5v5',5) RETURNING id`, [game])).id;
+  const sa = (await one(`INSERT INTO squads(owner_user_id,game_id,game_mode_id,name,slug,region_code,level_code)
+    VALUES ($1,$2,$3,'A','a','PH','amateur') RETURNING id`, [a,game,mode])).id;
+  const sb = (await one(`INSERT INTO squads(owner_user_id,game_id,game_mode_id,name,slug,region_code,level_code)
+    VALUES ($1,$2,$3,'B','b','PH','amateur') RETURNING id`, [b,game,mode])).id;
   const coachA = (await one(`INSERT INTO squad_coaches(squad_id,user_id,is_primary) VALUES ($1,$2,true) RETURNING id`, [sa,a])).id;
   const coachB = (await one(`INSERT INTO squad_coaches(squad_id,user_id,is_primary) VALUES ($1,$2,true) RETURNING id`, [sb,b])).id;
-  const player = (await one(`INSERT INTO players(created_by,in_game_name,mlbb_account_id,mlbb_zone_id) VALUES ($1,'P','123','456') RETURNING id`, [a])).id;
-  await db.query(`INSERT INTO squad_roster(squad_id,player_id,added_by_coach_id,roster_role) VALUES ($1,$2,$3,'captain')`, [sa,player,coachA]);
-  await reject('player cannot join two active squads', `INSERT INTO squad_roster(squad_id,player_id,added_by_coach_id,roster_role) VALUES ($1,$2,$3,'starter')`, [sb,player,coachB], '23505');
-  await db.query(`UPDATE squad_roster SET left_at=now() WHERE player_id=$1`, [player]);
-  await db.query(`INSERT INTO squad_roster(squad_id,player_id,added_by_coach_id,roster_role) VALUES ($1,$2,$3,'starter')`, [sb,player,coachB]);
-  pass('roster transfer preserves old membership');
+  const playerProfile = (await one(`INSERT INTO player_profiles(created_by,public_name) VALUES ($1,'Player P') RETURNING id`, [a])).id;
+  const playerGameProfile = (await one(`INSERT INTO player_game_profiles(player_profile_id,game_id,in_game_name,external_account_id,external_region_id)
+    VALUES ($1,$2,'P','123','456') RETURNING id`, [playerProfile,game])).id;
+  const membershipA = (await one(`INSERT INTO squad_memberships(squad_id,player_game_profile_id,game_id,added_by_coach_id,roster_role)
+    VALUES ($1,$2,$3,$4,'captain') RETURNING id`, [sa,playerGameProfile,game,coachA])).id;
+  await reject('player cannot join two active squads', `INSERT INTO squad_memberships(squad_id,player_game_profile_id,game_id,added_by_coach_id,roster_role)
+    VALUES ($1,$2,$3,$4,'starter')`, [sb,playerGameProfile,game,coachB], '23505');
+  await db.query(`UPDATE squad_memberships SET left_at=now() WHERE id=$1`, [membershipA]);
+  const membershipB = (await one(`INSERT INTO squad_memberships(squad_id,player_game_profile_id,game_id,added_by_coach_id,roster_role)
+    VALUES ($1,$2,$3,$4,'starter') RETURNING id`, [sb,playerGameProfile,game,coachB])).id;
+  assert.equal((await one(`SELECT count(*)::int AS n FROM player_game_profiles WHERE id=$1`, [playerGameProfile])).n, 1);
+  pass('roster transfer preserves player identity and old membership');
 
-  const inviteSql = `INSERT INTO scrim_invites(sender_squad_id,recipient_squad_id,created_by,created_by_coach_id,proposed_start,proposed_end,game_count,expires_at)
-    VALUES ($1,$2,$3,$4,now()+interval '2 days',now()+interval '2 days 2 hours',$5,now()+interval '1 day') RETURNING id`;
-  await reject('self invite rejected', inviteSql, [sa,sa,a,coachA,3], '23514');
-  await reject('even best-of rejected', inviteSql, [sa,sb,a,coachA,2], '23514');
-  const invite = (await one(inviteSql, [sa,sb,a,coachA,3])).id;
+  const inviteSql = `INSERT INTO scrim_invites(game_id,sender_squad_id,recipient_squad_id,created_by,created_by_coach_id,proposed_start,proposed_end,game_count,expires_at)
+    VALUES ($1,$2,$3,$4,$5,now()+interval '2 days',now()+interval '2 days 2 hours',$6,now()+interval '1 day') RETURNING id`;
+  await reject('self invite rejected', inviteSql, [game,sa,sa,a,coachA,3], '23514');
+  await reject('even best-of rejected', inviteSql, [game,sa,sb,a,coachA,2], '23514');
+  const invite = (await one(inviteSql, [game,sa,sb,a,coachA,3])).id;
   // Reuse the exact instant from the saved row to test reverse-pair uniqueness.
   await reject('reciprocal duplicate pending invite rejected', `INSERT INTO scrim_invites
-    (sender_squad_id,recipient_squad_id,created_by,created_by_coach_id,proposed_start,proposed_end,game_count,expires_at)
-    SELECT recipient_squad_id,sender_squad_id,$2,$3,proposed_start,proposed_end,game_count,expires_at
+    (game_id,sender_squad_id,recipient_squad_id,created_by,created_by_coach_id,proposed_start,proposed_end,game_count,expires_at)
+    SELECT game_id,recipient_squad_id,sender_squad_id,$2,$3,proposed_start,proposed_end,game_count,expires_at
     FROM scrim_invites WHERE id=$1`, [invite,b,coachB], '23505');
-  const scrimSql = `INSERT INTO scrims(invite_id,home_squad_id,away_squad_id,scheduled_start,scheduled_end,series_format,game_count)
-    SELECT id,sender_squad_id,recipient_squad_id,proposed_start,proposed_end,series_format,game_count
+  const scrimSql = `INSERT INTO scrims(game_id,invite_id,home_squad_id,away_squad_id,scheduled_start,scheduled_end,series_format,game_count)
+    SELECT game_id,id,sender_squad_id,recipient_squad_id,proposed_start,proposed_end,series_format,game_count
     FROM scrim_invites WHERE id=$1 RETURNING id`;
   await db.query(`UPDATE scrim_invites SET status='accepted',responded_by=$2,responded_at=now() WHERE id=$1`, [invite,b]);
   const scrim = (await one(scrimSql, [invite])).id;
   await reject('one scrim per invite', scrimSql, [invite], '23505');
   await reject('negative schedule duration rejected', `UPDATE scrims SET scheduled_end=scheduled_start-interval '1 hour' WHERE id=$1`, [scrim], '23514');
+  const statDefinition = (await one(`INSERT INTO stat_definitions(game_id,code,display_name,value_type,aggregation)
+    VALUES ($1,'kills','Kills','integer','sum') RETURNING id`, [game])).id;
+  const participant = (await one(`INSERT INTO match_participants(scrim_id,game_id,squad_membership_id,squad_id,player_game_profile_id,in_game_name_snapshot,role_snapshot)
+    VALUES ($1,$2,$3,$4,$5,'P','starter') RETURNING id`, [scrim,game,membershipB,sb,playerGameProfile])).id;
+  await db.query(`INSERT INTO participant_stat_values(match_participant_id,stat_definition_id,game_id,numeric_value)
+    VALUES ($1,$2,$3,12)`, [participant,statDefinition,game]);
+  await db.query(`UPDATE squad_memberships SET left_at=now() WHERE id=$1`, [membershipB]);
+  assert.equal((await one(`SELECT numeric_value FROM participant_stat_values WHERE match_participant_id=$1`, [participant])).numeric_value, '12.000000');
+  pass('match statistics survive a player leaving the squad');
   const submission = (await one(`INSERT INTO result_submissions(scrim_id,submitted_by_squad_id,submitted_by,home_wins,away_wins)
     VALUES ($1,$2,$3,2,1) RETURNING id`, [scrim,sa,a])).id;
   await reject('score/outcome inconsistency rejected', `INSERT INTO scrim_results(scrim_id,accepted_submission_id,home_wins,away_wins,outcome,finalized_by)
     VALUES ($1,$2,2,1,'away_win',$3)`, [scrim,submission,b], '23514');
-  const invite2 = (await one(inviteSql,[sa,sb,a,coachA,3])).id;
+  const invite2 = (await one(inviteSql,[game,sa,sb,a,coachA,3])).id;
   await reject('scrim squads must match invitation orientation', `INSERT INTO scrims
-    (invite_id,home_squad_id,away_squad_id,scheduled_start,scheduled_end,series_format,game_count)
-    SELECT id,recipient_squad_id,sender_squad_id,proposed_start,proposed_end,series_format,game_count
+    (game_id,invite_id,home_squad_id,away_squad_id,scheduled_start,scheduled_end,series_format,game_count)
+    SELECT game_id,id,recipient_squad_id,sender_squad_id,proposed_start,proposed_end,series_format,game_count
     FROM scrim_invites WHERE id=$1`, [invite2], '23503');
   const scrim2 = (await one(scrimSql,[invite2])).id;
   await reject('canonical result cannot use another scrim submission', `INSERT INTO scrim_results(scrim_id,accepted_submission_id,home_wins,away_wins,outcome,finalized_by)
@@ -74,18 +93,31 @@ try {
   await db.query(`INSERT INTO scrim_results(scrim_id,accepted_submission_id,home_wins,away_wins,outcome,finalized_by)
     VALUES ($1,$2,2,1,'home_win',$3)`,[scrim,submission,b]);
   pass('valid series result persists');
-  const profile = await one(`SELECT squad_name, region_name, primary_coach_name, player_count, players
+  const claim = (await one(`INSERT INTO player_profile_claims(player_profile_id,claimant_user_id) VALUES ($1,$2) RETURNING id`, [playerProfile,b])).id;
+  await db.query(`UPDATE player_profile_claims SET status='approved',reviewed_by=$2,reviewed_at=now() WHERE id=$1`, [claim,a]);
+  await db.query(`UPDATE player_profiles SET linked_user_id=$2,ownership_status='claimed',claimed_at=now() WHERE id=$1`, [playerProfile,b]);
+  await db.query(`INSERT INTO player_team_preferences(player_game_profile_id,is_looking_for_squad,preferred_region_code,desired_squad_level_code,introduction)
+    VALUES ($1,true,'PH','amateur','Available for tryouts')`, [playerGameProfile]);
+  const freeAgent = await one(`SELECT player_name, game_name, preferred_region FROM vw_free_agents WHERE player_game_profile_id=$1`, [playerGameProfile]);
+  assert.deepEqual(freeAgent, { player_name: 'P', game_name: 'Test Game', preferred_region: 'Philippines' });
+  pass('coach-created profile can be claimed and shown as an independent player');
+  const otherGame = (await one(`INSERT INTO games(code,name) VALUES ('other-game','Other Game') RETURNING id`)).id;
+  await reject('cross-game squad membership rejected', `INSERT INTO squad_memberships(squad_id,player_game_profile_id,game_id,added_by_coach_id,roster_role)
+    VALUES ($1,$2,$3,$4,'starter')`, [sa,playerGameProfile,otherGame,coachA], '23503');
+  const profile = await one(`SELECT squad_name, game_name, game_mode, region_name, primary_coach_name, player_count, players
     FROM vw_squad_profile WHERE squad_id=$1`, [sa]);
   assert.equal(profile.squad_name, 'A');
+  assert.equal(profile.game_name, 'Test Game');
+  assert.equal(profile.game_mode, 'Standard 5v5');
   assert.equal(profile.region_name, 'Philippines');
   assert.equal(profile.primary_coach_name, 'Alpha');
   assert.equal(profile.player_count, 0); // Player was transferred to squad B above.
   const schedule = await one(`SELECT opponent_name, score_display, result_label
     FROM vw_squad_schedule WHERE squad_id=$1 AND scrim_id=$2`, [sa, scrim]);
   assert.deepEqual(schedule, { opponent_name: 'B', score_display: '2-1', result_label: 'Win' });
-  const season = (await one(`INSERT INTO rating_seasons(name,starts_at,ends_at,algorithm_version)
-    VALUES ('Test season',now()-interval '1 day',now()+interval '1 day','test-v1') RETURNING id`)).id;
-  await db.query(`INSERT INTO squad_ratings(season_id,squad_id,rating) VALUES ($1,$2,1500)`, [season, sa]);
+  const season = (await one(`INSERT INTO rating_seasons(game_id,game_mode_id,name,starts_at,ends_at,algorithm_version)
+    VALUES ($1,$2,'Test season',now()-interval '1 day',now()+interval '1 day','test-v1') RETURNING id`, [game,mode])).id;
+  await db.query(`INSERT INTO squad_ratings(season_id,squad_id,game_id,rating) VALUES ($1,$2,$3,1500)`, [season,sa,game]);
   await db.exec('REFRESH MATERIALIZED VIEW mv_squad_statistics');
   await db.exec('REFRESH MATERIALIZED VIEW mv_leaderboard');
   const statistics = await one(`SELECT squad_name, wins, losses, win_rate_percent
