@@ -67,6 +67,10 @@ sources:
             data_type: INT
           - name: section_id
             data_type: INT
+          - name: grade_level
+            data_type: SMALLINT
+          - name: interests
+            data_type: TEXT[]
           - name: avatar_id
             data_type: INT
           - name: total_star_points
@@ -79,18 +83,12 @@ sources:
             data_type: TIMESTAMPTZ
           - name: updated_at
             data_type: TIMESTAMPTZ
-          - name: grade_level
-            data_type: INT2
-          - name: interest
-            data_type: TEXT[]
           - name: first_name
             data_type: TEXT
           - name: last_name
             data_type: TEXT
-          - name: birth_date
-            data_type: DATE
-            
-        
+          - name: birthdate
+            data_type: TEXT
       - name: parent_profiles
         columns:
           - name: parent_id
@@ -112,10 +110,9 @@ sources:
           - name: relationship
             data_type: TEXT
           - name: notification_channels
-            data_type: TEXT
+            data_type: TEXT[]
           - name: issetup_complete
             data_type: BOOLEAN
-            
       - name: student_parent_links
         columns:
           - name: student_parent_link_id
@@ -144,6 +141,186 @@ sources:
             data_type: TIMESTAMPTZ
           - name: is_active
             data_type: BOOLEAN
+      - name: organizations
+        columns:
+          - name: organization_id
+            data_type: INT
+          - name: organization_name
+            data_type: VARCHAR(255)
+          - name: organization_type
+            data_type: TEXT
+          - name: contact_email
+            data_type: TEXT
+          - name: organization_status
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
+      - name: organization_members
+        columns:
+          - name: organization_member_id
+            data_type: INT
+          - name: organization_id
+            data_type: INT
+          - name: teacher_id
+            data_type: INT
+          - name: membership_role
+            data_type: TEXT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: joined_at
+            data_type: TIMESTAMPTZ
+          - name: left_at
+            data_type: TIMESTAMPTZ
+      - name: organization_student_enrollments
+        columns:
+          - name: organization_student_enrollment_id
+            data_type: INT
+          - name: organization_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: enrolled_at
+            data_type: TIMESTAMPTZ
+          - name: left_at
+            data_type: TIMESTAMPTZ
+          - name: is_active
+            data_type: BOOLEAN
+      - name: subscription_plans
+        columns:
+          - name: plan_id
+            data_type: INT
+          - name: plan_code
+            data_type: VARCHAR(50)
+          - name: plan_name
+            data_type: VARCHAR(100)
+          - name: coverage_type
+            data_type: TEXT
+          - name: billing_model
+            data_type: TEXT
+          - name: price_amount
+            data_type: NUMERIC(12, 2)
+          - name: currency_code
+            data_type: CHAR(3)
+          - name: access_duration_months
+            data_type: INT
+          - name: is_lifetime
+            data_type: BOOLEAN
+          - name: default_seat_limit
+            data_type: INT
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
+      - name: billing_accounts
+        columns:
+          - name: billing_account_id
+            data_type: INT
+          - name: user_id
+            data_type: INT
+          - name: organization_id
+            data_type: INT
+          - name: billing_email
+            data_type: TEXT
+          - name: provider_customer_reference
+            data_type: TEXT
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
+      - name: subscriptions
+        columns:
+          - name: subscription_id
+            data_type: INT
+          - name: billing_account_id
+            data_type: INT
+          - name: plan_id
+            data_type: INT
+          - name: provider_subscription_reference
+            data_type: TEXT
+          - name: subscription_status
+            data_type: TEXT
+          - name: purchased_at
+            data_type: TIMESTAMPTZ
+          - name: access_starts_at
+            data_type: TIMESTAMPTZ
+          - name: access_ends_at
+            data_type: TIMESTAMPTZ
+          - name: is_lifetime
+            data_type: BOOLEAN
+          - name: auto_renew
+            data_type: BOOLEAN
+          - name: seat_limit
+            data_type: INT
+          - name: cancelled_at
+            data_type: TIMESTAMPTZ
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
+      - name: subscription_students
+        columns:
+          - name: subscription_student_id
+            data_type: INT
+          - name: subscription_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: assigned_at
+            data_type: TIMESTAMPTZ
+          - name: removed_at
+            data_type: TIMESTAMPTZ
+          - name: is_active
+            data_type: BOOLEAN
+      - name: payment_transactions
+        columns:
+          - name: payment_id
+            data_type: INT
+          - name: subscription_id
+            data_type: INT
+          - name: provider_payment_reference
+            data_type: TEXT
+          - name: amount
+            data_type: NUMERIC(12, 2)
+          - name: currency_code
+            data_type: CHAR(3)
+          - name: payment_status
+            data_type: TEXT
+          - name: paid_at
+            data_type: TIMESTAMPTZ
+          - name: created_at
+            data_type: TIMESTAMPTZ
+      - name: student_login_challenges
+        columns:
+          - name: challenge_id
+            data_type: UUID
+          - name: student_id
+            data_type: INT
+          - name: issued_by_parent_id
+            data_type: INT
+          - name: issued_by_teacher_id
+            data_type: INT
+          - name: challenge_type
+            data_type: TEXT
+          - name: public_code
+            data_type: VARCHAR(20)
+          - name: secret_hash
+            data_type: TEXT
+          - name: expires_at
+            data_type: TIMESTAMPTZ
+          - name: used_at
+            data_type: TIMESTAMPTZ
+          - name: revoked_at
+            data_type: TIMESTAMPTZ
+          - name: failed_attempt_count
+            data_type: INT
+          - name: maximum_attempt_count
+            data_type: INT
+          - name: created_at
+            data_type: TIMESTAMPTZ
       - name: math_topics
         columns:
           - name: topic_id
@@ -672,6 +849,20 @@ sources:
         columns:
           - name: vector_record_id
             data_type: BIGINT
+          - name: student_id
+            data_type: INT
+          - name: session_id
+            data_type: INT
+          - name: search_status
+            data_type: TEXT
+          - name: indexed_at
+            data_type: TIMESTAMPTZ
+          - name: last_error
+            data_type: TEXT
+          - name: content_hast
+            data_type: TEXT
+          - name: updated_at
+            data_type: TIMESTAMPTZ
           - name: namespace
             data_type: TEXT
           - name: source_type

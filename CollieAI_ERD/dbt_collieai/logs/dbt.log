@@ -7106,3 +7106,205 @@ drop view if exists "postgres"."analytics"."vw_column_lineage__dbt_backup" casca
 [0m14:43:45.687910 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000002984414D590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000298481D4050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000029847DD9850>]}
 [0m14:43:45.688294 [debug] [MainThread]: Flushing usage events
 [0m14:43:46.922677 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m23:20:47.103444 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018783204EC0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018785923ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018785923C50>]}
+
+
+============================== 23:20:47.107897 | ed46b719-fe09-4019-a5ca-201806975b0f ==============================
+[0m23:20:47.107897 [info ] [MainThread]: Running with dbt=1.12.0
+[0m23:20:47.108386 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'maximum_seed_size_mib': '1', 'printer_width': '80', 'write_json': 'True', 'introspect': 'True', 'log_cache_events': 'False', 'empty': 'None', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai', 'use_colors': 'True', 'hints_enabled': 'True', 'invocation_command': 'dbt ', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'c:\\Users\\YEN YEN\\Desktop\\ERD\\ERD-Portfolio-Repo\\CollieAI_ERD\\dbt_collieai\\logs'}
+[0m23:20:47.235688 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'ed46b719-fe09-4019-a5ca-201806975b0f', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000187838E56E0>]}
+[0m23:20:47.260838 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m23:20:47.264159 [info ] [MainThread]: Warning: No packages were found in packages.yml
+[0m23:20:47.265244 [debug] [MainThread]: Command `cli deps` succeeded at 23:20:47.264994 after 0.31 seconds
+[0m23:20:47.265685 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018781AFD590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018785BBC050>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000018785789850>]}
+[0m23:20:47.266004 [debug] [MainThread]: Flushing usage events
+[0m23:20:48.732232 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m23:27:46.542873 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C19CFD160>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1C41FED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1C41F9D0>]}
+
+
+============================== 23:27:46.548520 | 4d42c83f-350f-4b32-a576-da2787008a49 ==============================
+[0m23:27:46.548520 [info ] [MainThread]: Running with dbt=1.12.0
+[0m23:27:46.549152 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'version_check': 'True', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'maximum_seed_size_mib': '1', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'profiles_dir': 'dbt_collieai', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'False', 'invocation_command': 'dbt parse --no-partial-parse --project-dir dbt_collieai --profiles-dir dbt_collieai', 'hints_enabled': 'True', 'indirect_selection': 'eager', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'dbt_collieai\\logs'}
+[0m23:27:46.745059 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '4d42c83f-350f-4b32-a576-da2787008a49', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1A3D1810>]}
+[0m23:27:46.806250 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '4d42c83f-350f-4b32-a576-da2787008a49', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1C4E3460>]}
+[0m23:27:46.807352 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m23:27:47.114369 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m23:27:47.115220 [debug] [MainThread]: Partial parsing not enabled
+[0m23:27:48.753484 [warn ] [MainThread]: [[33mWARNING[0m]: Did not find matching node for patch with name 'vw_column_lineage' in the 'models' section of file 'models\marts\_marts.yml'
+[0m23:27:48.920949 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '4d42c83f-350f-4b32-a576-da2787008a49', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1CAA6A50>]}
+[0m23:27:48.926011 [info ] [MainThread]: Performance info: dbt_collieai\target\perf_info.json
+[0m23:27:49.115231 [debug] [MainThread]: Wrote artifact WritableManifest to dbt_collieai\target\manifest.json
+[0m23:27:49.136538 [debug] [MainThread]: Wrote artifact SemanticManifest to dbt_collieai\target\semantic_manifest.json
+[0m23:27:49.201038 [debug] [MainThread]: Wrote artifact OsiDocument to dbt_collieai\target\osi_document.json
+[0m23:27:49.202973 [debug] [MainThread]: Command `dbt parse` succeeded at 23:27:49.202753 after 2.85 seconds
+[0m23:27:49.203668 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1C422300>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1CB007D0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000021C1C2E7E70>]}
+[0m23:27:49.204347 [debug] [MainThread]: Flushing usage events
+[0m23:27:50.412908 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m23:27:52.638083 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C103ED160>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C12B13ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C12B139D0>]}
+
+
+============================== 23:27:52.641927 | 9ec74817-8330-4879-ad5c-73a69836e111 ==============================
+[0m23:27:52.641927 [info ] [MainThread]: Running with dbt=1.12.0
+[0m23:27:52.642416 [debug] [MainThread]: running dbt with arguments {'static_parser': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'version_check': 'True', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'True', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'dbt_collieai', 'use_colors': 'True', 'hints_enabled': 'True', 'invocation_command': 'dbt ls --project-dir dbt_collieai --profiles-dir dbt_collieai --resource-type source --output name', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'dbt_collieai\\logs'}
+[0m23:27:52.810910 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '9ec74817-8330-4879-ad5c-73a69836e111', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C10AC1810>]}
+[0m23:27:52.868910 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '9ec74817-8330-4879-ad5c-73a69836e111', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C12BD3570>]}
+[0m23:27:52.869961 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m23:27:53.065659 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m23:27:53.261539 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m23:27:53.261857 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m23:27:53.262105 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m23:27:53.269020 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '9ec74817-8330-4879-ad5c-73a69836e111', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C1331DC50>]}
+[0m23:27:53.376568 [debug] [MainThread]: Wrote artifact WritableManifest to dbt_collieai\target\manifest.json
+[0m23:27:53.380510 [debug] [MainThread]: Wrote artifact SemanticManifest to dbt_collieai\target\semantic_manifest.json
+[0m23:27:53.407148 [debug] [MainThread]: Wrote artifact OsiDocument to dbt_collieai\target\osi_document.json
+[0m23:27:53.434504 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': '9ec74817-8330-4879-ad5c-73a69836e111', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C1325F2F0>]}
+[0m23:27:53.434915 [info ] [MainThread]: Found 10 models, 50 sources, 477 macros
+[0m23:27:53.435186 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': '9ec74817-8330-4879-ad5c-73a69836e111', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C1314F3F0>]}
+[0m23:27:53.436256 [info ] [MainThread]: lemma.ai_messages
+[0m23:27:53.436583 [info ] [MainThread]: lemma.ai_sessions
+[0m23:27:53.436787 [info ] [MainThread]: lemma.api_request_logs
+[0m23:27:53.436967 [info ] [MainThread]: lemma.attempt_steps
+[0m23:27:53.437285 [info ] [MainThread]: lemma.avatar_items
+[0m23:27:53.437500 [info ] [MainThread]: lemma.avatars
+[0m23:27:53.437862 [info ] [MainThread]: lemma.billing_accounts
+[0m23:27:53.438148 [info ] [MainThread]: lemma.class_sections
+[0m23:27:53.438349 [info ] [MainThread]: lemma.dda_events
+[0m23:27:53.438536 [info ] [MainThread]: lemma.difficulty_levels
+[0m23:27:53.438732 [info ] [MainThread]: lemma.file_assets
+[0m23:27:53.438915 [info ] [MainThread]: lemma.guardrail_checks
+[0m23:27:53.439126 [info ] [MainThread]: lemma.learning_recommendations
+[0m23:27:53.439469 [info ] [MainThread]: lemma.math_problems
+[0m23:27:53.439708 [info ] [MainThread]: lemma.math_skills
+[0m23:27:53.439887 [info ] [MainThread]: lemma.math_topics
+[0m23:27:53.440055 [info ] [MainThread]: lemma.ml_models
+[0m23:27:53.440219 [info ] [MainThread]: lemma.n8n_workflow_logs
+[0m23:27:53.440379 [info ] [MainThread]: lemma.notifications
+[0m23:27:53.440542 [info ] [MainThread]: lemma.ocr_logs
+[0m23:27:53.440701 [info ] [MainThread]: lemma.organization_members
+[0m23:27:53.440857 [info ] [MainThread]: lemma.organization_student_enrollments
+[0m23:27:53.441016 [info ] [MainThread]: lemma.organizations
+[0m23:27:53.441243 [info ] [MainThread]: lemma.parent_profiles
+[0m23:27:53.441566 [info ] [MainThread]: lemma.payment_transactions
+[0m23:27:53.441802 [info ] [MainThread]: lemma.prompt_usage_logs
+[0m23:27:53.442083 [info ] [MainThread]: lemma.reward_transactions
+[0m23:27:53.442291 [info ] [MainThread]: lemma.roles
+[0m23:27:53.442515 [info ] [MainThread]: lemma.session_states
+[0m23:27:53.442688 [info ] [MainThread]: lemma.show_me_breakdowns
+[0m23:27:53.442853 [info ] [MainThread]: lemma.speech_to_text_logs
+[0m23:27:53.443210 [info ] [MainThread]: lemma.student_attempts
+[0m23:27:53.443482 [info ] [MainThread]: lemma.student_avatar_items
+[0m23:27:53.443766 [info ] [MainThread]: lemma.student_help_events
+[0m23:27:53.443964 [info ] [MainThread]: lemma.student_inputs
+[0m23:27:53.444199 [info ] [MainThread]: lemma.student_login_challenges
+[0m23:27:53.444467 [info ] [MainThread]: lemma.student_parent_links
+[0m23:27:53.444748 [info ] [MainThread]: lemma.student_profiles
+[0m23:27:53.444998 [info ] [MainThread]: lemma.student_skill_features
+[0m23:27:53.445206 [info ] [MainThread]: lemma.student_skill_predictions
+[0m23:27:53.445412 [info ] [MainThread]: lemma.student_teacher_links
+[0m23:27:53.445679 [info ] [MainThread]: lemma.subscription_plans
+[0m23:27:53.445877 [info ] [MainThread]: lemma.subscription_students
+[0m23:27:53.446054 [info ] [MainThread]: lemma.subscriptions
+[0m23:27:53.446226 [info ] [MainThread]: lemma.system_prompts
+[0m23:27:53.446391 [info ] [MainThread]: lemma.teacher_profiles
+[0m23:27:53.446648 [info ] [MainThread]: lemma.text_to_speech_logs
+[0m23:27:53.446860 [info ] [MainThread]: lemma.user_auth
+[0m23:27:53.447038 [info ] [MainThread]: lemma.users
+[0m23:27:53.447206 [info ] [MainThread]: lemma.vector_records
+[0m23:27:53.448027 [debug] [MainThread]: Command `dbt ls` succeeded at 23:27:53.447917 after 0.95 seconds
+[0m23:27:53.448335 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C131F3A00>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C12AC8590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x0000024C130DC4D0>]}
+[0m23:27:53.448616 [debug] [MainThread]: Flushing usage events
+[0m23:27:54.512938 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m23:28:35.570907 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BC98D160>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF0BFED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF0BF9D0>]}
+
+
+============================== 23:28:35.574489 | 93d0985e-743c-4342-9e7b-6c5010bca6cd ==============================
+[0m23:28:35.574489 [info ] [MainThread]: Running with dbt=1.12.0
+[0m23:28:35.575051 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'target_path': 'None', 'static_parser': 'True', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'log_format': 'default', 'debug': 'False', 'fail_fast': 'False', 'partial_parse': 'False', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'profiles_dir': 'dbt_collieai', 'invocation_command': 'dbt parse --no-partial-parse --project-dir dbt_collieai --profiles-dir dbt_collieai', 'hints_enabled': 'True', 'use_colors': 'True', 'use_experimental_parser': 'False', 'indirect_selection': 'eager', 'log_path': 'dbt_collieai\\logs'}
+[0m23:28:35.732636 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': '93d0985e-743c-4342-9e7b-6c5010bca6cd', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BD071810>]}
+[0m23:28:35.787137 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': '93d0985e-743c-4342-9e7b-6c5010bca6cd', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF183460>]}
+[0m23:28:35.788133 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m23:28:35.994811 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m23:28:35.995676 [debug] [MainThread]: Partial parsing not enabled
+[0m23:28:37.294949 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': '93d0985e-743c-4342-9e7b-6c5010bca6cd', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF6C2A50>]}
+[0m23:28:37.298392 [info ] [MainThread]: Performance info: dbt_collieai\target\perf_info.json
+[0m23:28:37.389187 [debug] [MainThread]: Wrote artifact WritableManifest to dbt_collieai\target\manifest.json
+[0m23:28:37.393080 [debug] [MainThread]: Wrote artifact SemanticManifest to dbt_collieai\target\semantic_manifest.json
+[0m23:28:37.416892 [debug] [MainThread]: Wrote artifact OsiDocument to dbt_collieai\target\osi_document.json
+[0m23:28:37.417833 [debug] [MainThread]: Command `dbt parse` succeeded at 23:28:37.417716 after 1.99 seconds
+[0m23:28:37.418222 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF0C2300>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BF71DC70>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x00000209BEF87E70>]}
+[0m23:28:37.418533 [debug] [MainThread]: Flushing usage events
+[0m23:28:38.456391 [debug] [MainThread]: An error was encountered while trying to flush usage events
+[0m23:28:40.602016 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E3515CD160>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E353D03ED0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E353D039D0>]}
+
+
+============================== 23:28:40.605669 | a87e8c8e-3d03-4576-9abd-0c0cae9d65de ==============================
+[0m23:28:40.605669 [info ] [MainThread]: Running with dbt=1.12.0
+[0m23:28:40.606128 [debug] [MainThread]: running dbt with arguments {'version_check': 'True', 'no_print': 'None', 'maximum_seed_size_mib': '1', 'warn_error_options': 'WarnErrorOptionsV2(error=[], warn=[], silence=[])', 'static_parser': 'True', 'target_path': 'None', 'printer_width': '80', 'write_json': 'True', 'empty': 'None', 'log_cache_events': 'False', 'introspect': 'True', 'cache_selected_only': 'False', 'fail_fast': 'False', 'debug': 'False', 'log_format': 'default', 'profiles_dir': 'dbt_collieai', 'send_anonymous_usage_stats': 'True', 'quiet': 'False', 'warn_error': 'None', 'partial_parse': 'True', 'indirect_selection': 'eager', 'hints_enabled': 'True', 'invocation_command': 'dbt ls --project-dir dbt_collieai --profiles-dir dbt_collieai --resource-type source --output name', 'use_experimental_parser': 'False', 'use_colors': 'True', 'log_path': 'dbt_collieai\\logs'}
+[0m23:28:40.760996 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'project_id', 'label': 'a87e8c8e-3d03-4576-9abd-0c0cae9d65de', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E351C91810>]}
+[0m23:28:40.819477 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'adapter_info', 'label': 'a87e8c8e-3d03-4576-9abd-0c0cae9d65de', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E353DC3570>]}
+[0m23:28:40.820534 [info ] [MainThread]: Registered adapter: postgres=1.11.0
+[0m23:28:41.023320 [debug] [MainThread]: checksum: eee4aa8f446f04cd153f3bb6462f41ca5fe29389c36d13d7747846389170d6ce, vars: {}, profile: lemmaai_analytics, target: dev, version: 1.12.0
+[0m23:28:41.222893 [debug] [MainThread]: Partial parsing enabled: 0 files deleted, 0 files added, 0 files changed.
+[0m23:28:41.223260 [debug] [MainThread]: Nothing changed, skipping partial parsing.
+[0m23:28:41.223645 [debug] [MainThread]: Partial parsing enabled, no changes found, skipping parsing
+[0m23:28:41.232003 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'load_project', 'label': 'a87e8c8e-3d03-4576-9abd-0c0cae9d65de', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E35456DC50>]}
+[0m23:28:41.346546 [debug] [MainThread]: Wrote artifact WritableManifest to dbt_collieai\target\manifest.json
+[0m23:28:41.350262 [debug] [MainThread]: Wrote artifact SemanticManifest to dbt_collieai\target\semantic_manifest.json
+[0m23:28:41.376052 [debug] [MainThread]: Wrote artifact OsiDocument to dbt_collieai\target\osi_document.json
+[0m23:28:41.399515 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'resource_counts', 'label': 'a87e8c8e-3d03-4576-9abd-0c0cae9d65de', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E3544AF2F0>]}
+[0m23:28:41.400000 [info ] [MainThread]: Found 10 models, 50 sources, 477 macros
+[0m23:28:41.400357 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'runnable_timing', 'label': 'a87e8c8e-3d03-4576-9abd-0c0cae9d65de', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E3546573F0>]}
+[0m23:28:41.401623 [info ] [MainThread]: lemma.ai_messages
+[0m23:28:41.401929 [info ] [MainThread]: lemma.ai_sessions
+[0m23:28:41.402153 [info ] [MainThread]: lemma.api_request_logs
+[0m23:28:41.402516 [info ] [MainThread]: lemma.attempt_steps
+[0m23:28:41.402777 [info ] [MainThread]: lemma.avatar_items
+[0m23:28:41.402988 [info ] [MainThread]: lemma.avatars
+[0m23:28:41.403459 [info ] [MainThread]: lemma.billing_accounts
+[0m23:28:41.403759 [info ] [MainThread]: lemma.class_sections
+[0m23:28:41.403981 [info ] [MainThread]: lemma.dda_events
+[0m23:28:41.404184 [info ] [MainThread]: lemma.difficulty_levels
+[0m23:28:41.404378 [info ] [MainThread]: lemma.file_assets
+[0m23:28:41.404619 [info ] [MainThread]: lemma.guardrail_checks
+[0m23:28:41.404824 [info ] [MainThread]: lemma.learning_recommendations
+[0m23:28:41.405008 [info ] [MainThread]: lemma.math_problems
+[0m23:28:41.405184 [info ] [MainThread]: lemma.math_skills
+[0m23:28:41.405365 [info ] [MainThread]: lemma.math_topics
+[0m23:28:41.405535 [info ] [MainThread]: lemma.ml_models
+[0m23:28:41.405698 [info ] [MainThread]: lemma.n8n_workflow_logs
+[0m23:28:41.405861 [info ] [MainThread]: lemma.notifications
+[0m23:28:41.406026 [info ] [MainThread]: lemma.ocr_logs
+[0m23:28:41.406188 [info ] [MainThread]: lemma.organization_members
+[0m23:28:41.406347 [info ] [MainThread]: lemma.organization_student_enrollments
+[0m23:28:41.406507 [info ] [MainThread]: lemma.organizations
+[0m23:28:41.406678 [info ] [MainThread]: lemma.parent_profiles
+[0m23:28:41.406845 [info ] [MainThread]: lemma.payment_transactions
+[0m23:28:41.407005 [info ] [MainThread]: lemma.prompt_usage_logs
+[0m23:28:41.407161 [info ] [MainThread]: lemma.reward_transactions
+[0m23:28:41.407318 [info ] [MainThread]: lemma.roles
+[0m23:28:41.407476 [info ] [MainThread]: lemma.session_states
+[0m23:28:41.407634 [info ] [MainThread]: lemma.show_me_breakdowns
+[0m23:28:41.407791 [info ] [MainThread]: lemma.speech_to_text_logs
+[0m23:28:41.407951 [info ] [MainThread]: lemma.student_attempts
+[0m23:28:41.408114 [info ] [MainThread]: lemma.student_avatar_items
+[0m23:28:41.408287 [info ] [MainThread]: lemma.student_help_events
+[0m23:28:41.408457 [info ] [MainThread]: lemma.student_inputs
+[0m23:28:41.408623 [info ] [MainThread]: lemma.student_login_challenges
+[0m23:28:41.408800 [info ] [MainThread]: lemma.student_parent_links
+[0m23:28:41.408960 [info ] [MainThread]: lemma.student_profiles
+[0m23:28:41.409118 [info ] [MainThread]: lemma.student_skill_features
+[0m23:28:41.409275 [info ] [MainThread]: lemma.student_skill_predictions
+[0m23:28:41.409432 [info ] [MainThread]: lemma.student_teacher_links
+[0m23:28:41.409590 [info ] [MainThread]: lemma.subscription_plans
+[0m23:28:41.409747 [info ] [MainThread]: lemma.subscription_students
+[0m23:28:41.410040 [info ] [MainThread]: lemma.subscriptions
+[0m23:28:41.410263 [info ] [MainThread]: lemma.system_prompts
+[0m23:28:41.410454 [info ] [MainThread]: lemma.teacher_profiles
+[0m23:28:41.410626 [info ] [MainThread]: lemma.text_to_speech_logs
+[0m23:28:41.410928 [info ] [MainThread]: lemma.user_auth
+[0m23:28:41.411097 [info ] [MainThread]: lemma.users
+[0m23:28:41.411258 [info ] [MainThread]: lemma.vector_records
+[0m23:28:41.412056 [debug] [MainThread]: Command `dbt ls` succeeded at 23:28:41.411954 after 0.96 seconds
+[0m23:28:41.412341 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E35441BA00>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E353CB8590>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x000001E354308410>]}
+[0m23:28:41.412608 [debug] [MainThread]: Flushing usage events
+[0m23:28:42.461629 [debug] [MainThread]: An error was encountered while trying to flush usage events

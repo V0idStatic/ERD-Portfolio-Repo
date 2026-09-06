@@ -377,6 +377,30 @@ CREATE TABLE student_login_challenges
  )
 );
 
+-- 1.3) Student Grade and Section History
+
+CREATE TABLE student_section_enrollments
+(
+    enrollment_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+    student_id INT NOT NULL, -- FK → student_profiles.student_id
+    section_id INT NOT NULL, -- FK → class_sections.section_id
+
+    enrolled_at TIMESTAMPTZ NOT NULL,
+    ended_at TIMESTAMPTZ,
+
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT ck_student_section_enrollment_dates
+        CHECK (
+            ended_at IS NULL
+            OR ended_at >= enrolled_at
+        )
+);
+
  -- 2.) Learning Content
 
  CREATE TABLE math_topics
@@ -941,6 +965,20 @@ REFERENCES parent_profiles(parent_id),
 ADD CONSTRAINT fk_student_login_challenges_teacher_id_teacher_profiles
 FOREIGN KEY (issued_by_teacher_id)
 REFERENCES teacher_profiles(teacher_id);
+
+-- 1.3) Student Grade and Section History
+
+ALTER TABLE student_section_enrollments
+ADD CONSTRAINT fk_student_section_enrollments_student
+FOREIGN KEY (student_id)
+REFERENCES student_profiles(student_id)
+ON DELETE CASCADE;
+
+ALTER TABLE student_section_enrollments
+ADD CONSTRAINT fk_student_section_enrollments_section
+FOREIGN KEY (section_id)
+REFERENCES class_sections(section_id)
+ON DELETE RESTRICT;
 
  -- 2.) Curriculum -> Tutoring session -> multimodal capture
 
