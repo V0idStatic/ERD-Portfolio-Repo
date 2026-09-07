@@ -306,6 +306,7 @@ models:
   - name: mv_topic_failure_patterns
     description: "Final materialized view endpoint with explicit columns for lineage."
     columns:
+      - name: student_id
       - name: topic_name
       - name: grade_level
       - name: skill_id
@@ -315,7 +316,6 @@ models:
       - name: wrong_attempts
       - name: failure_rate
       - name: avg_time_spent_seconds
-      - name: affected_student_count
       - name: latest_failure_at
       - name: wrong_step_count
       - name: hinted_step_count
@@ -1635,3 +1635,175 @@ models:
         description: |-
           HAVE LINEAGE : FILTERED
           CTE : latest_prediction | WRAPPED : prediction_ranked :
+  - name: mv_yearly_student_grade_performance
+    description: |-
+      VIEW TABLE ( READ )
+
+      REASON WHY THIS MATERIALIZED VIEW WAS BUILT
+
+      Provides one cached yearly performance row for each student, school year,
+      and grade level where learning activity exists. It combines sessions,
+      submitted answers, hint usage, help requests, DDA activity, and Show Me
+      breakdowns so yearly reporting does not need to repeatedly scan and join
+      the raw event tables.
+
+      GRAIN
+
+      - One row per (student_id, school_year, grade_level)
+
+      HISTORICAL ENROLLMENT / TIME-RANGE LINEAGE
+
+      Every event is assigned to the section enrollment active when the event
+      occurred using:
+
+      - event.created_at >= student_section_enrollments.enrolled_at
+      - event.created_at < student_section_enrollments.ended_at, or ended_at is NULL
+      - student_section_enrollments.section_id = class_sections.section_id
+
+      This preserves the correct school_year and grade_level when a student
+      changes sections or advances to another grade.
+
+      DIRECT LINEAGE (values carried from source-of-truth columns)
+
+      - student_id: carried without changing its value from each activity table
+      - school_year: class_sections.school_year, selected after enrollment matching
+      - grade_level: class_sections.grade_level, selected after enrollment matching
+
+      DERIVED FROM DIRECT COLUMNS
+
+      - student_name: student_profiles.first_name + student_profiles.last_name
+
+      NO LINEAGE
+
+      - None. Every output column is traceable to a source column, an aggregate,
+        a filter, a bridge relationship, or a documented calculation.
+
+      UNION / DRIVING-GRAIN LINEAGE
+
+      CTE: year_keys
+
+      UNION of session_yearly, attempt_yearly, help_yearly, dda_yearly, and
+      show_me_yearly. It creates each student/year/grade coordinate that has
+      activity; it is not itself a source-of-truth table.
+
+      ACTIVE-DAY LINEAGE
+
+      CTE: activity_day_keys unions distinct activity dates from session_events,
+      attempt_events, help_events, dda_event_rows, and show_me_events. CTE
+      active_days_yearly then counts those distinct student/year/grade/date rows.
+
+      SOURCE TABLES
+
+      - student_profiles: student identity and name
+      - student_section_enrollments: historical student-to-section membership
+      - class_sections: school year and grade level
+      - ai_sessions: session activity and student bridge for Show Me events
+      - student_attempts: answers, correctness, score, and time spent
+      - attempt_steps: whether an attempt used a hint
+      - student_help_events: explicit help-seeking activity
+      - dda_events: dynamic difficulty activity
+      - show_me_breakdowns: Show Me explanation activity
+    columns:
+      - name: student_id
+        description: |-
+          DIRECT + UNION / DRIVING-GRAIN LINEAGE
+          CTE: year_keys
+          Direct student_id value carried without transformation from every
+          yearly activity CTE. The UNION creates the grain; the final JOIN to
+          student_profiles guarantees that the student exists.
+      - name: student_name
+        description: |-
+          RENAMED / DERIVED DIRECT LINEAGE
+          Source of Truth: student_profiles
+          CONCAT_WS(' ', first_name, last_name).
+      - name: school_year
+        description: |-
+          DIRECT + HISTORICAL ENROLLMENT / TIME-RANGE LINEAGE
+          Source of Truth: class_sections.school_year
+          Assigned through student_section_enrollments for the enrollment active
+          at the time of each source event, then carried through year_keys.
+      - name: grade_level
+        description: |-
+          DIRECT + HISTORICAL ENROLLMENT / TIME-RANGE LINEAGE
+          Source of Truth: class_sections.grade_level
+          Assigned through student_section_enrollments for the enrollment active
+          at the time of each source event, then carried through year_keys.
+      - name: active_learning_days
+        description: |-
+          UNION / DERIVED AGGREGATED LINEAGE
+          CTEs: activity_day_keys -> active_days_yearly
+          COUNT(*) of distinct activity dates produced by UNION across sessions,
+          attempts, help requests, DDA events, and Show Me events. COALESCE to 0.
+      - name: sessions_started
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          CTE: session_yearly | Source of Truth: ai_sessions
+          COUNT(*) per student, school year, and grade level. COALESCE to 0.
+      - name: sessions_completed
+        description: |-
+          FILTERED AGGREGATED LINEAGE
+          CTE: session_yearly | Source of Truth: ai_sessions
+          COUNT(*) FILTER (WHERE session_status = 'completed'). COALESCE to 0.
+      - name: total_answer_attempts
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          CTE: attempt_yearly | Source of Truth: student_attempts
+          COUNT(*) of submitted attempts per student/year/grade. COALESCE to 0.
+      - name: correct_attempts
+        description: |-
+          FILTERED AGGREGATED LINEAGE
+          CTE: attempt_yearly | Source of Truth: student_attempts
+          COUNT(*) FILTER (WHERE is_correct IS TRUE). COALESCE to 0.
+      - name: wrong_attempts
+        description: |-
+          FILTERED AGGREGATED LINEAGE
+          CTE: attempt_yearly | Source of Truth: student_attempts
+          COUNT(*) FILTER (WHERE is_correct IS FALSE). COALESCE to 0.
+      - name: average_score
+        description: |-
+          DERIVED AGGREGATED / TRANSFORMED LINEAGE
+          CTE: attempt_yearly | Source of Truth: student_attempts.score
+          AVG(score), cast to numeric and rounded to 2 decimal places.
+      - name: average_time_spent_seconds
+        description: |-
+          DERIVED AGGREGATED / TRANSFORMED LINEAGE
+          CTE: attempt_yearly | Source of Truth: student_attempts.time_spent_seconds
+          AVG(time_spent_seconds), cast to numeric and rounded to 2 decimals.
+      - name: hinted_attempt_count
+        description: |-
+          FILTERED AGGREGATED LINEAGE
+          CTEs: attempt_hint -> attempt_events -> attempt_yearly
+          Sources of Truth: attempt_steps through student_attempts
+          BOOL_OR(hint_used > 0) determines hint use per attempt, followed by
+          COUNT(*) FILTER (WHERE used_hint IS TRUE). COALESCE to 0.
+      - name: help_request_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          CTE: help_yearly | Source of Truth: student_help_events
+          COUNT(*) per student/year/grade. COALESCE to 0.
+      - name: dda_trigger_count
+        description: |-
+          DERIVED AGGREGATED LINEAGE
+          CTE: dda_yearly | Source of Truth: dda_events
+          COUNT(*) per student/year/grade. COALESCE to 0.
+      - name: show_me_count
+        description: |-
+          BRIDGED DERIVED AGGREGATED LINEAGE
+          CTE: show_me_yearly | Source of Truth: show_me_breakdowns
+          COUNT(*) per student/year/grade. ai_sessions bridges
+          show_me_breakdowns.session_id to the owning student_id. COALESCE to 0.
+      - name: accuracy_rate
+        description: |-
+          CONDITIONAL CALCULATED LINEAGE
+          correct_attempts / total_answer_attempts, rounded to 4 decimals.
+          Returns NULL when total_answer_attempts is 0.
+      - name: hint_usage_rate
+        description: |-
+          CONDITIONAL CALCULATED LINEAGE
+          hinted_attempt_count / total_answer_attempts, rounded to 4 decimals.
+          Returns NULL when total_answer_attempts is 0.
+      - name: help_request_rate
+        description: |-
+          CONDITIONAL CALCULATED LINEAGE
+          help_request_count / (total_answer_attempts + help_request_count),
+          rounded to 4 decimals. Returns NULL when the denominator is 0.

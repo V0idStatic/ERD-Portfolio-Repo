@@ -1980,6 +1980,117 @@
         }
       }
     },
+    "student_section_enrollments": {
+      "name": "student_section_enrollments",
+      "columns": {
+        "enrollment_id": {
+          "name": "enrollment_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "student_id": {
+          "name": "student_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "section_id": {
+          "name": "section_id",
+          "type": "int4",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "enrolled_at": {
+          "name": "enrolled_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "ended_at": {
+          "name": "ended_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": false,
+          "comment": null
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "bool",
+          "default": true,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "default": null,
+          "check": null,
+          "notNull": true,
+          "comment": null
+        }
+      },
+      "comment": null,
+      "indexes": {},
+      "constraints": {
+        "student_section_enrollments_pkey": {
+          "type": "PRIMARY KEY",
+          "name": "student_section_enrollments_pkey",
+          "columnNames": [
+            "enrollment_id"
+          ]
+        },
+        "ck_student_section_enrollment_dates": {
+          "type": "CHECK",
+          "name": "ck_student_section_enrollment_dates",
+          "detail": "\n            ended_at IS NULL\n            OR ended_at >= enrolled_at\n        "
+        },
+        "fk_student_section_enrollments_student": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_section_enrollments_student",
+          "columnNames": [
+            "student_id"
+          ],
+          "targetTableName": "student_profiles",
+          "targetColumnNames": [
+            "student_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "CASCADE"
+        },
+        "fk_student_section_enrollments_section": {
+          "type": "FOREIGN KEY",
+          "name": "fk_student_section_enrollments_section",
+          "columnNames": [
+            "section_id"
+          ],
+          "targetTableName": "class_sections",
+          "targetColumnNames": [
+            "section_id"
+          ],
+          "updateConstraint": "NO_ACTION",
+          "deleteConstraint": "RESTRICT"
+        }
+      }
+    },
     "math_topics": {
       "name": "math_topics",
       "columns": {

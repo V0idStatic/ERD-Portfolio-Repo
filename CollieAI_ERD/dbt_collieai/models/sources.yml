@@ -321,6 +321,24 @@ sources:
             data_type: INT
           - name: created_at
             data_type: TIMESTAMPTZ
+      - name: student_section_enrollments
+        columns:
+          - name: enrollment_id
+            data_type: INT
+          - name: student_id
+            data_type: INT
+          - name: section_id
+            data_type: INT
+          - name: enrolled_at
+            data_type: TIMESTAMPTZ
+          - name: ended_at
+            data_type: TIMESTAMPTZ
+          - name: is_active
+            data_type: BOOLEAN
+          - name: created_at
+            data_type: TIMESTAMPTZ
+          - name: updated_at
+            data_type: TIMESTAMPTZ
       - name: math_topics
         columns:
           - name: topic_id
