@@ -6,6 +6,8 @@ call npx --yes @liam-hq/cli erd build --input abyss.sql --format postgres --outp
 if errorlevel 1 exit /b %errorlevel%
 node scripts/annotate-erd.mjs
 if errorlevel 1 exit /b %errorlevel%
+node scripts/apply-light-theme.mjs
+if errorlevel 1 exit /b %errorlevel%
 
 echo Starting Abyss ERD on localhost...
 call npx --yes serve dist

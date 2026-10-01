@@ -1215,9 +1215,9 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
         )}
       {data.shape === "data-store" ? (
         <svg className="database-art" viewBox="0 0 260 112" preserveAspectRatio="none" aria-hidden="true">
-          <path className="db-body" d="M3 16V94c0 10 57 16 127 16s127-6 127-16V16Z" />
-          <ellipse className="db-top" cx="130" cy="16" rx="127" ry="14" />
-          <path className="db-ring" d="M3 55c0 10 57 16 127 16s127-6 127-16" />
+          <path className="db-body" fill="#ffffff" d="M3 16V94c0 10 57 16 127 16s127-6 127-16V16Z" />
+          <ellipse className="db-top" fill="#ffffff" cx="130" cy="16" rx="127" ry="14" />
+          <path className="db-ring" fill="none" d="M3 55c0 10 57 16 127 16s127-6 127-16" />
         </svg>
       ) : null}
       {data.shape === "cloud" ? (
@@ -4359,34 +4359,112 @@ const persistPageIndex = (
       path.style.setProperty("stroke-width", `${Number.isFinite(strokeWidth) ? strokeWidth : 1.7}px`);
     });
     viewport.querySelectorAll<SVGPathElement>(".decision-art path").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
       const stroke = node
         ? getComputedStyle(node).getPropertyValue("--node").trim()
         : "#0ea5c6";
-      path.setAttribute("fill", "#ffffff");
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const fill = customFill || "#ffffff";
+      path.setAttribute("fill", fill);
       path.setAttribute("stroke", stroke || "#0ea5c6");
       path.setAttribute("stroke-width", "2.5");
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke || "#0ea5c6", "important");
+      path.style.setProperty("stroke-width", "2.5px", "important");
     });
     viewport.querySelectorAll<SVGElement>(".database-art .db-body").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
       const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      path.setAttribute("fill", "#ffffff");
-      path.setAttribute("stroke", color || "#0ea5c6");
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const fill = customFill || "#ffffff";
+      const customStroke = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-outline")
+        : "";
+      const stroke = customStroke || color || "#0ea5c6";
+      path.setAttribute("fill", fill);
+      path.setAttribute("stroke", stroke);
       path.setAttribute("stroke-width", "2");
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", "2px", "important");
     });
     viewport.querySelectorAll<SVGElement>(".database-art .db-top").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
       const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      path.setAttribute("fill", "#ffffff");
-      path.setAttribute("stroke", color || "#0ea5c6");
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const fill = customFill || "#ffffff";
+      const customStroke = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-outline")
+        : "";
+      const stroke = customStroke || color || "#0ea5c6";
+      path.setAttribute("fill", fill);
+      path.setAttribute("stroke", stroke);
       path.setAttribute("stroke-width", "2");
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", "2px", "important");
+    });
+    viewport.querySelectorAll<SVGElement>(".database-art .db-ring").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const customStroke = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-outline")
+        : "";
+      const stroke = customStroke || color || "#0ea5c6";
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", stroke);
+      path.setAttribute("stroke-width", "1.6");
+      path.style.setProperty("fill", "none", "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", "1.6px", "important");
     });
     viewport.querySelectorAll<SVGElement>(".cloud-art path").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
       const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      path.setAttribute("fill", "#ffffff");
-      path.setAttribute("stroke", color || "#0ea5c6");
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const fill = customFill || "#ffffff";
+      const customStroke = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-outline")
+        : "";
+      const stroke = customStroke || color || "#0ea5c6";
+      path.setAttribute("fill", fill);
+      path.setAttribute("stroke", stroke);
       path.setAttribute("stroke-width", "2.5");
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", "2.5px", "important");
+    });
+    viewport.querySelectorAll<SVGElement>(".service-hexagon-art path").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      const node = path.closest<HTMLElement>(".architecture-node");
+      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const fill = customFill || color || "#0ea5c6";
+      const customStroke = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-outline")
+        : "";
+      const stroke = customStroke || color || "#0ea5c6";
+      path.setAttribute("fill", fill);
+      path.setAttribute("stroke", stroke);
+      path.setAttribute("stroke-width", "2.4");
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", "2.4px", "important");
     });
     viewport.querySelectorAll<SVGPathElement>(
       ".shape-fishbone-spine > svg > path, .shape-fishbone-branch .fishbone-branch-spine, .shape-fishbone-branch .fishbone-cause-line",

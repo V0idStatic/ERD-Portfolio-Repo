@@ -2,6 +2,37 @@
 
 This architecture uses one React Native codebase for Android, iOS, and web; FastAPI for the REST API; Python workers for statistics and matching; Supabase for managed PostgreSQL and object storage; Vercel for the web build; and Render for the API and background workers.
 
+## Tech stack
+
+| Layer | Language and framework | Purpose |
+|---|---|---|
+| Mobile and web frontend | TypeScript, React Native, Expo, Expo Router | One shared application for Android, iOS, and web |
+| Client data | TanStack Query and Zustand | REST caching, request state, authentication state, and small local UI state |
+| REST backend | Python, FastAPI, Pydantic | Authentication, validation, authorization, and JSON endpoints |
+| Database access | SQLAlchemy 2, Alembic, psycopg | PostgreSQL transactions, models, connection pooling, and migrations |
+| Statistics | Python, pandas, NumPy | Squad totals, win rate, rating features, and historical analysis |
+| Match recommendation | scikit-learn and joblib | Train, evaluate, version, and load the compatibility model |
+| Database | Supabase PostgreSQL | Normal entity tables, `vw_*` display views, and `mv_*` calculated displays |
+| File storage | Supabase Storage | Avatars, banners, post media, result screenshots, and verification evidence |
+| Web deployment | Vercel | Deploy the React Native Web production build and static assets |
+| API and worker deployment | Render Web Service, Background Worker, and Cron Job | Run FastAPI, event processing, materialized-view refreshes, and scheduled model training |
+| Mobile delivery | Expo Application Services and the app stores | Build and distribute Android and iOS applications |
+
+## Usable assets
+
+| Available asset | How it is used |
+|---|---|
+| `ABYSS.pdf` requirements and interface references | Source for roles, screens, squad profiles, invitations, results, moderation, and dashboard behavior |
+| `abyss.sql` | PostgreSQL implementation of the domain model, constraints, relationships, display views, and calculated materialized views |
+| Interactive ERD in `dist/` | Visual reference for frontend, backend, database, and reporting implementation |
+| `vw_squad_profile`, `vw_free_agents`, `vw_matchmaking_squads`, and other `vw_*` objects | Display-ready data that avoids repeating complex joins in each API endpoint |
+| `mv_squad_statistics`, `mv_leaderboard`, and `mv_admin_dashboard_metrics` | Precalculated dashboard, ranking, win-rate, and administration values |
+| `match_participants`, `participant_stat_values`, `scrim_results`, and `rating_changes` | Historical data for statistics and future matching-model training |
+| Supabase Storage buckets | Reusable managed storage for public profile media and protected evidence files |
+| React Native and Expo component ecosystem | Shared navigation, forms, image handling, secure local storage, and platform-specific builds |
+
+The project-specific assets already available are the requirements document, SQL schema, ERD, and its display/calculation objects. Logos, finalized brand files, production game data, and a trained matching model should only be listed as usable assets after the team has actually created or obtained them.
+
 ```mermaid
 flowchart TB
     subgraph USERS[Users]

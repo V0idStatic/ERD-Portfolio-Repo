@@ -1,0 +1,106 @@
+/* Light palette for the static Liam ERD build. Loaded after Liam's generated CSS. */
+:root {
+  color-scheme: light;
+  --color-gray-100: #334155;
+  --color-gray-300: #475569;
+  --color-gray-400: #64748b;
+  --color-gray-500: #64748b;
+  --color-gray-600: #cbd5e1;
+  --color-gray-700: #d5dee8;
+  --color-gray-800: #e8eef4;
+  --color-gray-900: #ffffff;
+  --color-gray-1000: #f8fafc;
+  --color-white-alpha-20: rgba(15, 23, 42, .12);
+  --color-white-alpha-40: rgba(15, 23, 42, .35);
+  --color-white-alpha-50: rgba(15, 23, 42, .5);
+  --color-white-alpha-70: rgba(15, 23, 42, .72);
+  --global-background: #f8fafc;
+  --global-muted-background: #ffffff;
+  --global-foreground: #17212f;
+  --global-border: #d8e1e9;
+  --global-body-text: #334155;
+  --global-mute-text: #64748b;
+  --global-edit-text-background: #dbeafe;
+  --primary-accent: #087a48;
+  --primary-hover: #066b3f;
+  --primary-color: #087a48;
+  --primary-accent-overlay: rgba(8, 122, 72, .1);
+  --primary-accent-overlay-hover: rgba(8, 122, 72, .16);
+  --primary-overlay-5: rgba(8, 122, 72, .05);
+  --primary-overlay-10: rgba(8, 122, 72, .1);
+  --primary-overlay-15: rgba(8, 122, 72, .15);
+  --primary-overlay-20: rgba(8, 122, 72, .2);
+  --overlay-5: rgba(15, 23, 42, .04);
+  --overlay-10: rgba(15, 23, 42, .08);
+  --overlay-20: rgba(15, 23, 42, .14);
+  --overlay-30: rgba(15, 23, 42, .22);
+  --overlay-40: rgba(15, 23, 42, .32);
+  --overlay-50: rgba(15, 23, 42, .45);
+  --overlay-60: rgba(15, 23, 42, .58);
+  --overlay-70: rgba(15, 23, 42, .72);
+  --overlay-100: #17212f;
+  --button-border: #cbd5e1;
+  --button-foreground: #17212f;
+  --button-background: #ffffff;
+  --button-primary-foreground: #ffffff;
+  --button-secondary-foreground: #17212f;
+  --button-background-hover: #e8eef4;
+  --button-background-active: #dbe5ed;
+  --button-disabled-foreground: #94a3b8;
+  --button-disabled-background: #edf2f7;
+  --button-primary-background: #087a48;
+  --button-primary-background-hover: #066b3f;
+  --button-ghost-secondary-background: #e7f5ed;
+  --button-secondary-background-hover: #edf2f7;
+  --pane-border: #d8e1e9;
+  --pane-border-hover: #aab8c8;
+  --pane-border-active: #8ea3b5;
+  --pane-background: #ffffff;
+  --pane-muted-background: #f8fafc;
+  --pane-background-hover: #f0f4f8;
+  --pane-background-active: #e8eef4;
+  --link-default: #475569;
+  --link-active: #087a48;
+  --toggle-background: #94a3b8;
+  --toggle-background-checked: #087a48;
+  --node-border: #cbd5e1;
+  --node-muted-border: #e2e8f0;
+  --node-background: #ffffff;
+  --node-accent-background: #f3f7fa;
+  --node-foreground: #17212f;
+  --node-accent-foreground: #475569;
+  --node-selected: #087a48;
+  --dropdown-background-hover: #f0f4f8;
+  --dropdown-background-active: #e8eef4;
+  --dropdown-border: #cbd5e1;
+  --position-pattern-border: #d8e1e9;
+  --position-pattern-border-hover: #aab8c8;
+  --position-pattern-background: #ffffff;
+  --position-pattern-foreground: #94a3b8;
+  --position-pattern-foreground-hover: #475569;
+  --callout-callout: #17212f;
+  --callout-default-background: #f1f5f9;
+  --callout-default-border: #d8e1e9;
+  --callout-default-text: #475569;
+  --callout-default-link: #087a48;
+  --callout-default-underline: rgba(8, 122, 72, .35);
+}
+
+html, body, #root { background: #f8fafc; }
+.react-flow.dark {
+  --xy-background-color-default: #f8fafc;
+  --xy-background-pattern-dots-color-default: #dbe3eb;
+  --xy-background-pattern-lines-color-default: #e8eef4;
+  --xy-background-pattern-cross-color-default: #dbe3eb;
+  --xy-edge-stroke-default: #dce4ec;
+  --xy-edge-stroke-selected-default: #087a48;
+  --xy-minimap-background-color-default: #ffffff;
+  --xy-controls-button-background-color-default: #ffffff;
+  --xy-controls-button-background-color-hover-default: #f0f4f8;
+  --xy-controls-button-color-default: #17212f;
+  --xy-controls-button-color-hover-default: #087a48;
+  --xy-controls-button-border-color-default: #d8e1e9;
+  background-color: #f8fafc;
+}
+.react-flow__controls-button { background: #ffffff; color: #17212f; }
+.react-flow__edge-path { stroke: #dce4ec; }

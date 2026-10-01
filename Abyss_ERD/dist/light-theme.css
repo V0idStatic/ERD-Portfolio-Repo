@@ -1,0 +1,55 @@
+/* Liam ERD 0.7.24: override its color tokens after the generated stylesheet. */
+:root {
+  color-scheme: light;
+  --global-background: #ffffff;
+  --global-muted-background: #f5f7f8;
+  --global-foreground: #17212b;
+  --global-body-text: #334155;
+  --global-mute-text: #526171;
+  --global-border: #d8dee4;
+  --pane-background: #ffffff;
+  --pane-muted-background: #f5f7f8;
+  --pane-background-hover: #eef2f5;
+  --pane-background-active: #e8eef2;
+  --pane-border: #d8dee4;
+  --pane-border-hover: #8795a3;
+  --pane-border-active: #a9b5c0;
+  --node-background: #ffffff;
+  --node-accent-background: #f5f7f8;
+  --node-foreground: #17212b;
+  --node-accent-foreground: #526171;
+  --node-border: #a9b5c0;
+  --node-muted-border: #d8dee4;
+  --overlay-5: rgba(23, 33, 43, .05);
+  --overlay-10: rgba(23, 33, 43, .1);
+  --overlay-20: rgba(23, 33, 43, .2);
+  --overlay-30: rgba(23, 33, 43, .3);
+  --overlay-40: rgba(23, 33, 43, .4);
+  --overlay-50: rgba(23, 33, 43, .5);
+  --overlay-60: rgba(23, 33, 43, .6);
+  --overlay-70: rgba(23, 33, 43, .7);
+  --overlay-100: #17212b;
+  --button-secondary-foreground: #17212b;
+  --button-background: #f5f7f8;
+  --button-background-hover: #e8eef2;
+  --button-background-active: #d8dee4;
+  --button-border: #c4cdd5;
+  --link-default: #526171;
+  --link-active: #17212b;
+  --position-pattern-border: #d8dee4;
+  --position-pattern-border-hover: #8795a3;
+  --position-pattern-background: #f5f7f8;
+  --position-pattern-foreground: #526171;
+  --position-pattern-foreground-hover: #17212b;
+  --shadow-basic-shadow: rgba(23, 33, 43, .15);
+}
+
+html, body, #root, .react-flow, .react-flow__pane,
+[class*="_wrapper_tbu05_"] {
+  background-color: #ffffff !important;
+}
+
+/* Keep relationships visible, but let the hovered edge stand out. */
+._edge_y0tge_1:not(._hovered_y0tge_12) {
+  stroke: #d5dde3;
+}

@@ -16,6 +16,7 @@ If the prompt ends with `ERD-Portfolio-Repo>`, run:
 
 ```bat
 npx --yes @liam-hq/cli erd build --input CollieAI_ERD\collieAI.sql --format postgres --output-dir CollieAI_ERD\dist
+node CollieAI_ERD\scripts\apply-liam-light.mjs
 ```
 
 Then start localhost:
@@ -36,6 +37,7 @@ This builds the ERD and starts localhost. The equivalent build-only command is:
 
 ```bat
 npx --yes @liam-hq/cli erd build --input collieAI.sql --format postgres --output-dir dist
+node scripts\apply-liam-light.mjs
 ```
 
 In CMD, use plain `npx`. If you switch to PowerShell and it blocks `npx.ps1`, use `npx.cmd` instead. Your installed Liam CLI expects the format name `postgres`.
