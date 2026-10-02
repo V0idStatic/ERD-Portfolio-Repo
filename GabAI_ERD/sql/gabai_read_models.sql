@@ -584,14 +584,13 @@ COMMENT ON VIEW vw_ml_student_behavior_features_live IS
 -- 4. PRIVATE ANALYTICS READ MODELS
 -- ============================================================================
 
--- One row represents one Student's cached current behavior features. This is a
--- performance/read-model cache, never the source of truth and never the record
--- of features used by a historical prediction.
+-- One row represents one Student's persisted current behavior features. This
+-- materialized view is a performance/read-model cache, never the source of
+-- truth and never the record of features used by a historical prediction.
 -- LABEL: MV-ML-CACHE
--- PURPOSE: Cached version of the live ML feature view for repeated trusted
--- server-side inference and analytics. Refresh before jobs that need fresh data.
-CREATE MATERIALIZED VIEW analytics.mv_ml_student_behavior_features
-AS
+-- PURPOSE: Stored analytics cache for repeated trusted server-side inference.
+-- Refresh explicitly after ingestion or from a scheduled backend job.
+CREATE MATERIALIZED VIEW analytics.mv_ml_student_behavior_features AS
 SELECT
     institution_id,
     student_id,
@@ -604,14 +603,14 @@ SELECT
     flashcard_attempt_count_30d,
     flashcard_known_rate_30d,
     calculated_at AS refreshed_at
-FROM vw_ml_student_behavior_features_live
+FROM public.vw_ml_student_behavior_features_live
 WITH DATA;
 
 CREATE UNIQUE INDEX uq_mv_ml_student_behavior_features_tenant_student
     ON analytics.mv_ml_student_behavior_features (institution_id, student_id);
 
 COMMENT ON MATERIALIZED VIEW analytics.mv_ml_student_behavior_features IS
-'[MV-ML-CACHE] Private cached Student features for trusted ML/analytics jobs. Refresh on a schedule; never expose directly to clients.';
+'[MV-ML-CACHE] Private materialized Student analytics features. Refresh explicitly; never expose directly to clients.';
 
 -- One row represents one observed completion-time prediction suitable for
 -- reproducible evaluation or model training. The immutable feature_snapshot is
@@ -678,6 +677,12 @@ WHERE mp.prediction_type = 'completion_minutes'
 COMMENT ON VIEW analytics.vw_ml_activity_effort_training IS
 '[VW-ML-TRAINING] Private effort-regression training rows. Feature snapshots and exact difficulty assessments preserve prediction-time state.';
 
+GRANT USAGE ON SCHEMA analytics TO service_role;
+GRANT SELECT ON
+    analytics.mv_ml_student_behavior_features,
+    analytics.vw_ml_activity_effort_training
+TO service_role;
+
 REVOKE ALL ON ALL TABLES IN SCHEMA analytics FROM PUBLIC;
 REVOKE ALL ON ALL TABLES IN SCHEMA analytics FROM anon, authenticated;
 
@@ -708,9 +713,7 @@ COMMIT;
 -- Base-table grants and RLS policies live in gabai_supabase_auth_rls.sql. These
 -- security-invoker views apply those same policies to every underlying row.
 
--- Scheduled refresh recipe for the private ML feature cache:
+-- Scheduled/manual refresh recipe for the private ML feature cache:
 --
--- REFRESH MATERIALIZED VIEW CONCURRENTLY
---     analytics.mv_ml_student_behavior_features;
---
+-- REFRESH MATERIALIZED VIEW CONCURRENTLY analytics.mv_ml_student_behavior_features;
 -- ANALYZE analytics.mv_ml_student_behavior_features;

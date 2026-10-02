@@ -34,6 +34,12 @@ if errorlevel 1 (
 
 echo [OK] Liam ERD was generated in %OUTPUT_DIR%\
 
+call node scripts\apply-liam-light.mjs
+if errorlevel 1 (
+    echo [ERROR] Could not apply Liam ERD light theme.
+    exit /b 1
+)
+
 if /i "%~1"=="build" (
     echo Build-only check completed successfully.
     exit /b 0
