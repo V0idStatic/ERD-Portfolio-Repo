@@ -5,7 +5,7 @@ rem Always run from this repository, even when launched by double-clicking.
 cd /d "%~dp0"
 
 set "SCHEMA_FILE=sql\gabai_liamerd.sql"
-set "OUTPUT_DIR=liam-erd-dist"
+set "OUTPUT_DIR=dist"
 
 if not defined LIAM_PORT set "LIAM_PORT=3000"
 

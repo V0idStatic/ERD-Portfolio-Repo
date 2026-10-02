@@ -13,6 +13,10 @@
     "abyss:check": "node -e \"const fs=require('fs');const p='./Abyss_ERD/abyss.sql';if(!fs.readFileSync(p,'utf8').trim()){console.error('ERROR: Abyss_ERD/abyss.sql is empty.');process.exit(1)}\"",
     "abyss:build": "npm run abyss:check && npx --yes @liam-hq/cli erd build --input ./Abyss_ERD/abyss.sql --format postgres --output-dir ./Abyss_ERD/dist",
     "abyss:serve": "npx --yes serve ./Abyss_ERD/dist",
-    "abyss:preview": "npm run abyss:build && npm run abyss:serve"
+    "abyss:preview": "npm run abyss:build && npm run abyss:serve",
+    "gabai:check": "node -e \"const fs=require('fs');const p='./GabAI_ERD/sql/gabai_liamerd.sql';if(!fs.readFileSync(p,'utf8').trim()){console.error('ERROR: GabAI_ERD/sql/gabai_liamerd.sql is empty.');process.exit(1)}\"",
+    "gabai:build": "npm run gabai:check && npx --yes @liam-hq/cli erd build --input ./GabAI_ERD/sql/gabai_liamerd.sql --format postgres --output-dir ./GabAI_ERD/dist && node ./GabAI_ERD/scripts/apply-liam-light.mjs",
+    "gabai:serve": "npx --yes serve ./GabAI_ERD/dist",
+    "gabai:preview": "npm run gabai:build && npm run gabai:serve"
   }
 }

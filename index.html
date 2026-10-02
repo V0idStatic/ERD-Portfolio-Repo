@@ -1,18 +1,453 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>ERD Portfolio</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Architecture & ERD Portfolio | V0idStatic</title>
+    
+    <!-- Search Engine Optimization (SEO) Meta Tags -->
+    <meta name="description" content="Explore interactive Entity Relationship Diagrams (ERD) and relational database designs for GabAI, Abyss, CollieAI, Payroll, Agrivue, Aniko, and Typing Analysis by V0idStatic.">
+    <meta name="keywords" content="ERD, Entity Relationship Diagram, Database Architecture, SQL, PostgreSQL, GabAI ERD, Abyss ERD, CollieAI ERD, Database Design, Schema Design, Data Modeling">
+    <meta name="author" content="V0idStatic">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://v0idstatic.github.io/ERD-Portfolio-Repo/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://v0idstatic.github.io/ERD-Portfolio-Repo/">
+    <meta property="og:title" content="Database Architecture & ERD Portfolio | V0idStatic">
+    <meta property="og:description" content="Interactive Entity-Relationship Diagrams (ERD) and database architecture schemas for production applications.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://v0idstatic.github.io/ERD-Portfolio-Repo/">
+    <meta property="twitter:title" content="Database Architecture & ERD Portfolio | V0idStatic">
+    <meta property="twitter:description" content="Interactive Entity-Relationship Diagrams (ERD) and database architecture schemas for production applications.">
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --surface-color: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.15);
+            --card-hover-border: #60a5fa;
+            --tag-bg: #1e293b;
+            --tag-border: #475569;
+            --tag-text: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 2.5rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        header {
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #f8fafc 30%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 1.5rem auto;
+            line-height: 1.5;
+        }
+
+        /* Search Bar */
+        .search-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.9rem 1rem 0.9rem 2.85rem;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .search-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding: 0 0.25rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Grid */
+        .erd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            list-style: none;
+        }
+
+        .erd-card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .erd-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--card-hover-border);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+
+        .badge-new {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.2rem 0.55rem;
+            border-radius: 9999px;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 0.45rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            margin-bottom: 1.2rem;
+            flex-grow: 1;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            background-color: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            color: var(--tag-text);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .card-link {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .card-link svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s;
+        }
+
+        .erd-card:hover .card-link svg {
+            transform: translateX(3px);
+        }
+
+        .no-results {
+            display: none;
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+
+        footer {
+            margin-top: 3.5rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
-    <h1>My Database Designs :D</h1>
+    <div class="container">
+        <header>
+            <h1>My Database Designs :D</h1>
+            <p class="subtitle">Interactive Entity-Relationship Diagrams (ERD) & relational architecture models built with Liam ERD and PostgreSQL.</p>
+        </header>
 
-    <ul>
-        <li><a href="Aniko_ERD/dist/">Aniko ERD</a></li>
-        <li><a href="Typing_Analysis_ERD/dist/">Typing Analysis ERD</a></li>
-        <li><a href="Agrivue_ERD/dist/">Agrivue ERD</a></li>
-        <li><a href="CollieAI_ERD/dist/">CollieAI ERD</a></li>
-        <li><a href="Payroll_Erd/dist/">Payroll ERD</a></li>
-        <li><a href="Abyss_ERD/dist/">Abyss ERD</a></li>
-    </ul>
+        <!-- Search Bar -->
+        <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input 
+                type="text" 
+                id="erdSearch" 
+                class="search-input" 
+                placeholder="Search database designs (e.g., GabAI, Abyss, Collie, Auth, SQL)..." 
+                aria-label="Search database designs"
+                autofocus
+            />
+        </div>
+
+        <div class="stats-bar">
+            <span id="resultCount">Showing 7 database architectures</span>
+            <span>Live on GitHub Pages</span>
+        </div>
+
+        <!-- Semantic ERD list with cards -->
+        <ul class="erd-grid" id="erdList">
+            <!-- GabAI ERD -->
+            <li class="erd-item" data-keywords="gabai gab ai analytics auth rls ml read models postgresql supabase">
+                <a href="GabAI_ERD/dist/" class="erd-card">
+                    <span class="badge-new">Latest</span>
+                    <h2 class="card-title">GabAI ERD</h2>
+                    <p class="card-desc">AI assistant and analytics platform schema featuring Supabase Auth, Row-Level Security (RLS), persistent ML analytics tables, and read models.</p>
+                    <div class="card-tags">
+                        <span class="tag">PostgreSQL</span>
+                        <span class="tag">Supabase</span>
+                        <span class="tag">RLS</span>
+                        <span class="tag">Analytics</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Abyss ERD -->
+            <li class="erd-item" data-keywords="abyss deep complex relational architecture core postgresql schema">
+                <a href="Abyss_ERD/dist/" class="erd-card">
+                    <h2 class="card-title">Abyss ERD</h2>
+                    <p class="card-desc">High-scale database architecture schema engineered for complex relational workflows, multi-tiered entities, and system audit trails.</p>
+                    <div class="card-tags">
+                        <span class="tag">PostgreSQL</span>
+                        <span class="tag">Architecture</span>
+                        <span class="tag">High-Scale</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- CollieAI ERD -->
+            <li class="erd-item" data-keywords="collieai collie ai dbt transformations analytics postgresql lemma">
+                <a href="CollieAI_ERD/dist/" class="erd-card">
+                    <h2 class="card-title">CollieAI ERD</h2>
+                    <p class="card-desc">AI-driven workflow and analytics data model with dbt transformations, automated pipelines, and Lemma views.</p>
+                    <div class="card-tags">
+                        <span class="tag">PostgreSQL</span>
+                        <span class="tag">dbt</span>
+                        <span class="tag">AI Workflows</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Payroll ERD -->
+            <li class="erd-item" data-keywords="payroll hr compensation salaries deductions employees taxes finance">
+                <a href="Payroll_Erd/dist/" class="erd-card">
+                    <h2 class="card-title">Payroll ERD</h2>
+                    <p class="card-desc">Enterprise payroll and human resources schema modeling employee compensation, deductions, taxes, and accounting cycles.</p>
+                    <div class="card-tags">
+                        <span class="tag">HR & Payroll</span>
+                        <span class="tag">Finance</span>
+                        <span class="tag">Transactions</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Agrivue ERD -->
+            <li class="erd-item" data-keywords="agrivue agriculture farming sensors iot crop yield monitoring telemetry">
+                <a href="Agrivue_ERD/dist/" class="erd-card">
+                    <h2 class="card-title">Agrivue ERD</h2>
+                    <p class="card-desc">Agricultural telemetry and crop monitoring database designed for IoT sensors, field metrics, and seasonal harvest yields.</p>
+                    <div class="card-tags">
+                        <span class="tag">IoT & AgTech</span>
+                        <span class="tag">Telemetry</span>
+                        <span class="tag">Analytics</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Aniko ERD -->
+            <li class="erd-item" data-keywords="aniko operations business data management workflow relational model">
+                <a href="Aniko_ERD/dist/" class="erd-card">
+                    <h2 class="card-title">Aniko ERD</h2>
+                    <p class="card-desc">Relational operations database handling user entities, core business workflows, state transitions, and audit records.</p>
+                    <div class="card-tags">
+                        <span class="tag">Operations</span>
+                        <span class="tag">Relational</span>
+                        <span class="tag">Core Schema</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+
+            <!-- Typing Analysis ERD -->
+            <li class="erd-item" data-keywords="typing analysis wpm accuracy speed tests user statistics telemetry metrics">
+                <a href="Typing_Analysis_ERD/dist/" class="erd-card">
+                    <h2 class="card-title">Typing Analysis ERD</h2>
+                    <p class="card-desc">Real-time typing test performance tracking database capturing keystroke accuracy, WPM velocities, error rates, and user analytics.</p>
+                    <div class="card-tags">
+                        <span class="tag">Performance</span>
+                        <span class="tag">Telemetry</span>
+                        <span class="tag">Metrics</span>
+                    </div>
+                    <span class="card-link">
+                        Explore ERD
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </span>
+                </a>
+            </li>
+        </ul>
+
+        <div id="noResults" class="no-results">
+            <p>No database designs found matching your search.</p>
+        </div>
+
+        <footer>
+            <p>Maintained by <a href="https://github.com/V0idStatic" target="_blank" rel="noopener noreferrer">V0idStatic</a> &bull; <a href="https://github.com/V0idStatic/ERD-Portfolio-Repo" target="_blank" rel="noopener noreferrer">View GitHub Repository</a></p>
+        </footer>
+    </div>
+
+    <!-- Client-side instant search script -->
+    <script>
+        const searchInput = document.getElementById('erdSearch');
+        const items = document.querySelectorAll('.erd-item');
+        const countSpan = document.getElementById('resultCount');
+        const noResults = document.getElementById('noResults');
+        const totalItems = items.length;
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            let visibleCount = 0;
+
+            items.forEach((item) => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const desc = item.querySelector('.card-desc').textContent.toLowerCase();
+                const keywords = item.getAttribute('data-keywords') || '';
+                const match = title.includes(query) || desc.includes(query) || keywords.includes(query);
+
+                if (match) {
+                    item.style.display = '';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (visibleCount === 0) {
+                noResults.style.display = 'block';
+                countSpan.textContent = 'No database designs found';
+            } else {
+                noResults.style.display = 'none';
+                countSpan.textContent = query 
+                    ? `Showing ${visibleCount} of ${totalItems} database architectures`
+                    : `Showing ${totalItems} database architectures`;
+            }
+        });
+    </script>
 </body>
 </html>
