@@ -21,15 +21,15 @@
   --global-body-text: #334155;
   --global-mute-text: #64748b;
   --global-edit-text-background: #dbeafe;
-  --primary-accent: #087a48;
-  --primary-hover: #066b3f;
-  --primary-color: #087a48;
-  --primary-accent-overlay: rgba(8, 122, 72, .1);
-  --primary-accent-overlay-hover: rgba(8, 122, 72, .16);
-  --primary-overlay-5: rgba(8, 122, 72, .05);
-  --primary-overlay-10: rgba(8, 122, 72, .1);
-  --primary-overlay-15: rgba(8, 122, 72, .15);
-  --primary-overlay-20: rgba(8, 122, 72, .2);
+  --primary-accent: #06b6d4;
+  --primary-hover: #0891b2;
+  --primary-color: #06b6d4;
+  --primary-accent-overlay: rgba(6, 182, 212, .15);
+  --primary-accent-overlay-hover: rgba(6, 182, 212, .25);
+  --primary-overlay-5: rgba(6, 182, 212, .05);
+  --primary-overlay-10: rgba(6, 182, 212, .1);
+  --primary-overlay-15: rgba(6, 182, 212, .15);
+  --primary-overlay-20: rgba(6, 182, 212, .2);
   --overlay-5: rgba(15, 23, 42, .04);
   --overlay-10: rgba(15, 23, 42, .08);
   --overlay-20: rgba(15, 23, 42, .14);
@@ -48,9 +48,9 @@
   --button-background-active: #dbe5ed;
   --button-disabled-foreground: #94a3b8;
   --button-disabled-background: #edf2f7;
-  --button-primary-background: #087a48;
-  --button-primary-background-hover: #066b3f;
-  --button-ghost-secondary-background: #e7f5ed;
+  --button-primary-background: #06b6d4;
+  --button-primary-background-hover: #0891b2;
+  --button-ghost-secondary-background: rgba(6, 182, 212, .15);
   --button-secondary-background-hover: #edf2f7;
   --pane-border: #d8e1e9;
   --pane-border-hover: #aab8c8;
@@ -60,16 +60,17 @@
   --pane-background-hover: #f0f4f8;
   --pane-background-active: #e8eef4;
   --link-default: #475569;
-  --link-active: #087a48;
+  --link-active: #0891b2;
   --toggle-background: #94a3b8;
-  --toggle-background-checked: #087a48;
+  --toggle-background-checked: #06b6d4;
   --node-border: #cbd5e1;
   --node-muted-border: #e2e8f0;
   --node-background: #ffffff;
   --node-accent-background: #f3f7fa;
   --node-foreground: #17212f;
   --node-accent-foreground: #475569;
-  --node-selected: #087a48;
+  --node-selected: #06b6d4;
+  --node-layout: #06b6d4;
   --dropdown-background-hover: #f0f4f8;
   --dropdown-background-active: #e8eef4;
   --dropdown-border: #cbd5e1;
@@ -82,25 +83,118 @@
   --callout-default-background: #f1f5f9;
   --callout-default-border: #d8e1e9;
   --callout-default-text: #475569;
-  --callout-default-link: #087a48;
-  --callout-default-underline: rgba(8, 122, 72, .35);
+  --callout-default-link: #0891b2;
+  --callout-default-underline: rgba(6, 182, 212, .5);
+  --shadow-basic-shadow: rgba(15, 23, 42, .12);
+  --shadow-context-menu-shadow: rgba(15, 23, 42, .15);
 }
 
-html, body, #root { background: #f8fafc; }
+html, body, #root, .react-flow, .react-flow__pane,
+[class*="_wrapper_tbu05_"] {
+  background-color: #f8fafc !important;
+}
+
 .react-flow.dark {
   --xy-background-color-default: #f8fafc;
   --xy-background-pattern-dots-color-default: #dbe3eb;
   --xy-background-pattern-lines-color-default: #e8eef4;
   --xy-background-pattern-cross-color-default: #dbe3eb;
   --xy-edge-stroke-default: #dce4ec;
-  --xy-edge-stroke-selected-default: #087a48;
+  --xy-edge-stroke-selected-default: #06b6d4;
+  --xy-edge-stroke-selected: #06b6d4;
   --xy-minimap-background-color-default: #ffffff;
+  --xy-minimap-mask-background-color-default: rgba(220, 225, 235, .6);
+  --xy-minimap-node-background-color-default: #cbd5e1;
   --xy-controls-button-background-color-default: #ffffff;
   --xy-controls-button-background-color-hover-default: #f0f4f8;
   --xy-controls-button-color-default: #17212f;
-  --xy-controls-button-color-hover-default: #087a48;
+  --xy-controls-button-color-hover-default: #06b6d4;
   --xy-controls-button-border-color-default: #d8e1e9;
-  background-color: #f8fafc;
+  background-color: #f8fafc !important;
 }
-.react-flow__controls-button { background: #ffffff; color: #17212f; }
-.react-flow__edge-path { stroke: #dce4ec; }
+
+.react-flow__controls-button {
+  background: #ffffff;
+  color: #17212f;
+}
+
+/* ==========================================================================
+   Connectors: Maintain original connector geometry, only change colors
+   ========================================================================== */
+
+/* Unhighlighted relationship line color */
+._edge_y0tge_1:not(._hovered_y0tge_12) {
+  stroke: #d5dde3;
+}
+
+/* Highlighted relationship line color */
+._edge_y0tge_1._hovered_y0tge_12 {
+  stroke: #06b6d4;
+}
+
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge.selectable:focus .react-flow__edge-path,
+.react-flow__edge.selectable:focus-visible .react-flow__edge-path {
+  stroke: #06b6d4;
+}
+
+/* ==========================================================================
+   Tables: Highlight styling (#06b6d4) only when toggled
+   ========================================================================== */
+
+/* Base table card style */
+._wrapper_kvl10_1 {
+  border: 1px solid var(--node-border, #cbd5e1) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+  transition: border-color .2s ease, box-shadow .2s ease !important;
+}
+
+/* Untoggled table hover: subtle card hover, suppress green/yellow glow */
+._wrapper_kvl10_1:not(._wrapperActive_kvl10_24):not(._wrapperHighlighted_kvl10_18):hover {
+  border: 1px solid var(--pane-border-hover, #94a3b8) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Table ONLY when toggled: Active (clicked/selected) table */
+._wrapperActive_kvl10_24,
+._wrapperActive_kvl10_24:hover,
+.react-flow__node.selected ._wrapper_kvl10_1 {
+  border: 2px solid #06b6d4 !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.5) !important;
+}
+
+/* Table ONLY when toggled: Related connected tables */
+._wrapperHighlighted_kvl10_18,
+._wrapperHighlighted_kvl10_18:hover {
+  border: 1.5px solid #06b6d4 !important;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4) !important;
+}
+
+/* Active table header when toggled */
+._active_176ck_18,
+._active_176ck_18:hover {
+  background: linear-gradient(0deg, rgba(6, 182, 212, 0.15) 0%, rgba(6, 182, 212, 0.15) 100%), var(--pane-background-active) !important;
+}
+
+/* Related columns inside toggled/highlighted tables */
+._wrapper_1iyaa_1._highlightRelatedColumn_1iyaa_20 {
+  background-color: rgba(6, 182, 212, 0.18) !important;
+}
+
+._wrapper_1iyaa_1._highlightRelatedColumn_1iyaa_20:hover {
+  background-color: rgba(6, 182, 212, 0.28) !important;
+}
+
+/* ==========================================================================
+   Table Column Icons: Primary Key & Foreign Key link icons (#06b6d4)
+   ========================================================================== */
+._primaryKeyIcon_1iyaa_61,
+._linkIcon_1iyaa_65,
+._primaryKeyIcon_1dpdy_1,
+._primaryConstraintsIcon_1pkfx_26,
+._tableKeyIcon_1frgz_1,
+[aria-label="Primary Key"],
+[aria-label="Foreign Key"] {
+  color: #06b6d4 !important;
+  stroke: #06b6d4 !important;
+}
