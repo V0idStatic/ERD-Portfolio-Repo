@@ -1859,6 +1859,9 @@ function FlowingConnectorEdge({
   };
   const { screenToFlowPosition } = useReactFlow();
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
+  const labelRef = useRef<HTMLDivElement | null>(null);
+  const [domWidth, setDomWidth] = useState<number | null>(null);
+  const [domHeight, setDomHeight] = useState<number | null>(null);
   const validSavedJoints = (edgeData.joints ?? (edgeData.bend ? [edgeData.bend] : []))
     .filter((j) => Number.isFinite(j.x) && Number.isFinite(j.y));
 
@@ -2056,7 +2059,9 @@ function FlowingConnectorEdge({
   }, [label, labelFontSize, labelStyle?.fontWeight, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker]);
 
   const labelPosition = useMemo(() => {
-    if (!label) return rawLabelPosition;
+    // A dragged label is already projected onto the connector. Keep that
+    // position instead of clamping it back to a segment midpoint or endpoint.
+    if (!label || edgeData.labelPosition) return rawLabelPosition;
 
     const pad = labelBackgroundEnabled ? labelPaddingX : 6;
     const alongMargin = 14;
@@ -2093,11 +2098,7 @@ function FlowingConnectorEdge({
       const segY = targetSeg ? targetSeg.midpoint.y : rawLabelPosition.y;
       return { x: clampedX, y: segY };
     }
-  }, [label, rawLabelPosition, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker, labelBackgroundEnabled, labelPaddingX, domWidth, measuredTextWidth, targetSeg]);
-
-  const labelRef = useRef<HTMLDivElement | null>(null);
-  const [domWidth, setDomWidth] = useState<number | null>(null);
-  const [domHeight, setDomHeight] = useState<number | null>(null);
+  }, [label, edgeData.labelPosition, rawLabelPosition, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker, labelBackgroundEnabled, labelPaddingX, domWidth, measuredTextWidth, targetSeg]);
 
   useLayoutEffect(() => {
     if (labelRef.current) {
@@ -2206,54 +2207,43 @@ function FlowingConnectorEdge({
     event.preventDefault();
     event.stopPropagation();
     if (!edgeData.onLabelPositionChange) return;
+    const startPointer = screenToFlowPosition({ x: event.clientX, y: event.clientY });
+    const grabOffset = { x: startPointer.x - labelPosition.x, y: startPointer.y - labelPosition.y };
     const move = (moveEvent: PointerEvent) => {
-      const path = pathMeasureRef.current;
-      const svg = path?.ownerSVGElement;
-      const matrix = svg?.getScreenCTM();
-      if (!path || !svg || !matrix) return;
-      const pointer = svg.createSVGPoint();
-      pointer.x = moveEvent.clientX;
-      pointer.y = moveEvent.clientY;
-      const flowPoint = pointer.matrixTransform(matrix.inverse());
-      const totalLength = path.getTotalLength();
-      let bestLength = 0;
+      moveEvent.preventDefault();
+      const pointer = screenToFlowPosition({ x: moveEvent.clientX, y: moveEvent.clientY });
+      const flowPoint = { x: pointer.x - grabOffset.x, y: pointer.y - grabOffset.y };
+      if (!Number.isFinite(flowPoint.x) || !Number.isFinite(flowPoint.y)) return;
+      let closest = labelPosition;
       let bestDistance = Number.POSITIVE_INFINITY;
-      const samples = 72;
-      for (let index = 0; index <= samples; index += 1) {
-        const length = totalLength * index / samples;
-        const point = path.getPointAtLength(length);
+      // Project directly onto each straight leg so movement stays continuous
+      // even on short legs and long connectors, without sampled path positions.
+      for (let index = 0; index < routePoints.length - 1; index += 1) {
+        const from = routePoints[index];
+        const to = routePoints[index + 1];
+        const dx = to.x - from.x;
+        const dy = to.y - from.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1,
+          ((flowPoint.x - from.x) * dx + (flowPoint.y - from.y) * dy) / lengthSquared,
+        ));
+        const point = { x: from.x + t * dx, y: from.y + t * dy };
         const distance = Math.hypot(point.x - flowPoint.x, point.y - flowPoint.y);
         if (distance < bestDistance) {
           bestDistance = distance;
-          bestLength = length;
+          closest = point;
         }
       }
-      let range = totalLength / samples;
-      for (let pass = 0; pass < 6; pass += 1) {
-        const candidates = [
-          Math.max(0, bestLength - range),
-          bestLength,
-          Math.min(totalLength, bestLength + range),
-        ];
-        for (const length of candidates) {
-          const point = path.getPointAtLength(length);
-          const distance = Math.hypot(point.x - flowPoint.x, point.y - flowPoint.y);
-          if (distance < bestDistance) {
-            bestDistance = distance;
-            bestLength = length;
-          }
-        }
-        range /= 2;
-      }
-      const closest = path.getPointAtLength(bestLength);
       edgeData.onLabelPositionChange?.({ x: closest.x, y: closest.y });
     };
     const stop = () => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", stop, { once: true });
+    window.addEventListener("pointercancel", stop, { once: true });
   };
   return (
     <>
