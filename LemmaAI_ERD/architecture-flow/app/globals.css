@@ -9,7 +9,7 @@ html, body { height: 100%; margin: 0; overflow: hidden; }
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
+  font-family: var(--font-geist-sans, "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif);
 }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
@@ -244,15 +244,15 @@ button { cursor: pointer; }
 .react-flow__edge { z-index: 10 !important; }
 .react-flow__edge.selected { z-index: 15 !important; }
 .react-flow__edge-path { transition: stroke .15s ease; }
-.react-flow__edge:hover .react-flow__edge-path { stroke: #0ea5c6 !important; stroke-width: 2.5 !important; }
-.react-flow__edge.selected .react-flow__edge-path { stroke: #0b9cba !important; stroke-width: 3 !important; }
-.edge-label-foreign-object { overflow:visible; pointer-events:none; }
-.edge-label-measure-path { fill:none; stroke:transparent; stroke-width:1; pointer-events:none; }
-.erd-cardinality-marker { fill:none; stroke:#475569; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
-.erd-cardinality-marker circle { fill:#fff; }
+.react-flow__edge:hover .react-flow__edge-path { filter: drop-shadow(0 0 2px rgba(14,165,198,.8)); }
+.react-flow__edge.selected .react-flow__edge-path { filter: drop-shadow(0 0 3.5px rgba(11,156,186,.95)); }
+.edge-label-measure-path { fill:none !important; stroke:none !important; stroke-width:0 !important; opacity:0 !important; pointer-events:none !important; }
+.react-flow__edge-interaction { fill:none !important; stroke:transparent !important; }
+.erd-cardinality-marker { fill:none; stroke:#000000; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; pointer-events:none; }
+.erd-cardinality-marker circle { fill:#fff; stroke:#000000; }
 .edge-label-drag-region { width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none; }
 .edge-label-portal {
-  position:absolute; z-index:20; pointer-events:none; transform-origin:center;
+  position:absolute; top:0; left:0; z-index:20; pointer-events:none; transform-origin:center;
 }
 .edge-label-draggable {
   position:relative; isolation:isolate; max-width:none; overflow:visible; pointer-events:auto; cursor:grab; user-select:none;
@@ -692,51 +692,7 @@ button { cursor: pointer; }
 .architecture-node .side-handle.react-flow__handle-connecting,
 .architecture-node .side-handle.react-flow__handle-connectable { opacity: 1; }
 .shape-cloud .react-flow__handle, .shape-decision .react-flow__handle { z-index:5; }
-.document-export-mode .architecture-node { box-shadow:0 3px 8px rgba(30,41,59,.08); }
-.document-export-mode .shape-legend { box-shadow:none; }
-.document-export-mode .shape-legend-key { box-shadow:0 3px 8px rgba(30,41,59,.08); }
-.document-export-mode .node-inner { gap:8px; padding:8px 11px; }
-.document-export-mode .node-icon {
-  flex-basis:40px; width:40px; height:40px; border-radius:10px;
-}
-.document-export-mode .node-icon svg { width:23px; height:23px; }
-.document-export-mode .node-copy strong {
-  font-size:19px; line-height:1.05; letter-spacing:-.02em;
-}
-.document-export-mode .node-copy span { font-size:13px; line-height:1.18; }
-.document-export-mode .shape-decision { box-shadow:none; }
-.document-export-mode .shape-decision .node-inner { padding:22px 37px; }
-.document-export-mode .shape-decision .node-copy { max-width:154px; gap:2px; }
-.document-export-mode .shape-decision .node-copy strong { font-size:16px; line-height:1.05; }
-.document-export-mode .shape-decision .node-copy span { font-size:10.5px; line-height:1.12; }
-.document-export-mode .shape-decision .node-copy strong,
-.document-export-mode .shape-decision .node-copy span { text-align:center; }
-.document-export-mode .shape-cloud .node-inner { padding:43px 28px 15px; }
-.document-export-mode .react-flow__edge-path { stroke-width:3px !important; }
-.document-export-mode .react-flow__edge-text {
-  font-weight:850 !important; paint-order:stroke;
-  stroke:#fff; stroke-width:7px; stroke-linejoin:round;
-}
-.document-export-mode .react-flow__edge-textbg { fill:#fff !important; stroke:#fff !important; stroke-width:4px !important; }
-.document-export-mode .edge-label-draggable { font-weight:850 !important; box-shadow:none; }
-.docs-custom-export:not(.document-export-mode) .node-copy strong {
-  font-size:calc(13px * var(--docs-title-scale, 1));
-}
-.docs-custom-export:not(.document-export-mode) .node-copy span {
-  font-size:calc(10px * var(--docs-description-scale, 1));
-}
-.document-export-mode .node-copy strong {
-  font-size:calc(19px * var(--docs-title-scale, 1));
-}
-.document-export-mode .node-copy span {
-  font-size:calc(13px * var(--docs-description-scale, 1));
-}
-.document-export-mode .shape-decision .node-copy strong {
-  font-size:calc(16px * var(--docs-title-scale, 1));
-}
-.document-export-mode .shape-decision .node-copy span {
-  font-size:calc(10.5px * var(--docs-description-scale, 1));
-}
+
 /* Keep the text slots in place during a Docs snapshot.  Removing an element
    with display:none makes the export renderer recalculate every card, which
    is why toggling either option used to make the whole diagram look smaller. */
@@ -784,127 +740,8 @@ button { cursor: pointer; }
   overflow-wrap:normal !important;
 }
 
-/* Keep export typography inside its shape while the sliders change size. */
-.docs-custom-export .architecture-node {
-  box-sizing:border-box;
-}
-.docs-custom-export .shape-service,
-.docs-custom-export .shape-database {
-  height:100px;
-  min-height:100px;
-  overflow:hidden;
-}
-.docs-custom-export .shape-terminal {
-  height:62px;
-  min-height:62px;
-  overflow:hidden;
-}
-.docs-custom-export .node-inner {
-  min-width:0;
-  min-height:0;
-  box-sizing:border-box;
-  overflow:hidden;
-}
-.docs-custom-export .node-copy {
-  min-width:0;
-  min-height:0;
-  max-width:100%;
-  overflow:hidden;
-}
-.docs-custom-export .node-copy strong,
-.docs-custom-export .node-copy span {
-  max-width:100%;
-  overflow:hidden;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-  text-overflow:ellipsis;
-}
-.docs-custom-export .node-copy strong {
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-}
-.docs-custom-export .node-copy span {
-  display:-webkit-box;
-  -webkit-box-orient:vertical;
-  -webkit-line-clamp:2;
-}
-.docs-custom-export:not(.document-export-mode) .node-copy strong {
-  font-size:min(calc(13px * var(--docs-title-scale, 1)), 18px);
-}
-.docs-custom-export:not(.document-export-mode) .node-copy span {
-  font-size:min(calc(10px * var(--docs-description-scale, 1)), 13px);
-}
-.document-export-mode .node-copy strong {
-  font-size:min(calc(19px * var(--docs-title-scale, 1)), 22px);
-}
-.document-export-mode .node-copy span {
-  font-size:min(calc(13px * var(--docs-description-scale, 1)), 14px);
-}
-.document-export-mode .shape-decision .node-copy {
-  max-width:154px;
-  max-height:78px;
-}
-.document-export-mode .shape-decision .node-copy strong {
-  font-size:min(calc(16px * var(--docs-title-scale, 1)), 18px);
-}
-.document-export-mode .shape-decision .node-copy span {
-  font-size:min(calc(10.5px * var(--docs-description-scale, 1)), 12px);
-}
-.docs-custom-export .shape-cloud .node-copy {
-  max-width:190px;
-  max-height:58px;
-}
-.docs-custom-export .shape-cloud .node-copy strong {
-  font-size:min(calc(19px * var(--docs-title-scale, 1)), 18px);
-}
-.docs-custom-export .shape-cloud .node-copy span {
-  font-size:min(calc(13px * var(--docs-description-scale, 1)), 13px);
-  -webkit-line-clamp:1;
-}
-.docs-custom-export .shape-terminal .node-copy strong {
-  font-size:min(calc(19px * var(--docs-title-scale, 1)), 17px);
-  -webkit-line-clamp:1;
-}
-.docs-custom-export .shape-terminal .node-copy span {
-  font-size:min(calc(13px * var(--docs-description-scale, 1)), 10px);
-  -webkit-line-clamp:1;
-}
-/* Keep enlarged documentation text readable instead of replacing it with an ellipsis. */
-.docs-custom-export .node-copy,
-.docs-custom-export .node-copy strong,
-.docs-custom-export .node-copy span {
-  max-height:none;
-  overflow:visible;
-  text-overflow:clip;
-  white-space:pre-wrap;
-  display:block;
-  -webkit-line-clamp:unset;
-}
-.docs-custom-export:not(.document-export-mode) .node-copy strong {
-  font-size:calc(13px * var(--docs-title-scale, 1));
-}
-.docs-custom-export:not(.document-export-mode) .node-copy span {
-  font-size:calc(10px * var(--docs-description-scale, 1));
-}
-.document-export-mode .node-copy strong {
-  font-size:calc(19px * var(--docs-title-scale, 1));
-}
-.document-export-mode .node-copy span {
-  font-size:calc(13px * var(--docs-description-scale, 1));
-}
-.docs-custom-export .shape-cloud .node-copy,
-.docs-custom-export .shape-terminal .node-copy,
-.docs-custom-export .shape-decision .node-copy,
-.docs-custom-export .shape-cloud .node-copy strong,
-.docs-custom-export .shape-cloud .node-copy span,
-.docs-custom-export .shape-terminal .node-copy strong,
-.docs-custom-export .shape-terminal .node-copy span {
-  max-height:none;
-  overflow:visible;
-  text-overflow:clip;
-  -webkit-line-clamp:unset !important;
-}
+
+
 
 .inspector {
   position: fixed; z-index: 30; top: 136px; right: 62px; width: 310px; max-height: calc(100vh - 150px);
@@ -1117,6 +954,14 @@ button { cursor: pointer; }
   color:#526276; background:white; font-size:10px; font-weight:700;
 }
 .line-style-grid button.active { border-color:#16a9c7; color:#087d97; background:#effbfe; box-shadow:0 0 0 2px #d8f6fb; }
+.line-thickness-presets { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px; }
+.line-thickness-presets button {
+  padding:6px 0; border:1px solid #d9e2ea; border-radius:7px;
+  color:#526276; background:#fff; font-size:11px; font-weight:700;
+  cursor:pointer; transition:all .15s ease; text-align:center;
+}
+.line-thickness-presets button:hover { border-color:#0ea5c6; color:#087d97; background:#f8fdff; }
+.line-thickness-presets button.active { border-color:#16a9c7; color:#087d97; background:#effbfe; box-shadow:0 0 0 2px #d8f6fb; }
 .line-label-size { display:grid; gap:7px; }
 .line-label-size > span { color:#526276; font-size:10px; font-weight:750; letter-spacing:.05em; text-transform:uppercase; }
 .line-label-size > div { display:grid; grid-template-columns:1fr auto; align-items:center; gap:10px; }
@@ -1668,7 +1513,7 @@ button { cursor: pointer; }
 
 /* A single, soft pulse traces the connector from source to destination. */
 .react-flow__edge.anim-edge-active .react-flow__edge-path {
-  stroke:#64748b !important;
+  stroke:#000000 !important;
   stroke-width:1.7px !important;
   stroke-linecap:round;
   stroke-dasharray:none !important;

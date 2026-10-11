@@ -2,7 +2,6 @@
 
 import {
   addEdge,
-  BaseEdge,
   Background,
   BackgroundVariant,
   Connection,
@@ -86,6 +85,8 @@ import {
   RefreshCcw,
   Repeat,
   RotateCcw,
+  RotateCw,
+  FlipHorizontal,
   Route,
   Server,
   SkipBack,
@@ -107,6 +108,7 @@ Type,
   ZoomOut,
 } from "lucide-react";
 import { toBlob, toCanvas, toPng } from "html-to-image";
+import { EMBEDDED_FONTS_CSS } from "./embeddedFonts";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DashboardHome, { setLocalStorageItem } from "./DashboardHome";
@@ -210,6 +212,9 @@ type ArchitectureNodeData = {
   legendOpacity?: number;
   legendNodeIds?: string[];
   legendEntries?: LegendKeyEntry[];
+  legendOrientation?: "vertical" | "horizontal" | "auto";
+  rotation?: number;
+  onFlipOrientation?: () => void;
   _animState?: "inactive" | "active" | "completed";
   editing?: boolean;
   fontWeight?: CSSProperties["fontWeight"];
@@ -226,6 +231,7 @@ type ArchitectureNodeData = {
   editingTextTarget?: ComponentTextTarget;
   showTitle?: boolean;
   showDescription?: boolean;
+  showAreaLabel?: boolean;
   autoGrowWithText?: boolean;
   onLabelChange?: (value: string) => void;
   onEditingChange?: (editing: boolean) => void;
@@ -463,7 +469,7 @@ function TextNodeCard({
     if (editorRef.current && editorRef.current !== document.activeElement) {
       const currentHtml = editorRef.current.innerHTML;
       const target = data.label || "";
-      const targetHtml = target && !/<[a-z][\s\S]*>/i.test(target) ? target.replace(/\n/g, "<br>") : target;
+      const targetHtml = target && !/<[a-z][\s\S]*>/i.test(target) ? target.replace(/\r\n/g, "<br>") : target;
       if (currentHtml !== targetHtml) {
         editorRef.current.innerHTML = targetHtml;
       }
@@ -917,6 +923,7 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
     const green = Number.parseInt(normalized.slice(2, 4), 16);
     const blue = Number.parseInt(normalized.slice(4, 6), 16);
     const fill = `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+    const rotation = data.rotation ?? 0;
 
     return (
       <div
@@ -925,16 +932,20 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           {
             "--legend-color": color,
             "--legend-fill": fill,
+            transform: rotation ? `rotate(${rotation}deg)` : undefined,
+            transformOrigin: "center center",
           } as CSSProperties
         }
       >
-        <div className="legend-area-label">
-          <i aria-hidden="true" />
-          <span>
-            <strong>{data.label || "Untitled legend"}</strong>
-            <small>{data.legendNodeIds?.length ?? 0} components</small>
-          </span>
-        </div>
+        {data.showAreaLabel ? (
+          <div className="legend-area-label">
+            <i aria-hidden="true" />
+            <span>
+              <strong>{data.label || "Untitled legend"}</strong>
+              <small>{data.legendNodeIds?.length ?? 0} components</small>
+            </span>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -945,7 +956,8 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
     const keyWidth = width ?? 250;
     const keyHeight = height ?? 240;
     const entryCount = data.legendEntries?.length ?? 0;
-    const isWideLegend = keyWidth / keyHeight > 1.45;
+    const orientation = data.legendOrientation ?? "auto";
+    const isWideLegend = orientation === "horizontal" || (orientation === "auto" && keyWidth / keyHeight > 1.45);
     // Wide legend keys are a single horizontal row: each item receives an
     // equal share of the free width rather than wrapping into columns.
     const legendColumns = isWideLegend ? Math.max(1, entryCount) : 1;
@@ -958,14 +970,20 @@ function ArchitectureNodeCard({ id, data, selected, width, height }: NodeProps<A
           : Math.sqrt((keyWidth * keyHeight) / (250 * 240)),
       ),
     );
+    const rotation = data.rotation ?? 0;
     return (
       <div
         className={`architecture-node shape-legend-key ${isWideLegend ? "is-wide" : ""} ${selected ? "is-selected" : ""}`}
-        style={{ "--legend-scale": legendScale, "--legend-columns": legendColumns } as CSSProperties}
+        style={{
+          "--legend-scale": legendScale,
+          "--legend-columns": legendColumns,
+          transform: rotation ? `rotate(${rotation}deg)` : undefined,
+          transformOrigin: "center center",
+        } as CSSProperties}
       >
         <NodeResizer
-          minWidth={190}
-          minHeight={110}
+          minWidth={isWideLegend ? 240 : 190}
+          minHeight={isWideLegend ? 70 : 110}
           isVisible={selected}
           autoScale={false}
           color="#0ea5c6"
@@ -1556,25 +1574,40 @@ const measureLabelTextWidth = (text: string, fontSize: number, fontWeight?: stri
       canvasMeasureCtx = canvas.getContext("2d");
     }
     if (canvasMeasureCtx) {
-      canvasMeasureCtx.font = `${fontWeight ?? "normal"} ${fontSize}px var(--font-geist-sans), Arial, sans-serif`;
+      const weight = fontWeight ?? "bold";
+      let bodyFont = "";
+      try {
+        bodyFont = window.getComputedStyle(document.body).fontFamily || "";
+      } catch {
+        // ignore
+      }
+      // Never pass CSS variables like var(--font-geist-sans) to canvas.font as it silently fails in canvas 2D
+      const cleanFontFamily = (bodyFont || "")
+        .replace(/var\([^)]+\),?\s*/g, "")
+        .trim() || 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif';
+
+      canvasMeasureCtx.font = `${weight} ${fontSize}px ${cleanFontFamily}`;
+      if (!canvasMeasureCtx.font.includes(`${fontSize}px`)) {
+        canvasMeasureCtx.font = `${weight} ${fontSize}px sans-serif`;
+      }
       const metrics = canvasMeasureCtx.measureText(text);
       if (metrics && metrics.width > 0) {
-        return metrics.width;
+        return Math.ceil(metrics.width);
       }
     }
   }
   let units = 0;
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
-    if ("ijl|.,:;'! •".includes(ch)) units += 0.28;
-    else if ("frt-`()[]{}".includes(ch)) units += 0.35;
-    else if ("mwMW@#%&".includes(ch)) units += 0.82;
-    else if (ch >= "A" && ch <= "Z") units += 0.65;
-    else if (ch >= "0" && ch <= "9") units += 0.55;
-    else units += 0.50;
+    if ("ijl|.,:;'! •".includes(ch)) units += 0.32;
+    else if ("frt-`()[]{}".includes(ch)) units += 0.42;
+    else if ("mwMW@#%&".includes(ch)) units += 0.95;
+    else if (ch >= "A" && ch <= "Z") units += 0.75;
+    else if (ch >= "0" && ch <= "9") units += 0.60;
+    else units += 0.55;
   }
-  const isBold = fontWeight === 700 || fontWeight === "bold" || fontWeight === "800" || fontWeight === "900";
-  return isBold ? units * fontSize * 1.08 : units * fontSize;
+  const isBold = fontWeight === 700 || fontWeight === "bold" || fontWeight === "800" || fontWeight === "900" || !fontWeight;
+  return Math.ceil(isBold ? units * fontSize * 1.15 : units * fontSize);
 };
 
 type LegSegment = {
@@ -1588,6 +1621,207 @@ type LegSegment = {
   length: number;
   startDistance: number;
   endDistance: number;
+};
+
+const getPointAtDistanceOnPolyline = (points: EdgeBend[], targetDist: number): { point: EdgeBend; segIndex: number } => {
+  let accumulated = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const segLen = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    if (accumulated + segLen >= targetDist || i === points.length - 2) {
+      if (segLen === 0) return { point: { ...p1 }, segIndex: i };
+      const t = Math.max(0, Math.min(1, (targetDist - accumulated) / segLen));
+      return {
+        point: {
+          x: Math.round((p1.x + t * (p2.x - p1.x)) * 100) / 100,
+          y: Math.round((p1.y + t * (p2.y - p1.y)) * 100) / 100,
+        },
+        segIndex: i,
+      };
+    }
+    accumulated += segLen;
+  }
+  const last = points[points.length - 1];
+  return { point: { ...last }, segIndex: Math.max(0, points.length - 2) };
+};
+
+const isExportSafeDomNode = (domNode: Node): boolean => {
+  if (domNode instanceof Element) {
+    const className = domNode.getAttribute("class") || "";
+    if (
+      className.includes("edge-label-measure-path") ||
+      className.includes("react-flow__edge-interaction") ||
+      className.includes("connector-water-pulse") ||
+      className.includes("edge-bend-control") ||
+      className.includes("react-flow__handle") ||
+      className.includes("react-flow__edgeupdater") ||
+      className.includes("react-flow__resize-control") ||
+      className.includes("react-flow__resizer")
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export interface BoundingBox2D {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+function clipSegmentWithBox(
+  p1: { x: number; y: number },
+  p2: { x: number; y: number },
+  box: BoundingBox2D,
+): Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+
+  let t0 = 0.0;
+  let t1 = 1.0;
+
+  const p = [-dx, dx, -dy, dy];
+  const q = [p1.x - box.minX, box.maxX - p1.x, p1.y - box.minY, box.maxY - p1.y];
+
+  for (let i = 0; i < 4; i++) {
+    if (p[i] === 0) {
+      if (q[i] < 0) {
+        return [{ p1, p2 }];
+      }
+    } else {
+      const t = q[i] / p[i];
+      if (p[i] < 0) {
+        if (t > t1) return [{ p1, p2 }];
+        if (t > t0) t0 = t;
+      } else {
+        if (t < t0) return [{ p1, p2 }];
+        if (t < t1) t1 = t;
+      }
+    }
+  }
+
+  if (t0 >= t1) {
+    return [{ p1, p2 }];
+  }
+
+  const result: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
+  if (t0 > 0.001) {
+    result.push({
+      p1: { x: p1.x, y: p1.y },
+      p2: { x: p1.x + t0 * dx, y: p1.y + t0 * dy },
+    });
+  }
+  if (t1 < 0.999) {
+    result.push({
+      p1: { x: p1.x + t1 * dx, y: p1.y + t1 * dy },
+      p2: { x: p2.x, y: p2.y },
+    });
+  }
+  return result;
+}
+
+function computeGappedPolyline(
+  points: EdgeBend[],
+  boxes: BoundingBox2D[],
+  hasMarkerEnd = false,
+  markerClearance = 14,
+): string {
+  if (points.length < 2) return "";
+  if (!boxes || boxes.length === 0) {
+    return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
+  }
+
+  let segments: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    segments.push({ p1: points[i], p2: points[i + 1] });
+  }
+
+  for (const box of boxes) {
+    const nextSegments: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
+    for (const seg of segments) {
+      const clipped = clipSegmentWithBox(seg.p1, seg.p2, box);
+      for (const piece of clipped) {
+        const pieceLen = Math.hypot(piece.p2.x - piece.p1.x, piece.p2.y - piece.p1.y);
+        if (pieceLen >= 0.5) {
+          nextSegments.push(piece);
+        }
+      }
+    }
+    segments = nextSegments;
+  }
+
+  const subpaths: Array<Array<{ x: number; y: number }>> = [];
+  let currentSub: Array<{ x: number; y: number }> = [];
+
+  for (const seg of segments) {
+    if (currentSub.length === 0) {
+      currentSub.push(seg.p1, seg.p2);
+    } else {
+      const lastPt = currentSub[currentSub.length - 1];
+      if (Math.hypot(lastPt.x - seg.p1.x, lastPt.y - seg.p1.y) < 0.5) {
+        currentSub.push(seg.p2);
+      } else {
+        if (currentSub.length > 1) subpaths.push(currentSub);
+        currentSub = [seg.p1, seg.p2];
+      }
+    }
+  }
+  if (currentSub.length > 1) {
+    subpaths.push(currentSub);
+  }
+
+  const lastPoint = points[points.length - 1];
+  const firstPoint = points[0];
+  const prevPoint = points[points.length - 2];
+  const dLen = Math.hypot(lastPoint.x - prevPoint.x, lastPoint.y - prevPoint.y) || 1;
+  const ux = (lastPoint.x - prevPoint.x) / dLen;
+  const uy = (lastPoint.y - prevPoint.y) / dLen;
+
+  const validSubpaths: Array<Array<{ x: number; y: number }>> = [];
+  let hasConnectedEnd = false;
+
+  for (let i = 0; i < subpaths.length; i++) {
+    const sub = subpaths[i];
+    let subLen = 0;
+    for (let j = 0; j < sub.length - 1; j++) {
+      subLen += Math.hypot(sub[j + 1].x - sub[j].x, sub[j + 1].y - sub[j].y);
+    }
+
+    const endPt = sub[sub.length - 1];
+    const startPt = sub[0];
+    const touchesEnd = Math.hypot(endPt.x - lastPoint.x, endPt.y - lastPoint.y) < 1.0;
+    const touchesStart = Math.hypot(startPt.x - firstPoint.x, startPt.y - firstPoint.y) < 1.0;
+
+    if (touchesEnd) {
+      if (hasMarkerEnd && subLen < markerClearance) {
+        continue;
+      }
+      hasConnectedEnd = true;
+      validSubpaths.push(sub);
+    } else {
+      if (touchesStart) {
+        if (subLen >= 12) {
+          validSubpaths.push(sub);
+        }
+      } else if (subLen >= 14) {
+        validSubpaths.push(sub);
+      }
+    }
+  }
+
+  if (hasMarkerEnd && !hasConnectedEnd) {
+    validSubpaths.push([
+      { x: lastPoint.x - ux * 0.5, y: lastPoint.y - uy * 0.5 },
+      { x: lastPoint.x, y: lastPoint.y },
+    ]);
+  }
+
+  return validSubpaths
+    .map((sub) => sub.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" "))
+    .join(" ");
 };
 
 function FlowingConnectorEdge({
@@ -1621,6 +1855,7 @@ function FlowingConnectorEdge({
     sourceCardinality?: ErdCardinality;
     targetCardinality?: ErdCardinality;
     labelBackground?: boolean;
+    diagramLabelBoxes?: Array<BoundingBox2D & { edgeId: string }>;
   };
   const { screenToFlowPosition } = useReactFlow();
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
@@ -1709,17 +1944,27 @@ function FlowingConnectorEdge({
     window.addEventListener("pointerup", stop, { capture: true });
   };
 
+  const longestSegment = useMemo(() => {
+    if (segments.length === 0) return null;
+    return segments.reduce((best, curr) => (curr.length > best.length ? curr : best), segments[0]);
+  }, [segments]);
   const midSegment = segments[Math.floor(segments.length / 2)];
-  const labelDefaultPosition = midSegment ? midSegment.midpoint : { x: (sourceX + targetX) / 2, y: (sourceY + targetY) / 2 };
-  const labelPosition = edgeData.labelPosition ?? labelDefaultPosition;
-  const labelBackgroundEnabled = edgeData.labelBackground !== false;
-  const labelBackgroundColor = typeof labelBgStyle?.fill === "string" ? labelBgStyle.fill : "#fff";
+  const preferredSegment = (midSegment && midSegment.length >= 40) || !longestSegment ? midSegment : longestSegment;
+  const labelDefaultPosition = preferredSegment ? preferredSegment.midpoint : { x: (sourceX + targetX) / 2, y: (sourceY + targetY) / 2 };
+  const rawLabelPosition = edgeData.labelPosition ?? labelDefaultPosition;
+  const labelBackgroundEnabled =
+    edgeData.labelBackground !== false &&
+    labelBgStyle?.fill !== "transparent" &&
+    labelBgStyle?.fillOpacity !== 0;
+  const labelBackgroundColor =
+    typeof labelBgStyle?.fill === "string" && labelBgStyle.fill !== "transparent"
+      ? labelBgStyle.fill
+      : "#ffffff";
   const labelPaddingX = labelBgPadding?.[0] ?? 6;
   const labelPaddingY = labelBgPadding?.[1] ?? 4;
   const labelFontSize = typeof labelStyle?.fontSize === "number" && labelStyle.fontSize > 0 ? labelStyle.fontSize : 12;
-  const measuredTextWidth = useMemo(() => {
-    return label ? measureLabelTextWidth(String(label), labelFontSize, labelStyle?.fontWeight) : 0;
-  }, [label, labelFontSize, labelStyle?.fontWeight]);
+
+  const dominantRouteIsVertical = Math.abs(targetY - sourceY) >= Math.abs(targetX - sourceX);
 
   const closestSegmentInfo = useMemo(() => {
     if (segments.length === 0) return null;
@@ -1730,25 +1975,35 @@ function FlowingConnectorEdge({
       const dx = seg.to.x - seg.from.x;
       const dy = seg.to.y - seg.from.y;
       const lengthSq = dx * dx + dy * dy;
-      let t = lengthSq === 0 ? 0 : ((labelPosition.x - seg.from.x) * dx + (labelPosition.y - seg.from.y) * dy) / lengthSq;
+      let t = lengthSq === 0 ? 0 : ((rawLabelPosition.x - seg.from.x) * dx + (rawLabelPosition.y - seg.from.y) * dy) / lengthSq;
       t = Math.max(0, Math.min(1, t));
       const projX = seg.from.x + t * dx;
       const projY = seg.from.y + t * dy;
-      const dist = Math.hypot(labelPosition.x - projX, labelPosition.y - projY);
-      if (dist < bestDist) {
+      const dist = Math.hypot(rawLabelPosition.x - projX, rawLabelPosition.y - projY);
+
+      const isPreferredOrientation = seg.isVertical === dominantRouteIsVertical;
+      const currentIsPreferred = bestSeg.isVertical === dominantRouteIsVertical;
+
+      if (dist < bestDist - 2) {
         bestDist = dist;
         bestSeg = seg;
         bestT = t;
+      } else if (Math.abs(dist - bestDist) <= 2) {
+        if (isPreferredOrientation && !currentIsPreferred) {
+          bestDist = dist;
+          bestSeg = seg;
+          bestT = t;
+        }
       }
     }
     return { segment: bestSeg, distance: bestDist, t: bestT };
-  }, [segments, labelPosition.x, labelPosition.y]);
+  }, [segments, rawLabelPosition.x, rawLabelPosition.y, dominantRouteIsVertical]);
 
-  const closestSegment = closestSegmentInfo?.segment ?? null;
+  const closestSegment = closestSegmentInfo?.segment ?? preferredSegment ?? null;
 
   const isSegmentVertical = closestSegment
-    ? closestSegment.isVertical
-    : Math.abs(targetY - sourceY) >= Math.abs(targetX - sourceX);
+    ? (closestSegment.length >= 25 ? closestSegment.isVertical : dominantRouteIsVertical)
+    : dominantRouteIsVertical;
 
   const isSegmentFlowingDown = closestSegment
     ? closestSegment.to.y > closestSegment.from.y
@@ -1776,13 +2031,136 @@ function FlowingConnectorEdge({
     return { isLabelVertical: false, rotationAngle: 0 };
   }, [labelOrientation, isSegmentVertical, isSegmentFlowingDown]);
 
-  const maskId = `edge-mask-${id.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-  const cutoutWidth = labelBackgroundEnabled
-    ? measuredTextWidth + labelPaddingX * 2 + 2
-    : measuredTextWidth + 6;
-  const cutoutHeight = labelBackgroundEnabled
-    ? labelFontSize * 1.2 + labelPaddingY * 2 + 2
-    : labelFontSize * 1.25 + 4;
+  const targetSeg = closestSegment ?? preferredSegment;
+  const hasMarker = Boolean(markerEnd || (edgeData.targetCardinality && edgeData.targetCardinality !== "default"));
+  const isVerticalConnection = Math.abs(targetY - sourceY) >= Math.abs(targetX - sourceX);
+
+  const { effectiveFontSize, measuredTextWidth } = useMemo(() => {
+    if (!label) return { effectiveFontSize: labelFontSize, measuredTextWidth: 0 };
+    const rawWidth = measureLabelTextWidth(String(label), labelFontSize, labelStyle?.fontWeight);
+
+    const minBound = isVerticalConnection ? Math.min(sourceY, targetY) : Math.min(sourceX, targetX);
+    const maxBound = isVerticalConnection ? Math.max(sourceY, targetY) : Math.max(sourceX, targetX);
+    const totalSpan = maxBound - minBound;
+    const startClr = 16;
+    const endClr = hasMarker ? 24 : 16;
+    const margin = 12;
+    const availableSpan = totalSpan - startClr - endClr - margin;
+
+    let effSize = labelFontSize;
+    if (availableSpan >= 40 && rawWidth > availableSpan) {
+      effSize = Math.max(8, Math.min(labelFontSize, Math.floor(labelFontSize * (availableSpan / rawWidth))));
+    }
+    const scaledWidth = effSize === labelFontSize ? rawWidth : measureLabelTextWidth(String(label), effSize, labelStyle?.fontWeight);
+    return { effectiveFontSize: effSize, measuredTextWidth: scaledWidth };
+  }, [label, labelFontSize, labelStyle?.fontWeight, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker]);
+
+  const labelPosition = useMemo(() => {
+    if (!label) return rawLabelPosition;
+
+    const pad = labelBackgroundEnabled ? labelPaddingX : 6;
+    const alongMargin = 14;
+    const halfExtent = ((domWidth ?? measuredTextWidth) / 2) + pad + alongMargin;
+
+    if (isVerticalConnection) {
+      const minY = targetSeg ? Math.min(targetSeg.from.y, targetSeg.to.y) : Math.min(sourceY, targetY);
+      const maxY = targetSeg ? Math.max(targetSeg.from.y, targetSeg.to.y) : Math.max(sourceY, targetY);
+      const startClr = 18;
+      const endClr = hasMarker ? 28 : 18;
+      const totalSpan = maxY - minY;
+
+      let clampedY = rawLabelPosition.y;
+      if (totalSpan >= startClr + endClr + halfExtent * 2) {
+        clampedY = Math.max(minY + startClr + halfExtent, Math.min(maxY - endClr - halfExtent, rawLabelPosition.y));
+      } else {
+        clampedY = (minY + maxY) / 2;
+      }
+      const segX = targetSeg ? targetSeg.midpoint.x : rawLabelPosition.x;
+      return { x: segX, y: clampedY };
+    } else {
+      const minX = targetSeg ? Math.min(targetSeg.from.x, targetSeg.to.x) : Math.min(sourceX, targetX);
+      const maxX = targetSeg ? Math.max(targetSeg.from.x, targetSeg.to.x) : Math.max(sourceX, targetX);
+      const startClr = 18;
+      const endClr = hasMarker ? 28 : 18;
+      const totalSpan = maxX - minX;
+
+      let clampedX = rawLabelPosition.x;
+      if (totalSpan >= startClr + endClr + halfExtent * 2) {
+        clampedX = Math.max(minX + startClr + halfExtent, Math.min(maxX - endClr - halfExtent, rawLabelPosition.x));
+      } else {
+        clampedX = (minX + maxX) / 2;
+      }
+      const segY = targetSeg ? targetSeg.midpoint.y : rawLabelPosition.y;
+      return { x: clampedX, y: segY };
+    }
+  }, [label, rawLabelPosition, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker, labelBackgroundEnabled, labelPaddingX, domWidth, measuredTextWidth, targetSeg]);
+
+  const labelRef = useRef<HTMLDivElement | null>(null);
+  const [domWidth, setDomWidth] = useState<number | null>(null);
+  const [domHeight, setDomHeight] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (labelRef.current) {
+      const el = labelRef.current;
+      const w = el.offsetWidth || el.clientWidth;
+      const h = el.offsetHeight || el.clientHeight;
+      if (w > 0) {
+        setDomWidth((prev) => (prev !== w ? w : prev));
+      }
+      if (h > 0) {
+        setDomHeight((prev) => (prev !== h ? h : prev));
+      }
+    }
+  }, [label, effectiveFontSize, labelStyle?.fontWeight, labelBackgroundEnabled, labelPaddingX, labelPaddingY]);
+
+  const edgeStrokeWidth =
+    typeof style?.strokeWidth === "number"
+      ? style.strokeWidth
+      : typeof style?.strokeWidth === "string"
+        ? Number.parseFloat(style.strokeWidth) || 1.7
+        : 1.7;
+
+  const ownBox = useMemo<BoundingBox2D | null>(() => {
+    if (!label) return null;
+    const padX = labelBackgroundEnabled ? labelPaddingX : 6;
+    const padY = labelBackgroundEnabled ? labelPaddingY : 4;
+    const w = (domWidth ?? measuredTextWidth) + padX * 2;
+    const h = (domHeight ?? Math.ceil(effectiveFontSize * 1.35)) + padY * 2;
+    const alongMargin = 14;
+    const transMargin = 8;
+    const halfX = isLabelVertical ? h / 2 + transMargin : w / 2 + alongMargin;
+    const halfY = isLabelVertical ? w / 2 + alongMargin : h / 2 + transMargin;
+    return {
+      minX: labelPosition.x - halfX,
+      maxX: labelPosition.x + halfX,
+      minY: labelPosition.y - halfY,
+      maxY: labelPosition.y + halfY,
+    };
+  }, [label, labelBackgroundEnabled, labelPaddingX, labelPaddingY, domWidth, measuredTextWidth, domHeight, effectiveFontSize, isLabelVertical, labelPosition.x, labelPosition.y]);
+
+  const boxesToClip = useMemo(() => {
+    const list: BoundingBox2D[] = [];
+    if (ownBox) list.push(ownBox);
+    const otherBoxes = (edgeData.diagramLabelBoxes ?? []).filter((b) => b.edgeId !== id);
+    let rMinX = Infinity, rMaxX = -Infinity, rMinY = Infinity, rMaxY = -Infinity;
+    for (const p of routePoints) {
+      if (p.x < rMinX) rMinX = p.x;
+      if (p.x > rMaxX) rMaxX = p.x;
+      if (p.y < rMinY) rMinY = p.y;
+      if (p.y > rMaxY) rMaxY = p.y;
+    }
+    for (const b of otherBoxes) {
+      if (b.maxX >= rMinX - 10 && b.minX <= rMaxX + 10 && b.maxY >= rMinY - 10 && b.minY <= rMaxY + 10) {
+        list.push(b);
+      }
+    }
+    return list;
+  }, [ownBox, edgeData.diagramLabelBoxes, id, routePoints]);
+
+  const visibleD = useMemo(() => {
+    const hasMarker = Boolean(markerEnd || (edgeData.targetCardinality && edgeData.targetCardinality !== "default"));
+    return computeGappedPolyline(routePoints, boxesToClip, hasMarker, 14);
+  }, [routePoints, boxesToClip, markerEnd, edgeData.targetCardinality]);
 
   const renderCardinalityMarker = (
     key: string,
@@ -1808,8 +2186,8 @@ function FlowingConnectorEdge({
         className="erd-cardinality-marker"
         transform={`translate(${x} ${y}) rotate(${rotation})`}
         style={{
-          stroke: typeof style?.stroke === "string" ? style.stroke : "#64748b",
-          strokeWidth: typeof style?.strokeWidth === "number" ? style.strokeWidth : 1.7,
+          stroke: typeof style?.stroke === "string" && style.stroke !== "#64748b" ? style.stroke : "#000000",
+          strokeWidth: edgeStrokeWidth,
         }}
         aria-hidden="true"
       >
@@ -1879,52 +2257,39 @@ function FlowingConnectorEdge({
   };
   return (
     <>
-      {label ? (
-        <defs>
-          <mask
-            id={maskId}
-            maskUnits="userSpaceOnUse"
-            maskContentUnits="userSpaceOnUse"
-            x="-50000"
-            y="-50000"
-            width="100000"
-            height="100000"
-          >
-            <rect x="-50000" y="-50000" width="100000" height="100000" fill="#ffffff" />
-            <rect
-              x={-cutoutWidth / 2}
-              y={-cutoutHeight / 2}
-              width={cutoutWidth}
-              height={cutoutHeight}
-              rx={labelBackgroundEnabled ? (labelBgBorderRadius ?? 4) : 2}
-              fill="#000000"
-              transform={`translate(${labelPosition.x}, ${labelPosition.y}) rotate(${rotationAngle})`}
-            />
-          </mask>
-        </defs>
-      ) : null}
-      <BaseEdge
-        id={id}
-        path={d}
-        style={{ ...style, strokeOpacity: 0 }}
-        interactionWidth={14}
+      <path
+        d={visibleD}
+        fill="none"
+        stroke="none"
+        strokeOpacity={0}
+        strokeWidth={Math.max(16, edgeStrokeWidth + 12)}
+        className="react-flow__edge-interaction"
+        style={{ fill: "none", stroke: "transparent", pointerEvents: "stroke" }}
       />
       <path
+        id={id}
         className="react-flow__edge-path edge-visible-path"
-        d={d}
+        d={visibleD}
         fill="none"
         markerEnd={markerEnd}
-        mask={label ? `url(#${maskId})` : undefined}
         style={{
           ...style,
           fill: "none",
-          stroke: style?.stroke ?? "#64748b",
-          strokeWidth: style?.strokeWidth ?? 1.7,
+          stroke: typeof style?.stroke === "string" && style.stroke !== "#64748b" ? style.stroke : "#000000",
+          strokeWidth: edgeStrokeWidth,
           strokeLinecap: "round",
           strokeLinejoin: "round",
         }}
       />
-      <path ref={pathMeasureRef} d={d} className="edge-label-measure-path" aria-hidden="true" />
+      <path
+        ref={pathMeasureRef}
+        d={d}
+        className="edge-label-measure-path"
+        aria-hidden="true"
+        fill="none"
+        stroke="none"
+        style={{ fill: "none", stroke: "none", opacity: 0, pointerEvents: "none" }}
+      />
       {edgeData.sourceCardinality && edgeData.sourceCardinality !== "default"
         ? renderCardinalityMarker("source-cardinality", sourceX, sourceY, sourcePosition, edgeData.sourceCardinality)
         : null}
@@ -1936,10 +2301,15 @@ function FlowingConnectorEdge({
           <div
             className="edge-label-portal nodrag nopan"
             style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
               transform: `translate(-50%, -50%) translate(${labelPosition.x}px, ${labelPosition.y}px)`,
+              pointerEvents: "none",
             }}
           >
             <div
+              ref={labelRef}
               className={`edge-label-draggable nodrag nopan ${isLabelVertical ? "is-vertical" : ""} ${selected ? "is-selected" : ""}`}
               onPointerDown={(event) => {
                 edgeData.onSelect?.();
@@ -1952,10 +2322,10 @@ function FlowingConnectorEdge({
               onDoubleClick={(event) => { event.stopPropagation(); edgeData.onLabelPositionChange?.(); }}
               title="Drag to reposition · Double-click to reset"
               style={{
-                color: typeof labelStyle?.fill === "string" ? labelStyle.fill : "#334155",
-                fontSize: `${labelFontSize}px`,
+                color: typeof labelStyle?.fill === "string" && labelStyle.fill !== "#334155" ? labelStyle.fill : "#000000",
+                fontSize: `${effectiveFontSize}px`,
                 fontWeight: labelStyle?.fontWeight,
-                background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-cutout, var(--paper, #f6f8fb))",
+                background: labelBackgroundEnabled ? labelBackgroundColor : "var(--edge-label-bg, transparent)",
                 opacity: 1,
                 borderRadius: labelBackgroundEnabled ? (labelBgBorderRadius ?? 4) : 2,
                 padding: labelBackgroundEnabled ? `${labelPaddingY}px ${labelPaddingX}px` : "1px 3px",
@@ -1971,15 +2341,14 @@ function FlowingConnectorEdge({
       ) : null}
       {edgeData._flowDuration ? (
         <path
-          d={d}
+          d={visibleD}
           className="connector-water-pulse"
-          mask={label ? `url(#${maskId})` : undefined}
           style={{ animationDuration: `${edgeData._flowDuration}ms` }}
           aria-hidden="true"
         />
       ) : null}
       {edgeData.lineStyle === "flow-dot" ? (
-        <circle className="connector-flow-dot" r={3.5} aria-hidden="true">
+        <circle className="connector-flow-dot" r={Math.max(3.5, edgeStrokeWidth * 1.35)} aria-hidden="true">
           <animateMotion key={d} dur="2.35s" repeatCount="indefinite" path={d} />
         </circle>
       ) : null}
@@ -2161,13 +2530,36 @@ const edge = (
   targetHandle: targetHandle ?? "top-0",
   type: "flowing",
   animated: dashed,
-  markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
-  style: { stroke: "#64748b", strokeWidth: 1.7, strokeDasharray: dashed ? "6 5" : undefined },
-  labelStyle: { fill: "#334155", fontWeight: 700, fontSize: 12 },
+  markerEnd: { type: MarkerType.ArrowClosed, color: "#000000" },
+  style: { stroke: "#000000", strokeWidth: 1.7, strokeDasharray: dashed ? "6 5" : undefined },
+  labelStyle: { fill: "#000000", fontWeight: 700, fontSize: 12 },
   labelBgStyle: { fill: "#ffffff", fillOpacity: 1, stroke: "#ffffff", strokeWidth: 4 },
   labelBgPadding: [6, 4],
   labelBgBorderRadius: 5,
 });
+
+const normalizeEdgeStyles = (edgesToNormalize: Edge[]): Edge[] =>
+  edgesToNormalize.map((edgeItem) => {
+    const isOldSlate = edgeItem.style?.stroke === "#64748b" || !edgeItem.style?.stroke;
+    const stroke = isOldSlate ? "#000000" : edgeItem.style.stroke;
+    const isOldMarkerSlate =
+      edgeItem.markerEnd && typeof edgeItem.markerEnd === "object" && (edgeItem.markerEnd.color === "#64748b" || !edgeItem.markerEnd.color);
+    const markerColor = isOldMarkerSlate
+      ? "#000000"
+      : (typeof edgeItem.markerEnd === "object" ? edgeItem.markerEnd.color : stroke);
+
+    return {
+      ...edgeItem,
+      style: {
+        ...edgeItem.style,
+        stroke,
+      },
+      markerEnd:
+        edgeItem.markerEnd && typeof edgeItem.markerEnd === "object"
+          ? { ...edgeItem.markerEnd, color: markerColor }
+          : edgeItem.markerEnd ?? { type: MarkerType.ArrowClosed, color: stroke },
+    };
+  });
 
 const initialEdges: Edge[] = [
   edge("e1", "start", "app"),
@@ -2508,7 +2900,7 @@ const removeAnimationEdgeClasses = (className?: string) =>
 
 function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureNode>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(normalizeEdgeStyles(initialEdges));
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [canvasMode, setCanvasMode] = useState<"select" | "move">("select");
@@ -2588,6 +2980,10 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [applyTitleSizeToAll, setApplyTitleSizeToAll] = useState(false);
   const [applyDescriptionSizeToAll, setApplyDescriptionSizeToAll] = useState(false);
   const [linkFishboneLineLengths, setLinkFishboneLineLengths] = useState(false);
+  const [defaultEdgeStrokeWidth, setDefaultEdgeStrokeWidth] = useState(1.7);
+  const [defaultEdgeColor, setDefaultEdgeColor] = useState("#000000");
+  const [applyThicknessToAll, setApplyThicknessToAll] = useState(false);
+  const [applyColorToAll, setApplyColorToAll] = useState(false);
   const [legendDraft, setLegendDraft] = useState<LegendDraft>(createLegendDraft);
   const [saved, setSaved] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -2927,7 +3323,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
       if (pageData) {
         const parsed = JSON.parse(pageData) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
         setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(parsed.nodes ?? []), ...commentMarkers(restoredComments)]));
-        setEdges(parsed.edges ?? []);
+        setEdges(normalizeEdgeStyles(parsed.edges ?? []));
       } else if (wsId !== "collie" || restoredActive !== "main") {
         // A workspace other than the original collie one starts (and stays)
         // empty until the user adds content.  Only the default collie "main"
@@ -2977,7 +3373,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
           });
           restore(cloud.pages, cloud.trashedPages ?? [], cloudActive);
           setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(cloudDiagram.nodes ?? []), ...commentMarkers(restoredComments)]));
-          setEdges(cloudDiagram.edges ?? []);
+          setEdges(normalizeEdgeStyles(cloudDiagram.edges ?? []));
         })
         .catch(() => undefined)
         .finally(() => {
@@ -3087,6 +3483,94 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
     [selectedId, setNodes],
   );
 
+  const flipLegendNode = useCallback(() => {
+    if (!selectedId) return;
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.id !== selectedId) return node;
+        const currentAngle = node.data.rotation ?? 0;
+        const nextAngle = (currentAngle + 90) % 360;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            rotation: nextAngle,
+          },
+        };
+      }),
+    );
+  }, [selectedId, setNodes]);
+
+  const setLegendRotation = useCallback((angle: number) => {
+    if (!selectedId) return;
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.id !== selectedId) return node;
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            rotation: angle,
+          },
+        };
+      }),
+    );
+  }, [selectedId, setNodes]);
+
+  const swapLegendDimensions = useCallback(() => {
+    if (!selectedId) return;
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.id !== selectedId) return node;
+        const curW = Number(node.style?.width ?? node.width ?? 250);
+        const curH = Number(node.style?.height ?? node.height ?? 240);
+        return {
+          ...node,
+          width: curH,
+          height: curW,
+          style: {
+            ...node.style,
+            width: curH,
+            height: curW,
+          },
+        };
+      }),
+    );
+  }, [selectedId, setNodes]);
+
+  const setLegendLayout = useCallback((layout: "vertical" | "horizontal" | "auto") => {
+    if (!selectedId) return;
+    setNodes((current) =>
+      current.map((node) => {
+        if (node.id !== selectedId) return node;
+        const entryCount = node.data.legendEntries?.length ?? 1;
+        let newW = Number(node.style?.width ?? node.width ?? 250);
+        let newH = Number(node.style?.height ?? node.height ?? 240);
+        if (layout === "horizontal") {
+          newW = Math.max(460, entryCount * 130 + 70);
+          newH = 110;
+        } else if (layout === "vertical") {
+          newW = 250;
+          newH = 67 + entryCount * 43;
+        }
+        return {
+          ...node,
+          width: newW,
+          height: newH,
+          style: {
+            ...node.style,
+            width: newW,
+            height: newH,
+          },
+          data: {
+            ...node.data,
+            legendOrientation: layout,
+          },
+        };
+      }),
+    );
+  }, [selectedId, setNodes]);
+
   const updateSelectedFishbone = useCallback((patch: Partial<ArchitectureNodeData>) => {
     if (!selectedId) return;
     setNodes((current) => current.map((node) => {
@@ -3191,9 +3675,9 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
             // stays directly straight for nearby ports and only routes when
             // there is enough distance to need a corner.
             type: "flowing",
-            markerEnd: { type: MarkerType.ArrowClosed, color: "#64748b" },
-            style: { stroke: "#64748b", strokeWidth: 1.7 },
-            labelStyle: { fill: "#334155", fontWeight: 700, fontSize: 12 },
+            markerEnd: { type: MarkerType.ArrowClosed, color: defaultEdgeColor },
+            style: { stroke: defaultEdgeColor, strokeWidth: defaultEdgeStrokeWidth },
+            labelStyle: { fill: "#000000", fontWeight: 700, fontSize: 12 },
             labelBgStyle: { fill: "#ffffff", fillOpacity: 1, stroke: "#ffffff", strokeWidth: 4 },
             labelBgPadding: [6, 4],
             labelBgBorderRadius: 5,
@@ -3205,7 +3689,7 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         ),
       );
     },
-    [nodes, setEdges],
+    [nodes, setEdges, defaultEdgeColor, defaultEdgeStrokeWidth],
   );
 
   const isValidConnection = useCallback(
@@ -3309,6 +3793,77 @@ function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
         data: {
           ...selectedEdge.data,
           labelOrientation: orientation,
+        },
+      });
+    }
+  };
+
+  const selectedEdgeThickness =
+    typeof selectedEdge?.style?.strokeWidth === "number"
+      ? selectedEdge.style.strokeWidth
+      : typeof selectedEdge?.style?.strokeWidth === "string"
+        ? Number.parseFloat(selectedEdge.style.strokeWidth) || 1.7
+        : 1.7;
+
+  const selectedEdgeColor =
+    typeof selectedEdge?.style?.stroke === "string" && selectedEdge.style.stroke !== "#64748b"
+      ? selectedEdge.style.stroke
+      : "#000000";
+
+  const setEdgeThickness = (thickness: number) => {
+    if (!selectedEdge) return;
+    const clamped = Math.max(0.5, Math.min(20, Math.round(thickness * 10) / 10));
+    setDefaultEdgeStrokeWidth(clamped);
+    if (applyThicknessToAll) {
+      setEdges((current) =>
+        current.map((edgeItem) => ({
+          ...edgeItem,
+          style: {
+            ...edgeItem.style,
+            strokeWidth: clamped,
+          },
+        })),
+      );
+    } else {
+      updateSelectedEdge({
+        style: {
+          ...selectedEdge.style,
+          strokeWidth: clamped,
+        },
+      });
+    }
+  };
+
+  const setEdgeColor = (color: string) => {
+    if (!selectedEdge) return;
+    setDefaultEdgeColor(color);
+    const nextMarker = selectedEdge.markerEnd
+      ? typeof selectedEdge.markerEnd === "object"
+        ? { ...selectedEdge.markerEnd, color }
+        : selectedEdge.markerEnd
+      : { type: MarkerType.ArrowClosed, color };
+
+    if (applyColorToAll) {
+      setEdges((current) =>
+        current.map((edgeItem) => ({
+          ...edgeItem,
+          markerEnd: edgeItem.markerEnd
+            ? typeof edgeItem.markerEnd === "object"
+              ? { ...edgeItem.markerEnd, color }
+              : edgeItem.markerEnd
+            : { type: MarkerType.ArrowClosed, color },
+          style: {
+            ...edgeItem.style,
+            stroke: color,
+          },
+        })),
+      );
+    } else {
+      updateSelectedEdge({
+        markerEnd: nextMarker,
+        style: {
+          ...selectedEdge.style,
+          stroke: color,
         },
       });
     }
@@ -3418,7 +3973,7 @@ const persistPageIndex = (
     try {
       const parsed = JSON.parse(stored) as { nodes?: ArchitectureNode[]; edges?: Edge[] };
       setNodes(synchronizeLegendKey([...replaceLegacyServiceLogos(parsed.nodes ?? []), ...commentMarkers(nextComments)]));
-      setEdges(parsed.edges ?? []);
+      setEdges(normalizeEdgeStyles(parsed.edges ?? []));
     } catch {
       if (emptyForNonCollie()) {
         setNodes(commentMarkers(nextComments));
@@ -3766,8 +4321,8 @@ const persistPageIndex = (
                 animated: false,
                 style: {
                   ...e.style,
-                  stroke: "#64748b",
-                  strokeWidth: 1.7,
+                  stroke: typeof e.style?.stroke === "string" && e.style.stroke !== "#64748b" ? e.style.stroke : "#000000",
+                  strokeWidth: e.style?.strokeWidth ?? 1.7,
                   strokeDasharray: undefined,
                 },
               }
@@ -3910,7 +4465,7 @@ const persistPageIndex = (
         type: "flowing",
         data: { ...e.data, _flowDuration: undefined },
         animated: false,
-        style: { ...e.style, stroke: "#64748b", strokeWidth: 1.7, strokeDasharray: undefined },
+        style: { ...e.style, stroke: typeof e.style?.stroke === "string" && e.style.stroke !== "#64748b" ? e.style.stroke : "#000000", strokeWidth: e.style?.strokeWidth ?? 1.7, strokeDasharray: undefined },
       })),
     );
   }, [clearAnimationEffects, setEdges]);
@@ -4218,6 +4773,7 @@ const persistPageIndex = (
         backgroundColor: "#ffffff",
         cacheBust: true,
         pixelRatio: 1,
+        fontEmbedCSS: EMBEDDED_FONTS_CSS,
         width: exportWidth,
         height: exportHeight,
         style: {
@@ -4225,13 +4781,9 @@ const persistPageIndex = (
           height: `${exportHeight}px`,
           transformOrigin: "top left",
           transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
+          fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
         },
-        filter: (domNode) =>
-          !(
-            domNode instanceof HTMLElement &&
-            (domNode.classList.contains("react-flow__handle") ||
-              domNode.classList.contains("react-flow__edgeupdater"))
-          ),
+        filter: isExportSafeDomNode,
       });
 
       const link = document.createElement("a");
@@ -4257,7 +4809,10 @@ const persistPageIndex = (
     // canvas typography and connector labels untouched; only visibility
     // classes are applied when the user explicitly hides text.
     viewport.classList.add("docs-export-snapshot");
-    viewport.style.setProperty("--edge-label-cutout", mode === "readable" ? "#ffffff" : "#f6f8fb");
+    viewport.style.setProperty("--edge-label-bg", "#ffffff");
+    viewport.style.setProperty("--font-geist-sans", "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif");
+    viewport.style.setProperty("--font-geist-mono", "'Geist Mono', monospace");
+    viewport.style.fontFamily = "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif";
     if (!docsShowTitles) viewport.classList.add("docs-hide-titles");
     if (!docsShowDescriptions) viewport.classList.add("docs-hide-descriptions");
   };
@@ -4290,6 +4845,10 @@ const persistPageIndex = (
     viewport.style.removeProperty("--docs-title-scale");
     viewport.style.removeProperty("--docs-description-scale");
     viewport.style.removeProperty("--edge-label-cutout");
+    viewport.style.removeProperty("--edge-label-bg");
+    viewport.style.removeProperty("--font-geist-sans");
+    viewport.style.removeProperty("--font-geist-mono");
+    viewport.style.fontFamily = "";
     viewport.querySelectorAll<SVGTextElement>(".react-flow__edge-text").forEach((label) => {
       if ("exportOriginalFontSize" in label.dataset) {
         label.style.fontSize = label.dataset.exportOriginalFontSize ?? "";
@@ -4308,6 +4867,7 @@ const persistPageIndex = (
       strokeWidth: element.getAttribute("stroke-width"),
       strokeLinecap: element.getAttribute("stroke-linecap"),
       strokeLinejoin: element.getAttribute("stroke-linejoin"),
+      strokeDasharray: element.getAttribute("stroke-dasharray"),
       vectorEffect: element.getAttribute("vector-effect"),
     });
   };
@@ -4325,6 +4885,7 @@ const persistPageIndex = (
           ["stroke-width", originalPaint.strokeWidth],
           ["stroke-linecap", originalPaint.strokeLinecap],
           ["stroke-linejoin", originalPaint.strokeLinejoin],
+          ["stroke-dasharray", originalPaint.strokeDasharray],
           ["vector-effect", originalPaint.vectorEffect],
         ] as Array<[string, string | null | undefined]>).forEach(([attribute, value]) => {
           if (value === null || value === undefined) element.removeAttribute(attribute);
@@ -4342,85 +4903,121 @@ const persistPageIndex = (
     // conversion and implicitly close open polylines with a black fill. Pin
     // connector paint inline so preview and downloaded PNGs stay line-only.
     viewport.querySelectorAll<SVGPathElement>(
-      ".edge-visible-path, .edge-label-measure-path, .connector-water-pulse, .react-flow__edge-interaction",
+      ".edge-visible-path, .connector-water-pulse",
     ).forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       path.setAttribute("fill", "none");
       path.style.setProperty("fill", "none", "important");
       path.style.setProperty("stroke-linecap", "round");
       path.style.setProperty("stroke-linejoin", "round");
     });
+    viewport.querySelectorAll<SVGPathElement>(
+      ".edge-label-measure-path, .react-flow__edge-interaction",
+    ).forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", "none");
+      path.setAttribute("stroke-width", "0");
+      path.setAttribute("display", "none");
+      path.style.setProperty("display", "none", "important");
+      path.style.setProperty("fill", "none", "important");
+      path.style.setProperty("stroke", "none", "important");
+      path.style.setProperty("stroke-width", "0", "important");
+      path.style.setProperty("opacity", "0", "important");
+    });
     viewport.querySelectorAll<SVGPathElement>(".edge-visible-path").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
       const computed = getComputedStyle(path);
-      const stroke = computed.stroke && computed.stroke !== "none" ? computed.stroke : "#64748b";
+      const stroke = computed.stroke && computed.stroke !== "none" && computed.stroke !== "rgb(100, 116, 139)" && computed.stroke !== "#64748b" ? computed.stroke : "#000000";
       const strokeWidth = Number.parseFloat(computed.strokeWidth);
+      const widthVal = Number.isFinite(strokeWidth) ? strokeWidth : 1.7;
       path.setAttribute("stroke", stroke);
-      path.setAttribute("stroke-width", String(Number.isFinite(strokeWidth) ? strokeWidth : 1.7));
+      path.setAttribute("stroke-width", String(widthVal));
       path.style.setProperty("stroke", stroke);
-      path.style.setProperty("stroke-width", `${Number.isFinite(strokeWidth) ? strokeWidth : 1.7}px`);
+      path.style.setProperty("stroke-width", `${widthVal}px`);
+    });
+    viewport.querySelectorAll<SVGElement>("marker path, marker polyline, marker circle, marker polygon").forEach((markerElem) => {
+      rememberExportSafeFishbonePaint(markerElem);
+      const computed = getComputedStyle(markerElem);
+      const fill = computed.fill && computed.fill !== "none" && computed.fill !== "rgb(100, 116, 139)" && computed.fill !== "#64748b" ? computed.fill : "#000000";
+      const stroke = computed.stroke && computed.stroke !== "none" && computed.stroke !== "rgb(100, 116, 139)" && computed.stroke !== "#64748b" ? computed.stroke : "#000000";
+      markerElem.setAttribute("fill", fill);
+      markerElem.setAttribute("stroke", stroke);
+      markerElem.style.setProperty("fill", fill);
+      markerElem.style.setProperty("stroke", stroke);
+    });
+    viewport.querySelectorAll<SVGElement>(".cardinality-marker *, .erd-cardinality-marker, .erd-cardinality-marker *").forEach((elem) => {
+      rememberExportSafeFishbonePaint(elem);
+      const computed = getComputedStyle(elem);
+      const stroke = computed.stroke && computed.stroke !== "none" ? computed.stroke : "#000000";
+      elem.setAttribute("stroke", stroke);
+      elem.style.setProperty("stroke", stroke);
     });
     viewport.querySelectorAll<SVGPathElement>(".decision-art path").forEach((path) => {
       rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
-      const stroke = node
-        ? getComputedStyle(node).getPropertyValue("--node").trim()
-        : "#0ea5c6";
-      const customFill = node?.classList.contains("has-component-style")
-        ? node.style.getPropertyValue("--shape-fill")
-        : "";
-      const fill = customFill || "#ffffff";
-      path.setAttribute("fill", fill);
-      path.setAttribute("stroke", stroke || "#0ea5c6");
-      path.setAttribute("stroke-width", "2.5");
-      path.style.setProperty("fill", fill, "important");
-      path.style.setProperty("stroke", stroke || "#0ea5c6", "important");
-      path.style.setProperty("stroke-width", "2.5px", "important");
-    });
-    viewport.querySelectorAll<SVGElement>(".database-art .db-body").forEach((path) => {
-      rememberExportSafeFishbonePaint(path);
-      const node = path.closest<HTMLElement>(".architecture-node");
-      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      const customFill = node?.classList.contains("has-component-style")
-        ? node.style.getPropertyValue("--shape-fill")
-        : "";
-      const fill = customFill || "#ffffff";
       const customStroke = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-outline")
         : "";
-      const stroke = customStroke || color || "#0ea5c6";
-      path.setAttribute("fill", fill);
-      path.setAttribute("stroke", stroke);
-      path.setAttribute("stroke-width", "2");
-      path.style.setProperty("fill", fill, "important");
-      path.style.setProperty("stroke", stroke, "important");
-      path.style.setProperty("stroke-width", "2px", "important");
-    });
-    viewport.querySelectorAll<SVGElement>(".database-art .db-top").forEach((path) => {
-      rememberExportSafeFishbonePaint(path);
-      const node = path.closest<HTMLElement>(".architecture-node");
-      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
       const customFill = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-fill")
         : "";
-      const fill = customFill || "#ffffff";
+      const customDash = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-dasharray")
+        : "";
+      const computed = getComputedStyle(path);
+      const nodeColor = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const stroke = customStroke || (computed.stroke && computed.stroke !== "none" ? computed.stroke : (nodeColor || "#0ea5c6"));
+      const fill = customFill || (computed.fill && computed.fill !== "none" ? computed.fill : "#ffffff");
+      const strokeWidth = computed.strokeWidth || "2.4px";
+      path.setAttribute("fill", fill);
+      path.setAttribute("stroke", stroke);
+      path.setAttribute("stroke-width", strokeWidth.replace("px", ""));
+      path.style.setProperty("fill", fill, "important");
+      path.style.setProperty("stroke", stroke, "important");
+      path.style.setProperty("stroke-width", strokeWidth, "important");
+      if (customDash) {
+        path.setAttribute("stroke-dasharray", customDash);
+        path.style.setProperty("stroke-dasharray", customDash, "important");
+      }
+    });
+    viewport.querySelectorAll<SVGElement>(".database-art .db-body, .database-art .db-top").forEach((path) => {
+      rememberExportSafeFishbonePaint(path);
+      const node = path.closest<HTMLElement>(".architecture-node");
       const customStroke = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-outline")
         : "";
-      const stroke = customStroke || color || "#0ea5c6";
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const customDash = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-dasharray")
+        : "";
+      const computed = getComputedStyle(path);
+      const nodeColor = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const stroke = customStroke || (computed.stroke && computed.stroke !== "none" ? computed.stroke : (nodeColor || "#0ea5c6"));
+      const fill = customFill || (computed.fill && computed.fill !== "none" ? computed.fill : "#ffffff");
+      const strokeWidth = computed.strokeWidth || "2px";
       path.setAttribute("fill", fill);
       path.setAttribute("stroke", stroke);
-      path.setAttribute("stroke-width", "2");
+      path.setAttribute("stroke-width", strokeWidth.replace("px", ""));
       path.style.setProperty("fill", fill, "important");
       path.style.setProperty("stroke", stroke, "important");
-      path.style.setProperty("stroke-width", "2px", "important");
+      path.style.setProperty("stroke-width", strokeWidth, "important");
+      if (customDash) {
+        path.setAttribute("stroke-dasharray", customDash);
+        path.style.setProperty("stroke-dasharray", customDash, "important");
+      }
     });
     viewport.querySelectorAll<SVGElement>(".database-art .db-ring").forEach((path) => {
       rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
-      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
       const customStroke = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-outline")
         : "";
-      const stroke = customStroke || color || "#0ea5c6";
+      const computed = getComputedStyle(path);
+      const nodeColor = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const stroke = customStroke || (computed.stroke && computed.stroke !== "none" ? computed.stroke : (nodeColor || "#0ea5c6"));
       path.setAttribute("fill", "none");
       path.setAttribute("stroke", stroke);
       path.setAttribute("stroke-width", "1.6");
@@ -4431,40 +5028,44 @@ const persistPageIndex = (
     viewport.querySelectorAll<SVGElement>(".cloud-art path").forEach((path) => {
       rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
-      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      const customFill = node?.classList.contains("has-component-style")
-        ? node.style.getPropertyValue("--shape-fill")
-        : "";
-      const fill = customFill || "#ffffff";
       const customStroke = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-outline")
         : "";
-      const stroke = customStroke || color || "#0ea5c6";
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const computed = getComputedStyle(path);
+      const nodeColor = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const stroke = customStroke || (computed.stroke && computed.stroke !== "none" ? computed.stroke : (nodeColor || "#0ea5c6"));
+      const fill = customFill || (computed.fill && computed.fill !== "none" ? computed.fill : "#ffffff");
+      const strokeWidth = computed.strokeWidth || "2.2px";
       path.setAttribute("fill", fill);
       path.setAttribute("stroke", stroke);
-      path.setAttribute("stroke-width", "2.5");
+      path.setAttribute("stroke-width", strokeWidth.replace("px", ""));
       path.style.setProperty("fill", fill, "important");
       path.style.setProperty("stroke", stroke, "important");
-      path.style.setProperty("stroke-width", "2.5px", "important");
+      path.style.setProperty("stroke-width", strokeWidth, "important");
     });
     viewport.querySelectorAll<SVGElement>(".service-hexagon-art path").forEach((path) => {
       rememberExportSafeFishbonePaint(path);
       const node = path.closest<HTMLElement>(".architecture-node");
-      const color = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
-      const customFill = node?.classList.contains("has-component-style")
-        ? node.style.getPropertyValue("--shape-fill")
-        : "";
-      const fill = customFill || color || "#0ea5c6";
       const customStroke = node?.classList.contains("has-component-style")
         ? node.style.getPropertyValue("--shape-outline")
         : "";
-      const stroke = customStroke || color || "#0ea5c6";
+      const customFill = node?.classList.contains("has-component-style")
+        ? node.style.getPropertyValue("--shape-fill")
+        : "";
+      const computed = getComputedStyle(path);
+      const nodeColor = node ? getComputedStyle(node).getPropertyValue("--node").trim() : "#0ea5c6";
+      const stroke = customStroke || (computed.stroke && computed.stroke !== "none" ? computed.stroke : (nodeColor || "#0ea5c6"));
+      const fill = customFill || (computed.fill && computed.fill !== "none" ? computed.fill : (nodeColor || "#0ea5c6"));
+      const strokeWidth = computed.strokeWidth || "2.4px";
       path.setAttribute("fill", fill);
       path.setAttribute("stroke", stroke);
-      path.setAttribute("stroke-width", "2.4");
+      path.setAttribute("stroke-width", strokeWidth.replace("px", ""));
       path.style.setProperty("fill", fill, "important");
       path.style.setProperty("stroke", stroke, "important");
-      path.style.setProperty("stroke-width", "2.4px", "important");
+      path.style.setProperty("stroke-width", strokeWidth, "important");
     });
     viewport.querySelectorAll<SVGPathElement>(
       ".shape-fishbone-spine > svg > path, .shape-fishbone-branch .fishbone-branch-spine, .shape-fishbone-branch .fishbone-cause-line",
@@ -4529,9 +5130,14 @@ const persistPageIndex = (
       label.style.setProperty("overflow-wrap", computed.overflowWrap, "important");
     });
     viewport.querySelectorAll<SVGRectElement>(".react-flow__edge-textbg").forEach((rect) => {
-      rect.setAttribute("fill", "#ffffff");
-      rect.setAttribute("stroke", "#ffffff");
-      rect.setAttribute("stroke-width", "4");
+      rememberExportSafeFishbonePaint(rect);
+      const computed = getComputedStyle(rect);
+      if (computed.fill !== "none" && computed.fill !== "transparent" && computed.fillOpacity !== "0") {
+        const fill = computed.fill || "#ffffff";
+        rect.setAttribute("fill", fill);
+        rect.setAttribute("stroke", fill);
+        rect.setAttribute("stroke-width", "4");
+      }
     });
   };
 
@@ -4643,58 +5249,73 @@ const persistPageIndex = (
     changeDocsInspectZoom(event.deltaY < 0 ? 0.2 : -0.2);
   };
 
-  const exportDocsPng = async (mode: DocsExportMode) => {
+  const exportDocsPng = async (mode: DocsExportMode = docsExportMode) => {
     if (exporting || nodes.length === 0) return;
-    const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
-    if (!viewport) return;
 
     setExporting(true);
-    setExportNotice(
-      mode === "readable"
-        ? "Building a readable single-page document image…"
-        : "Fitting the full visual design onto one document page…",
-    );
-    setSelectedId(null);
-    setSelectedEdgeId(null);
-    setInspectorOpen(false);
-    setNodes((current) => current.map((node) => ({ ...node, selected: false })));
-    setEdges((current) => current.map((edgeItem) => ({ ...edgeItem, selected: false })));
-    setDocsViewportStyles(viewport, mode);
-    // Edge labels are SVG text and do not participate in the node text layout.
-    // Pin their computed size before the snapshot so text visibility toggles
-    // cannot make connector labels inherit a smaller export scale.
-    prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
+    setExportNotice("Exporting document PNG…");
 
     try {
-      await document.fonts.ready;
-      await new Promise<void>((resolve) =>
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
-      );
+      const previewCanvas = docsPreviewCanvasRef.current;
+      let blob: Blob | null = null;
 
-      prepareExportSafeSvgPaint(viewport);
-      const { page, renderScale, translateX, translateY } = getDocsLayout(mode);
+      // 1. If the live preview canvas is ready, export directly from it!
+      // This guarantees 100% pixel-for-pixel identity with what the user sees before exporting.
+      if (previewCanvas && docsPreviewReady && previewCanvas.width > 0 && previewCanvas.height > 0) {
+        blob = await new Promise<Blob | null>((resolve) => {
+          previewCanvas.toBlob((b) => resolve(b), "image/png");
+        });
+      }
 
-      const blob = await toBlob(viewport, {
-        backgroundColor: "#ffffff",
-        cacheBust: false,
-        pixelRatio: 1,
-        width: page.width,
-        height: page.height,
-        style: {
-          width: `${page.width}px`,
-          height: `${page.height}px`,
-          transformOrigin: "top left",
-          transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
-        },
-        filter: (domNode) =>
-          !(
-            domNode instanceof HTMLElement &&
-            (domNode.classList.contains("react-flow__handle") ||
-              domNode.classList.contains("react-flow__edgeupdater"))
-          ),
-      });
+      // 2. Fallback: render using the exact same toCanvas pipeline
+      if (!blob) {
+        const viewport = document.querySelector<HTMLElement>(".react-flow__viewport");
+        if (!viewport) throw new Error("Viewport unavailable");
+
+        setSelectedId(null);
+        setSelectedEdgeId(null);
+        setInspectorOpen(false);
+        setNodes((current) => current.map((node) => node.selected ? { ...node, selected: false } : node));
+        setEdges((current) => current.map((edgeItem) => edgeItem.selected ? { ...edgeItem, selected: false } : edgeItem));
+        setDocsViewportStyles(viewport, mode);
+        prepareExportEdgeLabelStyles(viewport, docsEdgeLabelScale);
+
+        try {
+          await document.fonts.ready;
+          await new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          );
+
+          prepareExportSafeSvgPaint(viewport);
+          const { page, renderScale, translateX, translateY } = getDocsLayout(mode);
+
+          const canvas = await toCanvas(viewport, {
+            backgroundColor: "#ffffff",
+            cacheBust: false,
+            pixelRatio: 1,
+            fontEmbedCSS: EMBEDDED_FONTS_CSS,
+            width: page.width,
+            height: page.height,
+            style: {
+              width: `${page.width}px`,
+              height: `${page.height}px`,
+              transformOrigin: "top left",
+              transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
+              fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
+            },
+            filter: isExportSafeDomNode,
+          });
+          blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob((b) => resolve(b), "image/png");
+          });
+        } finally {
+          clearDocsViewportStyles(viewport);
+        }
+      }
+
       if (!blob) throw new Error("Document image could not be created");
 
+      const { page } = getDocsLayout(mode);
       const link = document.createElement("a");
       const stamp = new Date().toISOString().slice(0, 10);
       link.download = `collieai-architecture-docs-${mode}-${page.name}-${stamp}.png`;
@@ -4702,15 +5323,14 @@ const persistPageIndex = (
       link.href = downloadUrl;
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+
       setExportNotice(
-        `Exported ${mode === "readable" ? "readable overview" : "full design"} · ${Math.round(
-          docsTitleScale * 100,
-        )}% text · ${Math.round(docsExportZoom * 100)}% zoom`,
+        `Exported full design · ${Math.round(docsExportZoom * 100)}% zoom`,
       );
+      setDocsExportOpen(false);
     } catch {
       setExportNotice("Document export could not finish. Try closing other large tabs and export again.");
     } finally {
-      clearDocsViewportStyles(viewport);
       setExporting(false);
       window.setTimeout(() => setExportNotice(null), 5200);
     }
@@ -4760,6 +5380,7 @@ const persistPageIndex = (
             backgroundColor: "#ffffff",
             cacheBust: false,
             pixelRatio: 1,
+            fontEmbedCSS: EMBEDDED_FONTS_CSS,
             width: page.width,
             height: page.height,
             style: {
@@ -4767,13 +5388,9 @@ const persistPageIndex = (
               height: `${page.height}px`,
               transformOrigin: "top left",
               transform: `translate(${translateX}px, ${translateY}px) scale(${renderScale})`,
+              fontFamily: "'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif",
             },
-            filter: (domNode) =>
-              !(
-                domNode instanceof HTMLElement &&
-                (domNode.classList.contains("react-flow__handle") ||
-                  domNode.classList.contains("react-flow__edgeupdater"))
-              ),
+            filter: isExportSafeDomNode,
           });
           if (cancelled || renderId !== docsPreviewRenderIdRef.current) return;
 
@@ -4828,6 +5445,12 @@ const persistPageIndex = (
     // Each document-export session starts from the live diagram exactly as it
     // is now. Export-only changes are temporary and begin only after the user
     // changes an option in this dialog.
+    setSelectedId(null);
+    setSelectedEdgeId(null);
+    setInspectorOpen(false);
+    setNodes((current) => current.map((node) => node.selected ? { ...node, selected: false } : node));
+    setEdges((current) => current.map((edgeItem) => edgeItem.selected ? { ...edgeItem, selected: false } : edgeItem));
+
     setDocsExportMode("full-design");
     setDocsShowTitles(true);
     setDocsShowDescriptions(true);
@@ -5447,6 +6070,28 @@ const persistPageIndex = (
           },
         };
       }
+      if (node.data.shape === "legend-key" || node.data.shape === "legend") {
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            onFlipOrientation: () => {
+              setNodes((items) => items.map((item) => {
+                if (item.id !== node.id) return item;
+                const curAngle = item.data.rotation ?? 0;
+                const nextAngle = (curAngle + 90) % 360;
+                return {
+                  ...item,
+                  data: {
+                    ...item.data,
+                    rotation: nextAngle,
+                  },
+                };
+              }));
+            },
+          },
+        };
+      }
       const nodeWithTextEditor = {
         ...node,
         data: {
@@ -5468,17 +6113,126 @@ const persistPageIndex = (
     });
   }, [animActiveIds, animCompletedIds, nodes, setNodes, setSelectedEdgeId, setSelectedId]);
 
+  const diagramLabelBoxes = useMemo(() => {
+    const boxes: Array<BoundingBox2D & { edgeId: string }> = [];
+    for (const edge of edges) {
+      if (!edge.label || String(edge.label).trim() === "") continue;
+      const labelText = String(edge.label).trim();
+      const edgeData = (edge.data ?? {}) as {
+        labelPosition?: EdgeBend;
+        labelOrientation?: EdgeLabelOrientation;
+        labelBackground?: boolean;
+      };
+      const labelStyle = edge.labelStyle as { fontSize?: number; fontWeight?: string | number } | undefined;
+      const labelFontSize = typeof labelStyle?.fontSize === "number" && labelStyle.fontSize > 0 ? labelStyle.fontSize : 12;
+      const labelBgStyle = edge.labelBgStyle as { fill?: string; fillOpacity?: number } | undefined;
+      const labelBgPadding = edge.labelBgPadding as [number, number] | undefined;
+      const labelBackgroundEnabled =
+        edgeData.labelBackground !== false &&
+        labelBgStyle?.fill !== "transparent" &&
+        labelBgStyle?.fillOpacity !== 0;
+
+      const srcNode = nodes.find((n) => n.id === edge.source);
+      const tgtNode = nodes.find((n) => n.id === edge.target);
+
+      let isVertical = false;
+      const labelOrientation = edgeData.labelOrientation ?? "auto";
+      if (labelOrientation === "vertical" || labelOrientation === "vertical-up" || labelOrientation === "vertical-down") {
+        isVertical = true;
+      } else if (labelOrientation === "horizontal") {
+        isVertical = false;
+      } else {
+        const srcHandle = String(edge.sourceHandle || "");
+        const tgtHandle = String(edge.targetHandle || "");
+        if (srcHandle.startsWith("top") || srcHandle.startsWith("bottom") || tgtHandle.startsWith("top") || tgtHandle.startsWith("bottom")) {
+          isVertical = true;
+        } else if (srcNode && tgtNode) {
+          isVertical = Math.abs(tgtNode.position.y - srcNode.position.y) >= Math.abs(tgtNode.position.x - srcNode.position.x);
+        }
+      }
+
+      let effSize = labelFontSize;
+      const rawTextWidth = measureLabelTextWidth(labelText, labelFontSize, labelStyle?.fontWeight);
+      if (srcNode && tgtNode) {
+        const segDist = isVertical
+          ? Math.abs(tgtNode.position.y - srcNode.position.y)
+          : Math.abs(tgtNode.position.x - srcNode.position.x);
+        const avail = segDist - 38 - 12;
+        if (avail >= 40 && rawTextWidth > avail) {
+          effSize = Math.max(8, Math.min(labelFontSize, Math.floor(labelFontSize * (avail / rawTextWidth))));
+        }
+      }
+
+      const textWidth = effSize === labelFontSize ? rawTextWidth : measureLabelTextWidth(labelText, effSize, labelStyle?.fontWeight);
+      const textHeight = Math.ceil(effSize * 1.35);
+
+      const padX = labelBackgroundEnabled ? (labelBgPadding?.[0] ?? 6) : 6;
+      const padY = labelBackgroundEnabled ? (labelBgPadding?.[1] ?? 4) : 4;
+      const w = textWidth + padX * 2;
+      const h = textHeight + padY * 2;
+
+      let cx = edgeData.labelPosition?.x;
+      let cy = edgeData.labelPosition?.y;
+      if (cx == null || cy == null) {
+        if (srcNode && tgtNode) {
+          cx = (srcNode.position.x + tgtNode.position.x) / 2;
+          cy = (srcNode.position.y + tgtNode.position.y) / 2;
+        } else {
+          continue;
+        }
+      }
+
+      const alongMargin = 14;
+      const transMargin = 8;
+      const halfX = isVertical ? h / 2 + transMargin : w / 2 + alongMargin;
+      const halfY = isVertical ? w / 2 + alongMargin : h / 2 + transMargin;
+
+      boxes.push({
+        edgeId: edge.id,
+        minX: cx - halfX,
+        maxX: cx + halfX,
+        minY: cy - halfY,
+        maxY: cy + halfY,
+      });
+    }
+    return boxes;
+  }, [edges, nodes]);
+
   const renderedEdges = useMemo(() => edges.map((edgeItem) => {
     const isErdRelationship = nodes.find((node) => node.id === edgeItem.source)?.data.shape === "database"
       && nodes.find((node) => node.id === edgeItem.target)?.data.shape === "database";
     const edgeData = edgeItem.data as { sourceCardinality?: ErdCardinality; targetCardinality?: ErdCardinality } | undefined;
     const targetCardinality = isErdRelationship ? (edgeData?.targetCardinality ?? "many") : "default";
+
+    const strokeColor =
+      typeof edgeItem.style?.stroke === "string" && edgeItem.style.stroke !== "#64748b"
+        ? edgeItem.style.stroke
+        : "#000000";
+
+    const resolvedMarkerEnd =
+      isErdRelationship && targetCardinality !== "default"
+        ? undefined
+        : edgeItem.markerEnd && typeof edgeItem.markerEnd === "object"
+          ? {
+              ...edgeItem.markerEnd,
+              color:
+                typeof edgeItem.markerEnd.color === "string" && edgeItem.markerEnd.color !== "#64748b"
+                  ? edgeItem.markerEnd.color
+                  : strokeColor,
+            }
+          : { type: MarkerType.ArrowClosed, color: strokeColor };
+
     return {
       ...edgeItem,
-      markerEnd: isErdRelationship && targetCardinality !== "default" ? undefined : edgeItem.markerEnd,
+      style: {
+        ...edgeItem.style,
+        stroke: strokeColor,
+      },
+      markerEnd: resolvedMarkerEnd,
       selected: edgeItem.selected || edgeItem.id === selectedEdgeId,
       data: {
         ...edgeItem.data,
+        diagramLabelBoxes,
         ...(isErdRelationship ? {
           sourceCardinality: edgeData?.sourceCardinality ?? "one",
           targetCardinality,
@@ -5492,7 +6246,7 @@ const persistPageIndex = (
         },
       },
     };
-  }), [edges, nodes, selectedEdgeId, updateEdgeJoints, updateEdgeLabelPosition, setSelectedEdgeId, setSelectedId, setInspectorOpen]);
+  }), [edges, nodes, selectedEdgeId, diagramLabelBoxes, updateEdgeJoints, updateEdgeLabelPosition, setSelectedEdgeId, setSelectedId, setInspectorOpen]);
   const activeAnnotationConfig = annotationTool === "eraser" ? null : annotationConfig[annotationTool];
 
   return (
@@ -6992,6 +7746,92 @@ const persistPageIndex = (
                 onChange={(event) => updateSelected({ label: event.target.value })}
               />
             </label>
+
+            <div className="editor-section-heading section-style-heading" style={{ marginTop: 14 }}>
+              <span>02</span>
+              <div>
+                <strong>Orientation & Angle</strong>
+                <small>Flip 90° or adjust layout</small>
+              </div>
+            </div>
+
+            <fieldset className="legend-angle-controls inspector-control-card">
+              <legend>Angle & Rotation</legend>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className="reset-connection-route"
+                  style={{ flex: 1, minHeight: 34, padding: "0 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}
+                  onClick={flipLegendNode}
+                  title="Rotate angle by 90 degrees (cycles 0° → 90° → 180° → 270°)"
+                >
+                  <RotateCw size={14} />
+                  Flip 90° ({selectedLegendKey.data.rotation ?? 0}°)
+                </button>
+                <button
+                  type="button"
+                  className="reset-connection-route"
+                  style={{ flex: 1, minHeight: 34, padding: "0 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}
+                  onClick={swapLegendDimensions}
+                  title="Swap Width and Height dimensions"
+                >
+                  <FlipHorizontal size={14} />
+                  Swap W ↔ H
+                </button>
+              </div>
+
+              <div className="line-orientation-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                {[0, 90, 180, 270].map((deg) => (
+                  <button
+                    key={deg}
+                    type="button"
+                    className={(selectedLegendKey.data.rotation ?? 0) === deg ? "active" : ""}
+                    onClick={() => setLegendRotation(deg)}
+                    style={{ padding: "6px 0", fontSize: 12, fontWeight: 600, textAlign: "center" }}
+                  >
+                    {deg}°
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="legend-layout-controls inspector-control-card" style={{ marginTop: 10 }}>
+              <legend>Card Layout Style</legend>
+              <div className="line-orientation-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6 }}>
+                <button
+                  type="button"
+                  className={(selectedLegendKey.data.legendOrientation ?? "auto") === "vertical" ? "active" : ""}
+                  onClick={() => setLegendLayout("vertical")}
+                  title="Vertical column layout"
+                >
+                  Vertical
+                </button>
+                <button
+                  type="button"
+                  className={(selectedLegendKey.data.legendOrientation ?? "auto") === "horizontal" ? "active" : ""}
+                  onClick={() => setLegendLayout("horizontal")}
+                  title="Horizontal row / banner layout"
+                >
+                  Horizontal
+                </button>
+                <button
+                  type="button"
+                  className={(selectedLegendKey.data.legendOrientation ?? "auto") === "auto" ? "active" : ""}
+                  onClick={() => setLegendLayout("auto")}
+                  title="Auto-adapt based on box dimensions"
+                >
+                  Auto
+                </button>
+              </div>
+            </fieldset>
+
+            <div className="editor-section-heading section-content-heading" style={{ marginTop: 14 }}>
+              <span>03</span>
+              <div>
+                <strong>Legend Items</strong>
+                <small>Linked components</small>
+              </div>
+            </div>
             <div className="legend-key-inspector-list">
               {(selectedLegendKey.data.legendEntries ?? []).map((entry) => (
                 <div key={entry.id}>
@@ -7003,7 +7843,7 @@ const persistPageIndex = (
                 </div>
               ))}
             </div>
-            <div className="inspector-tip">
+            <div className="inspector-tip" style={{ marginTop: 10 }}>
               <CircleHelp size={16} />
               This card updates automatically. Drag it anywhere on the canvas and edit each area to
               change its label or color.
@@ -7017,6 +7857,18 @@ const persistPageIndex = (
                 value={selectedLegend.data.label}
                 onChange={(event) => updateSelected({ label: event.target.value })}
               />
+            </label>
+            <label className="description-toggle inspector-apply-toggle">
+              <span>
+                <strong>Show area label badge</strong>
+                <small>Display the title badge inside the shaded container.</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={Boolean(selectedLegend.data.showAreaLabel)}
+                onChange={(event) => updateSelected({ showAreaLabel: event.target.checked })}
+              />
+              <i aria-hidden="true" />
             </label>
             <label className="legend-color-control">
               <span>Area color</span>
@@ -7046,7 +7898,46 @@ const persistPageIndex = (
               </div>
               <small>Lower values keep the architecture easier to read.</small>
             </label>
-            <fieldset>
+            <fieldset className="legend-angle-controls inspector-control-card" style={{ marginTop: 10 }}>
+              <legend>Angle & Rotation</legend>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className="reset-connection-route"
+                  style={{ flex: 1, minHeight: 34, padding: "0 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}
+                  onClick={flipLegendNode}
+                  title="Rotate angle by 90 degrees (cycles 0° → 90° → 180° → 270°)"
+                >
+                  <RotateCw size={14} />
+                  Flip 90° ({selectedLegend.data.rotation ?? 0}°)
+                </button>
+                <button
+                  type="button"
+                  className="reset-connection-route"
+                  style={{ flex: 1, minHeight: 34, padding: "0 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}
+                  onClick={swapLegendDimensions}
+                  title="Swap Width and Height dimensions"
+                >
+                  <FlipHorizontal size={14} />
+                  Swap W ↔ H
+                </button>
+              </div>
+              <div className="line-orientation-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                {[0, 90, 180, 270].map((deg) => (
+                  <button
+                    key={deg}
+                    type="button"
+                    className={(selectedLegend.data.rotation ?? 0) === deg ? "active" : ""}
+                    onClick={() => setLegendRotation(deg)}
+                    style={{ padding: "6px 0", fontSize: 12, fontWeight: 600, textAlign: "center" }}
+                  >
+                    {deg}°
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset style={{ marginTop: 12 }}>
               <legend>Components in this area</legend>
               <div className="legend-member-list">
                 {componentNodes.map((node) => {
@@ -7643,8 +8534,51 @@ const persistPageIndex = (
               />
               <small>Applies to this connection label only.</small>
             </label>
+            <label className="line-label-text-color">
+              <span>Text color</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <input
+                  type="color"
+                  value={
+                    typeof selectedEdge.labelStyle?.fill === "string" && selectedEdge.labelStyle.fill !== "#334155"
+                      ? selectedEdge.labelStyle.fill
+                      : "#000000"
+                  }
+                  onChange={(event) =>
+                    updateSelectedEdge({
+                      labelStyle: {
+                        ...selectedEdge.labelStyle,
+                        fill: event.target.value,
+                      },
+                    })
+                  }
+                />
+                <output style={{ fontSize: 12, color: "#64748b" }}>
+                  {typeof selectedEdge.labelStyle?.fill === "string" && selectedEdge.labelStyle.fill !== "#334155"
+                    ? selectedEdge.labelStyle.fill
+                    : "#000000"}
+                </output>
+              </div>
+            </label>
             <fieldset className="line-label-orientation inspector-control-card">
               <legend>Label orientation</legend>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                <button
+                  type="button"
+                  className="reset-connection-route"
+                  style={{ flex: 1, minHeight: 32, padding: "0 10px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6, fontSize: 12 }}
+                  onClick={() => {
+                    const current = selectedEdgeOrientation;
+                    if (current === "horizontal" || current === "auto") setEdgeOrientation("vertical-down");
+                    else if (current === "vertical-down") setEdgeOrientation("vertical-up");
+                    else setEdgeOrientation("horizontal");
+                  }}
+                  title="Flip angle 90°"
+                >
+                  <RotateCw size={14} />
+                  Flip 90°
+                </button>
+              </div>
               <div className="line-orientation-grid">
                 <button
                   type="button"
@@ -7699,8 +8633,26 @@ const persistPageIndex = (
                 <span><strong>Show background</strong><small>Add a color behind this label.</small></span>
                 <input
                   type="checkbox"
-                  checked={((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true)}
-                  onChange={(event) => updateSelectedEdge({ data: { ...selectedEdge.data, labelBackground: event.target.checked } })}
+                  checked={
+                    ((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true) &&
+                    selectedEdge.labelBgStyle?.fill !== "transparent" &&
+                    selectedEdge.labelBgStyle?.fillOpacity !== 0
+                  }
+                  onChange={(event) => {
+                    const isChecked = event.target.checked;
+                    updateSelectedEdge({
+                      data: { ...selectedEdge.data, labelBackground: isChecked },
+                      labelBgStyle: {
+                        ...selectedEdge.labelBgStyle,
+                        fillOpacity: isChecked ? 1 : 0,
+                        fill: isChecked
+                          ? (typeof selectedEdge.labelBgStyle?.fill === "string" && selectedEdge.labelBgStyle.fill !== "transparent"
+                              ? selectedEdge.labelBgStyle.fill
+                              : "#ffffff")
+                          : "transparent",
+                      },
+                    });
+                  }}
                 />
                 <i aria-hidden="true" />
               </label>
@@ -7708,9 +8660,22 @@ const persistPageIndex = (
                 <span>Background color</span>
                 <input
                   type="color"
-                  disabled={((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true) === false}
-                  value={typeof selectedEdge.labelBgStyle?.fill === "string" ? selectedEdge.labelBgStyle.fill : "#ffffff"}
-                  onChange={(event) => updateSelectedEdge({ labelBgStyle: { ...selectedEdge.labelBgStyle, fill: event.target.value, fillOpacity: 1 } })}
+                  disabled={
+                    ((selectedEdge.data as { labelBackground?: boolean } | undefined)?.labelBackground ?? true) === false ||
+                    selectedEdge.labelBgStyle?.fill === "transparent" ||
+                    selectedEdge.labelBgStyle?.fillOpacity === 0
+                  }
+                  value={
+                    typeof selectedEdge.labelBgStyle?.fill === "string" && selectedEdge.labelBgStyle.fill !== "transparent"
+                      ? selectedEdge.labelBgStyle.fill
+                      : "#ffffff"
+                  }
+                  onChange={(event) =>
+                    updateSelectedEdge({
+                      data: { ...selectedEdge.data, labelBackground: true },
+                      labelBgStyle: { ...selectedEdge.labelBgStyle, fill: event.target.value, fillOpacity: 1 },
+                    })
+                  }
                 />
               </label>
             </fieldset>
@@ -7779,6 +8744,135 @@ const persistPageIndex = (
                   Solid + moving dot
                 </button>
               </div>
+            </fieldset>
+            <fieldset className="line-thickness-fieldset inspector-control-card">
+              <legend>Line thickness</legend>
+              <div className="line-thickness-presets">
+                {[
+                  { label: "1px", value: 1 },
+                  { label: "1.7px", value: 1.7 },
+                  { label: "2.5px", value: 2.5 },
+                  { label: "4px", value: 4 },
+                  { label: "6px", value: 6 },
+                ].map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    className={Math.abs(selectedEdgeThickness - preset.value) < 0.15 ? "active" : ""}
+                    onClick={() => setEdgeThickness(preset.value)}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+              <label className="line-label-size" style={{ marginTop: 8 }}>
+                <span>Thickness ({selectedEdgeThickness}px)</span>
+                <div>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="10"
+                    step="0.5"
+                    value={selectedEdgeThickness}
+                    onChange={(event) => setEdgeThickness(Number.parseFloat(event.target.value))}
+                  />
+                  <output>{selectedEdgeThickness}px</output>
+                </div>
+              </label>
+              <label className="description-toggle inspector-apply-toggle" style={{ marginTop: 6 }}>
+                <span><strong>Apply thickness to all lines</strong><small>Update every connection line on the canvas.</small></span>
+                <input
+                  type="checkbox"
+                  checked={applyThicknessToAll}
+                  onChange={(event) => {
+                    const isChecked = event.target.checked;
+                    setApplyThicknessToAll(isChecked);
+                    if (isChecked) {
+                      setEdges((current) =>
+                        current.map((edgeItem) => ({
+                          ...edgeItem,
+                          style: {
+                            ...edgeItem.style,
+                            strokeWidth: selectedEdgeThickness,
+                          },
+                        })),
+                      );
+                    }
+                  }}
+                />
+                <i aria-hidden="true" />
+              </label>
+            </fieldset>
+
+            <fieldset className="line-color-fieldset inspector-control-card">
+              <legend>Line color</legend>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <input
+                  type="color"
+                  value={selectedEdgeColor}
+                  onChange={(event) => setEdgeColor(event.target.value)}
+                  style={{ width: 44, height: 36, padding: 3, border: "1px solid #d6e0e8", borderRadius: 8, background: "#fff", cursor: "pointer" }}
+                />
+                <output style={{ fontSize: 12, color: "#475569", fontWeight: 700, fontFamily: "var(--font-geist-mono)" }}>
+                  {selectedEdgeColor.toUpperCase()}
+                </output>
+                <div style={{ display: "flex", gap: 5, marginLeft: "auto" }}>
+                  {[
+                    "#000000",
+                    "#64748b",
+                    "#2563eb",
+                    "#0891b2",
+                    "#059669",
+                    "#d97706",
+                    "#e11d48",
+                  ].map((presetColor) => (
+                    <button
+                      key={presetColor}
+                      type="button"
+                      onClick={() => setEdgeColor(presetColor)}
+                      title={presetColor}
+                      style={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        background: presetColor,
+                        border: selectedEdgeColor.toLowerCase() === presetColor.toLowerCase() ? "2px solid #000" : "1px solid rgba(0,0,0,0.15)",
+                        cursor: "pointer",
+                        padding: 0,
+                        boxShadow: selectedEdgeColor.toLowerCase() === presetColor.toLowerCase() ? "0 0 0 2px #fff, 0 0 0 3px #0ea5c6" : "none",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <label className="description-toggle inspector-apply-toggle" style={{ marginTop: 8 }}>
+                <span><strong>Apply color to all lines</strong><small>Update every connection line stroke on the canvas.</small></span>
+                <input
+                  type="checkbox"
+                  checked={applyColorToAll}
+                  onChange={(event) => {
+                    const isChecked = event.target.checked;
+                    setApplyColorToAll(isChecked);
+                    if (isChecked) {
+                      setEdges((current) =>
+                        current.map((edgeItem) => ({
+                          ...edgeItem,
+                          markerEnd: edgeItem.markerEnd
+                            ? typeof edgeItem.markerEnd === "object"
+                              ? { ...edgeItem.markerEnd, color: selectedEdgeColor }
+                              : edgeItem.markerEnd
+                            : { type: MarkerType.ArrowClosed, color: selectedEdgeColor },
+                          style: {
+                            ...edgeItem.style,
+                            stroke: selectedEdgeColor,
+                          },
+                        })),
+                      );
+                    }
+                  }}
+                />
+                <i aria-hidden="true" />
+              </label>
             </fieldset>
             <div className="connection-summary">
               <span>{nodes.find((node) => node.id === selectedEdge.source)?.data.label}</span>
@@ -8011,13 +9105,13 @@ const persistPageIndex = (
               <button
                 className="create-node-submit"
                 type="button"
+                disabled={exporting || !docsPreviewReady}
                 onClick={() => {
-                  setDocsExportOpen(false);
                   void exportDocsPng(docsExportMode);
                 }}
               >
-                <Download size={16} />
-                Export this preview
+                {exporting ? <LoaderCircle className="spin" size={16} /> : <Download size={16} />}
+                {exporting ? "Exporting…" : "Export this preview"}
               </button>
             </div>
           </section>
