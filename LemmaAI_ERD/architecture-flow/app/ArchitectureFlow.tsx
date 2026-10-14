@@ -112,6 +112,8 @@ import { EMBEDDED_FONTS_CSS } from "./embeddedFonts";
 import type { ComponentType, CSSProperties, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from "react";
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import DashboardHome, { setLocalStorageItem } from "./DashboardHome";
+import { anchorConnectorJoints } from "./connectorRouting";
+import { computeGappedPolyline, getLabelClipBox, type BoundingBox2D } from "./connectorLabels";
 import {
   DFD_PROCESS_3_1_PAGE_ID,
   DFD_PROCESS_3_1_PAGE_NAME,
@@ -1665,165 +1667,6 @@ const isExportSafeDomNode = (domNode: Node): boolean => {
   return true;
 };
 
-export interface BoundingBox2D {
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
-}
-
-function clipSegmentWithBox(
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  box: BoundingBox2D,
-): Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> {
-  const dx = p2.x - p1.x;
-  const dy = p2.y - p1.y;
-
-  let t0 = 0.0;
-  let t1 = 1.0;
-
-  const p = [-dx, dx, -dy, dy];
-  const q = [p1.x - box.minX, box.maxX - p1.x, p1.y - box.minY, box.maxY - p1.y];
-
-  for (let i = 0; i < 4; i++) {
-    if (p[i] === 0) {
-      if (q[i] < 0) {
-        return [{ p1, p2 }];
-      }
-    } else {
-      const t = q[i] / p[i];
-      if (p[i] < 0) {
-        if (t > t1) return [{ p1, p2 }];
-        if (t > t0) t0 = t;
-      } else {
-        if (t < t0) return [{ p1, p2 }];
-        if (t < t1) t1 = t;
-      }
-    }
-  }
-
-  if (t0 >= t1) {
-    return [{ p1, p2 }];
-  }
-
-  const result: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
-  if (t0 > 0.001) {
-    result.push({
-      p1: { x: p1.x, y: p1.y },
-      p2: { x: p1.x + t0 * dx, y: p1.y + t0 * dy },
-    });
-  }
-  if (t1 < 0.999) {
-    result.push({
-      p1: { x: p1.x + t1 * dx, y: p1.y + t1 * dy },
-      p2: { x: p2.x, y: p2.y },
-    });
-  }
-  return result;
-}
-
-function computeGappedPolyline(
-  points: EdgeBend[],
-  boxes: BoundingBox2D[],
-  hasMarkerEnd = false,
-  markerClearance = 14,
-): string {
-  if (points.length < 2) return "";
-  if (!boxes || boxes.length === 0) {
-    return points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" ");
-  }
-
-  let segments: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
-  for (let i = 0; i < points.length - 1; i++) {
-    segments.push({ p1: points[i], p2: points[i + 1] });
-  }
-
-  for (const box of boxes) {
-    const nextSegments: Array<{ p1: { x: number; y: number }; p2: { x: number; y: number } }> = [];
-    for (const seg of segments) {
-      const clipped = clipSegmentWithBox(seg.p1, seg.p2, box);
-      for (const piece of clipped) {
-        const pieceLen = Math.hypot(piece.p2.x - piece.p1.x, piece.p2.y - piece.p1.y);
-        if (pieceLen >= 0.5) {
-          nextSegments.push(piece);
-        }
-      }
-    }
-    segments = nextSegments;
-  }
-
-  const subpaths: Array<Array<{ x: number; y: number }>> = [];
-  let currentSub: Array<{ x: number; y: number }> = [];
-
-  for (const seg of segments) {
-    if (currentSub.length === 0) {
-      currentSub.push(seg.p1, seg.p2);
-    } else {
-      const lastPt = currentSub[currentSub.length - 1];
-      if (Math.hypot(lastPt.x - seg.p1.x, lastPt.y - seg.p1.y) < 0.5) {
-        currentSub.push(seg.p2);
-      } else {
-        if (currentSub.length > 1) subpaths.push(currentSub);
-        currentSub = [seg.p1, seg.p2];
-      }
-    }
-  }
-  if (currentSub.length > 1) {
-    subpaths.push(currentSub);
-  }
-
-  const lastPoint = points[points.length - 1];
-  const firstPoint = points[0];
-  const prevPoint = points[points.length - 2];
-  const dLen = Math.hypot(lastPoint.x - prevPoint.x, lastPoint.y - prevPoint.y) || 1;
-  const ux = (lastPoint.x - prevPoint.x) / dLen;
-  const uy = (lastPoint.y - prevPoint.y) / dLen;
-
-  const validSubpaths: Array<Array<{ x: number; y: number }>> = [];
-  let hasConnectedEnd = false;
-
-  for (let i = 0; i < subpaths.length; i++) {
-    const sub = subpaths[i];
-    let subLen = 0;
-    for (let j = 0; j < sub.length - 1; j++) {
-      subLen += Math.hypot(sub[j + 1].x - sub[j].x, sub[j + 1].y - sub[j].y);
-    }
-
-    const endPt = sub[sub.length - 1];
-    const startPt = sub[0];
-    const touchesEnd = Math.hypot(endPt.x - lastPoint.x, endPt.y - lastPoint.y) < 1.0;
-    const touchesStart = Math.hypot(startPt.x - firstPoint.x, startPt.y - firstPoint.y) < 1.0;
-
-    if (touchesEnd) {
-      if (hasMarkerEnd && subLen < markerClearance) {
-        continue;
-      }
-      hasConnectedEnd = true;
-      validSubpaths.push(sub);
-    } else {
-      if (touchesStart) {
-        if (subLen >= 12) {
-          validSubpaths.push(sub);
-        }
-      } else if (subLen >= 14) {
-        validSubpaths.push(sub);
-      }
-    }
-  }
-
-  if (hasMarkerEnd && !hasConnectedEnd) {
-    validSubpaths.push([
-      { x: lastPoint.x - ux * 0.5, y: lastPoint.y - uy * 0.5 },
-      { x: lastPoint.x, y: lastPoint.y },
-    ]);
-  }
-
-  return validSubpaths
-    .map((sub) => sub.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(" "))
-    .join(" ");
-};
-
 function FlowingConnectorEdge({
   id,
   sourceX,
@@ -1856,6 +1699,7 @@ function FlowingConnectorEdge({
     targetCardinality?: ErdCardinality;
     labelBackground?: boolean;
     diagramLabelBoxes?: Array<BoundingBox2D & { edgeId: string }>;
+    onLabelBoxChange?: (edgeId: string, box: BoundingBox2D | null) => void;
   };
   const { screenToFlowPosition } = useReactFlow();
   const pathMeasureRef = useRef<SVGPathElement | null>(null);
@@ -1867,7 +1711,10 @@ function FlowingConnectorEdge({
 
   const routePoints = useMemo(() => {
     if (validSavedJoints.length > 0) {
-      const raw = [{ x: sourceX, y: sourceY }, ...validSavedJoints, { x: targetX, y: targetY }];
+      const source = { x: sourceX, y: sourceY };
+      const target = { x: targetX, y: targetY };
+      const anchoredJoints = anchorConnectorJoints(validSavedJoints, source, sourcePosition, target, targetPosition);
+      const raw = [source, ...anchoredJoints, target];
       return enforceOrthogonal(raw);
     }
     return computeDefaultOrthogonalPoints(sourceX, sourceY, sourcePosition, targetX, targetY, targetPosition);
@@ -2101,8 +1948,9 @@ function FlowingConnectorEdge({
   }, [label, edgeData.labelPosition, rawLabelPosition, isVerticalConnection, sourceX, sourceY, targetX, targetY, hasMarker, labelBackgroundEnabled, labelPaddingX, domWidth, measuredTextWidth, targetSeg]);
 
   useLayoutEffect(() => {
-    if (labelRef.current) {
-      const el = labelRef.current;
+    const el = labelRef.current;
+    if (!el) return;
+    const measure = () => {
       const w = el.offsetWidth || el.clientWidth;
       const h = el.offsetHeight || el.clientHeight;
       if (w > 0) {
@@ -2111,7 +1959,11 @@ function FlowingConnectorEdge({
       if (h > 0) {
         setDomHeight((prev) => (prev !== h ? h : prev));
       }
-    }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [label, effectiveFontSize, labelStyle?.fontWeight, labelBackgroundEnabled, labelPaddingX, labelPaddingY]);
 
   const edgeStrokeWidth =
@@ -2123,21 +1975,18 @@ function FlowingConnectorEdge({
 
   const ownBox = useMemo<BoundingBox2D | null>(() => {
     if (!label) return null;
-    const padX = labelBackgroundEnabled ? labelPaddingX : 6;
-    const padY = labelBackgroundEnabled ? labelPaddingY : 4;
-    const w = (domWidth ?? measuredTextWidth) + padX * 2;
-    const h = (domHeight ?? Math.ceil(effectiveFontSize * 1.35)) + padY * 2;
-    const alongMargin = 14;
-    const transMargin = 8;
-    const halfX = isLabelVertical ? h / 2 + transMargin : w / 2 + alongMargin;
-    const halfY = isLabelVertical ? w / 2 + alongMargin : h / 2 + transMargin;
-    return {
-      minX: labelPosition.x - halfX,
-      maxX: labelPosition.x + halfX,
-      minY: labelPosition.y - halfY,
-      maxY: labelPosition.y + halfY,
-    };
+    const w = domWidth ?? measuredTextWidth + (labelBackgroundEnabled ? labelPaddingX * 2 : 6);
+    const h = domHeight ?? effectiveFontSize * 1.2 + (labelBackgroundEnabled ? labelPaddingY * 2 : 2);
+    return getLabelClipBox(labelPosition, w, h, isLabelVertical);
   }, [label, labelBackgroundEnabled, labelPaddingX, labelPaddingY, domWidth, measuredTextWidth, domHeight, effectiveFontSize, isLabelVertical, labelPosition.x, labelPosition.y]);
+
+  useLayoutEffect(() => {
+    edgeData.onLabelBoxChange?.(id, ownBox);
+  }, [id, ownBox, edgeData.onLabelBoxChange]);
+
+  useEffect(() => () => {
+    edgeData.onLabelBoxChange?.(id, null);
+  }, [id, edgeData.onLabelBoxChange]);
 
   const boxesToClip = useMemo(() => {
     const list: BoundingBox2D[] = [];
@@ -2891,6 +2740,21 @@ const removeAnimationEdgeClasses = (className?: string) =>
 function FlowWorkspace({ onGoHome }: { onGoHome: () => void }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ArchitectureNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(normalizeEdgeStyles(initialEdges));
+  const [renderedLabelBoxes, setRenderedLabelBoxes] = useState<Record<string, BoundingBox2D>>({});
+  const updateEdgeLabelBox = useCallback((edgeId: string, box: BoundingBox2D | null) => {
+    setRenderedLabelBoxes((current) => {
+      const previous = current[edgeId];
+      if (!box) {
+        if (!previous) return current;
+        const next = { ...current };
+        delete next[edgeId];
+        return next;
+      }
+      if (previous && previous.minX === box.minX && previous.maxX === box.maxX
+        && previous.minY === box.minY && previous.maxY === box.maxY) return current;
+      return { ...current, [edgeId]: box };
+    });
+  }, []);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [canvasMode, setCanvasMode] = useState<"select" | "move">("select");
@@ -6103,90 +5967,10 @@ const persistPageIndex = (
     });
   }, [animActiveIds, animCompletedIds, nodes, setNodes, setSelectedEdgeId, setSelectedId]);
 
-  const diagramLabelBoxes = useMemo(() => {
-    const boxes: Array<BoundingBox2D & { edgeId: string }> = [];
-    for (const edge of edges) {
-      if (!edge.label || String(edge.label).trim() === "") continue;
-      const labelText = String(edge.label).trim();
-      const edgeData = (edge.data ?? {}) as {
-        labelPosition?: EdgeBend;
-        labelOrientation?: EdgeLabelOrientation;
-        labelBackground?: boolean;
-      };
-      const labelStyle = edge.labelStyle as { fontSize?: number; fontWeight?: string | number } | undefined;
-      const labelFontSize = typeof labelStyle?.fontSize === "number" && labelStyle.fontSize > 0 ? labelStyle.fontSize : 12;
-      const labelBgStyle = edge.labelBgStyle as { fill?: string; fillOpacity?: number } | undefined;
-      const labelBgPadding = edge.labelBgPadding as [number, number] | undefined;
-      const labelBackgroundEnabled =
-        edgeData.labelBackground !== false &&
-        labelBgStyle?.fill !== "transparent" &&
-        labelBgStyle?.fillOpacity !== 0;
-
-      const srcNode = nodes.find((n) => n.id === edge.source);
-      const tgtNode = nodes.find((n) => n.id === edge.target);
-
-      let isVertical = false;
-      const labelOrientation = edgeData.labelOrientation ?? "auto";
-      if (labelOrientation === "vertical" || labelOrientation === "vertical-up" || labelOrientation === "vertical-down") {
-        isVertical = true;
-      } else if (labelOrientation === "horizontal") {
-        isVertical = false;
-      } else {
-        const srcHandle = String(edge.sourceHandle || "");
-        const tgtHandle = String(edge.targetHandle || "");
-        if (srcHandle.startsWith("top") || srcHandle.startsWith("bottom") || tgtHandle.startsWith("top") || tgtHandle.startsWith("bottom")) {
-          isVertical = true;
-        } else if (srcNode && tgtNode) {
-          isVertical = Math.abs(tgtNode.position.y - srcNode.position.y) >= Math.abs(tgtNode.position.x - srcNode.position.x);
-        }
-      }
-
-      let effSize = labelFontSize;
-      const rawTextWidth = measureLabelTextWidth(labelText, labelFontSize, labelStyle?.fontWeight);
-      if (srcNode && tgtNode) {
-        const segDist = isVertical
-          ? Math.abs(tgtNode.position.y - srcNode.position.y)
-          : Math.abs(tgtNode.position.x - srcNode.position.x);
-        const avail = segDist - 38 - 12;
-        if (avail >= 40 && rawTextWidth > avail) {
-          effSize = Math.max(8, Math.min(labelFontSize, Math.floor(labelFontSize * (avail / rawTextWidth))));
-        }
-      }
-
-      const textWidth = effSize === labelFontSize ? rawTextWidth : measureLabelTextWidth(labelText, effSize, labelStyle?.fontWeight);
-      const textHeight = Math.ceil(effSize * 1.35);
-
-      const padX = labelBackgroundEnabled ? (labelBgPadding?.[0] ?? 6) : 6;
-      const padY = labelBackgroundEnabled ? (labelBgPadding?.[1] ?? 4) : 4;
-      const w = textWidth + padX * 2;
-      const h = textHeight + padY * 2;
-
-      let cx = edgeData.labelPosition?.x;
-      let cy = edgeData.labelPosition?.y;
-      if (cx == null || cy == null) {
-        if (srcNode && tgtNode) {
-          cx = (srcNode.position.x + tgtNode.position.x) / 2;
-          cy = (srcNode.position.y + tgtNode.position.y) / 2;
-        } else {
-          continue;
-        }
-      }
-
-      const alongMargin = 14;
-      const transMargin = 8;
-      const halfX = isVertical ? h / 2 + transMargin : w / 2 + alongMargin;
-      const halfY = isVertical ? w / 2 + alongMargin : h / 2 + transMargin;
-
-      boxes.push({
-        edgeId: edge.id,
-        minX: cx - halfX,
-        maxX: cx + halfX,
-        minY: cy - halfY,
-        maxY: cy + halfY,
-      });
-    }
-    return boxes;
-  }, [edges, nodes]);
+  const diagramLabelBoxes = useMemo(() => edges.flatMap((edge) => {
+    const box = renderedLabelBoxes[edge.id];
+    return edge.label && box ? [{ ...box, edgeId: edge.id }] : [];
+  }), [edges, renderedLabelBoxes]);
 
   const renderedEdges = useMemo(() => edges.map((edgeItem) => {
     const isErdRelationship = nodes.find((node) => node.id === edgeItem.source)?.data.shape === "database"
@@ -6223,6 +6007,7 @@ const persistPageIndex = (
       data: {
         ...edgeItem.data,
         diagramLabelBoxes,
+        onLabelBoxChange: updateEdgeLabelBox,
         ...(isErdRelationship ? {
           sourceCardinality: edgeData?.sourceCardinality ?? "one",
           targetCardinality,
@@ -6236,7 +6021,7 @@ const persistPageIndex = (
         },
       },
     };
-  }), [edges, nodes, selectedEdgeId, diagramLabelBoxes, updateEdgeJoints, updateEdgeLabelPosition, setSelectedEdgeId, setSelectedId, setInspectorOpen]);
+  }), [edges, nodes, selectedEdgeId, diagramLabelBoxes, updateEdgeLabelBox, updateEdgeJoints, updateEdgeLabelPosition, setSelectedEdgeId, setSelectedId, setInspectorOpen]);
   const activeAnnotationConfig = annotationTool === "eraser" ? null : annotationConfig[annotationTool];
 
   return (

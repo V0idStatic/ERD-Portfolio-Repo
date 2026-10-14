@@ -10,6 +10,8 @@
     "build": "vinext build",
     "start": "node start.mjs",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
+    "test:routing": "node --experimental-strip-types --test tests/connector-routing.test.mjs",
+    "test:labels": "node --experimental-strip-types --test tests/connector-labels.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "db:generate": "drizzle-kit generate"
   },

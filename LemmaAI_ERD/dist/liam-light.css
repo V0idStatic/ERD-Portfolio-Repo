@@ -9,12 +9,12 @@
   --color-gray-700: #d5dee8;
   --color-gray-800: #e8eef4;
   --color-gray-900: #ffffff;
-  --color-gray-1000: #f8fafc;
+  --color-gray-1000: #ffffff;
   --color-white-alpha-20: rgba(15, 23, 42, .12);
   --color-white-alpha-40: rgba(15, 23, 42, .35);
   --color-white-alpha-50: rgba(15, 23, 42, .5);
   --color-white-alpha-70: rgba(15, 23, 42, .72);
-  --global-background: #f8fafc;
+  --global-background: #ffffff;
   --global-muted-background: #ffffff;
   --global-foreground: #17212f;
   --global-border: #d8e1e9;
@@ -89,13 +89,14 @@
   --shadow-context-menu-shadow: rgba(15, 23, 42, .15);
 }
 
-html, body, #root, .react-flow, .react-flow__pane,
+html, body, #root, .react-flow, .react-flow__pane, .react-flow__background,
 [class*="_wrapper_tbu05_"] {
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
 }
 
+.react-flow,
 .react-flow.dark {
-  --xy-background-color-default: #f8fafc;
+  --xy-background-color-default: #ffffff;
   --xy-background-pattern-dots-color-default: #dbe3eb;
   --xy-background-pattern-lines-color-default: #e8eef4;
   --xy-background-pattern-cross-color-default: #dbe3eb;
@@ -110,7 +111,7 @@ html, body, #root, .react-flow, .react-flow__pane,
   --xy-controls-button-color-default: #17212f;
   --xy-controls-button-color-hover-default: #06b6d4;
   --xy-controls-button-border-color-default: #d8e1e9;
-  background-color: #f8fafc !important;
+  background-color: #ffffff !important;
 }
 
 .react-flow__controls-button {
